@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "SwipeClean Free",
+    "slug": "swipeclean-free",
+    "scheme": "swipeclean",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.swipeclean.free",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "SwipeClean needs access to your photos so you can review and clean your gallery.",
+        "NSPhotoLibraryAddUsageDescription": "SwipeClean saves only when you choose to restore or share photos."
+      }
+    },
+    "android": {
+      "package": "com.swipeclean.free",
+      "permissions": [
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "react-native-compressor",
+      [
+        "expo-notifications",
+        {
+          "color": "#075ec8"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "SwipeClean needs access to your photos so you can review and clean your gallery.",
+          "savePhotosPermission": "SwipeClean saves only when you choose to restore or share photos.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "43f1c63e-b92b-47c7-a794-b3d499b2f4fa"
+      }
+    },
+    "owner": "mosutermo"
+  }
+}
