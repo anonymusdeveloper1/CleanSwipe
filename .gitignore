@@ -7,11 +7,22 @@ expo-env.d.ts
 # @end expo-cli
 
 node_modules/
+.env
+.env.local
+.env.*.local
 dist/
 dist-android/
+dist-share/
+dist-demo-check/
 android/.gradle/
 android/build/
 android/app/build/
 *.log
 *.png
 .codex-remote-attachments/
+
+# Local tooling / run artifacts (Maestro CLI binary, logs, test media, helper
+# scripts) — all machine-local. The committed Maestro FLOWS live in .maestro/
+# and are intentionally tracked.
+.codex/
+.maestro/screenshots/

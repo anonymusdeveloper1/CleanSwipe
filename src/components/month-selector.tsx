@@ -1,13 +1,16 @@
 import { router } from "expo-router";
 import { ChevronDown } from "lucide-react-native";
 import { Pressable, Text } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useAppStore } from "@/store/app-store";
+import { useIndexedMediaAssets } from "@/store/media-index-store";
 import { filterPhotosByMediaType, getMediaTypeAllLabel, groupPhotosByMonth } from "@/utils/months";
 
 export function MonthSelector() {
+  const { t } = useTranslation();
   const theme = useAppTheme();
-  const photos = useAppStore((state) => state.photos);
+  const photos = useIndexedMediaAssets();
   const selectedMonthKey = useAppStore((state) => state.selectedMonthKey);
   const selectedMediaType = useAppStore((state) => state.selectedMediaType);
   const scopedPhotos = filterPhotosByMediaType(photos, selectedMediaType);
@@ -16,7 +19,7 @@ export function MonthSelector() {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Select month"
+      accessibilityLabel={t("months.selectMonthA11y")}
       onPress={() => router.push("/month-selector")}
       style={{
         flexDirection: "row",

@@ -1,8 +1,14 @@
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import { useFocusEffect } from "expo-router";
+import { Volume2, VolumeX } from "lucide-react-native";
 import { Animated, PanResponder, Pressable, Text, View, useWindowDimensions } from "react-native";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CachedImage } from "@/components/cached-image";
+import { MediaThumbnail } from "@/components/media-thumbnail";
+import { VideoMediaPlayer } from "@/components/video-media-player";
+import { isVideoUri } from "@/components/video-thumb-placeholder";
 import { PhotoAsset, SwipeAction } from "@/models/photo";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
@@ -14,12 +20,29 @@ type Props = {
 };
 
 export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
+  const { t } = useTranslation();
   const theme = useAppTheme();
   const { width } = useWindowDimensions();
   const position = useRef(new Animated.ValueXY()).current;
   const animating = useRef(false);
+  const [videoMuted, setVideoMuted] = useState(true);
   const threshold = Math.min(130, width * 0.28);
   const backgroundPhotos = stackPhotos.filter((item) => item.id !== photo.id).slice(0, 3);
+  const isVideo = photo.mediaType === "video";
+
+  // Only keep the card's video decoder alive while the Swipe screen is focused.
+  // Opening the full-screen preview (a modal) leaves this screen mounted, so
+  // without this the card video AND the preview video would both hold a hardware
+  // decoder at once — on some devices (e.g. Galaxy S24 with HEVC/4K) that exceeds
+  // the concurrent-decoder limit and hard-crashes the app. Unmounting the player
+  // on blur releases the codec; it remounts and resumes when the screen refocuses.
+  const [screenFocused, setScreenFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setScreenFocused(true);
+      return () => setScreenFocused(false);
+    }, [])
+  );
 
   useLayoutEffect(() => {
     animating.current = false;
@@ -27,7 +50,9 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
   }, [photo.id, position]);
 
   useEffect(() => {
-    const uris = stackPhotos.map((item) => item.uri).filter(Boolean);
+    // Exclude videos — prefetching a video URI makes expo-image decode a frame,
+    // which can OOM-crash on high-res clips (see video-thumb-placeholder).
+    const uris = stackPhotos.map((item) => item.uri).filter((uri) => uri && !isVideoUri(uri));
     if (uris.length > 0) {
       void Image.prefetch(uris, { cachePolicy: "memory-disk" }).catch(() => undefined);
     }
@@ -180,7 +205,7 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
               overflow: "hidden"
             }}
           >
-            <CachedImage uri={item.uri} contentFit="contain" backgroundColor={theme.background} style={{ flex: 1 }} />
+            <MediaThumbnail uri={item.uri} id={item.id} mediaType={item.mediaType} contentFit="cover" backgroundColor={theme.background} style={{ flex: 1 }} />
             <View style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15,23,42,0.07)" }} />
           </Container>
         );
@@ -199,8 +224,46 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
           animatedCardStyle
         ]}
       >
-        <CachedImage uri={photo.uri} contentFit="contain" backgroundColor={theme.background} style={{ flex: 1 }} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Open media preview" onPress={onOpen} style={{ position: "absolute", inset: 0 }} />
+        {isVideo ? (
+          screenFocused ? (
+            <VideoMediaPlayer
+              uri={photo.uri}
+              autoPlay
+              loop
+              muted={videoMuted}
+              contentFit="cover"
+              backgroundColor={theme.background}
+              style={{ flex: 1 }}
+            />
+          ) : (
+            // Blurred (preview modal open / other tab) — decoder released; the card
+            // is covered or off-screen so a plain fill is invisible to the user.
+            <View style={{ flex: 1, backgroundColor: theme.background }} />
+          )
+        ) : (
+          <CachedImage uri={photo.uri} contentFit="cover" backgroundColor={theme.background} style={{ flex: 1 }} />
+        )}
+        <Pressable accessibilityRole="button" accessibilityLabel={t("swipeCard.openMediaPreview")} onPress={onOpen} style={{ position: "absolute", inset: 0 }} />
+        {isVideo ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={videoMuted ? t("swipeCard.unmuteVideo") : t("swipeCard.muteVideo")}
+            onPress={() => setVideoMuted((value) => !value)}
+            style={{
+              position: "absolute",
+              top: 14,
+              right: 14,
+              width: 42,
+              height: 42,
+              borderRadius: 21,
+              backgroundColor: "rgba(0,0,0,0.44)",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            {videoMuted ? <VolumeX size={21} color="#fff" /> : <Volume2 size={21} color="#fff" />}
+          </Pressable>
+        ) : null}
         <Animated.View
           pointerEvents="none"
           style={{
@@ -239,7 +302,7 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
           }}
         >
           <Text selectable style={{ color: "#ffffff", fontSize: 28, fontWeight: "900", letterSpacing: 0 }}>
-            Delete
+            {t("swipeCard.deleteLabel")}
           </Text>
         </Animated.View>
         <Animated.View
@@ -262,7 +325,7 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
           }}
         >
           <Text selectable style={{ color: "#ffffff", fontSize: 28, fontWeight: "900", letterSpacing: 0 }}>
-            Keep
+            {t("swipeCard.keepLabel")}
           </Text>
         </Animated.View>
         <View
@@ -277,7 +340,7 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
           }}
         >
           <Text selectable numberOfLines={1} style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>
-            {(photo.filename ?? "Untitled photo").replace(/\.[^.]+$/, "").replaceAll("_", " ")}
+            {(photo.filename ?? t("swipeCard.untitledPhoto")).replace(/\.[^.]+$/, "").replaceAll("_", " ")}
           </Text>
         </View>
       </Animated.View>

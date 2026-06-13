@@ -1,8 +1,9 @@
+import i18n from "@/i18n";
 import { MarkedForDeletionItem, MediaTypeFilter, MonthGroup, PhotoAsset } from "@/models/photo";
 import { getMonthKey, monthLabel } from "@/utils/date";
 import { sumBytes } from "@/utils/format";
 
-export function groupPhotosByMonth(photos: PhotoAsset[], allLabel = "All Photos"): MonthGroup[] {
+export function groupPhotosByMonth(photos: PhotoAsset[], allLabel = i18n.t("media.allPhotos")): MonthGroup[] {
   const map = new Map<string, PhotoAsset[]>();
   for (const photo of photos) {
     const bucket = map.get(photo.monthKey) ?? [];
@@ -53,15 +54,15 @@ export function filterMarkedItemsByScope(items: MarkedForDeletionItem[], monthKe
 }
 
 export function getMediaTypeAllLabel(mediaType: MediaTypeFilter) {
-  if (mediaType === "video") return "All Videos";
-  if (mediaType === "photo") return "All Photos";
-  return "All Media";
+  if (mediaType === "video") return i18n.t("media.allVideos");
+  if (mediaType === "photo") return i18n.t("media.allPhotos");
+  return i18n.t("media.allMedia");
 }
 
 export function getMediaTypeNoun(mediaType: MediaTypeFilter, count?: number) {
-  if (mediaType === "video") return count === 1 ? "video" : "videos";
-  if (mediaType === "photo") return count === 1 ? "photo" : "photos";
-  return count === 1 ? "item" : "media";
+  if (mediaType === "video") return i18n.t(count === 1 ? "media.videoOne" : "media.videoOther");
+  if (mediaType === "photo") return i18n.t(count === 1 ? "media.photoOne" : "media.photoOther");
+  return i18n.t(count === 1 ? "media.itemOne" : "media.itemOther");
 }
 
 export function getMarkedItemMonthKey(item: MarkedForDeletionItem) {

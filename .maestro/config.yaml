@@ -1,0 +1,15 @@
+# Maestro workspace config for SwipeClean UI/E2E flows.
+# Run all flows:   maestro test .maestro
+# Run one flow:    maestro test .maestro/01_smoke.yaml
+#
+# These are dev-client flows: they require the app installed AND Metro running
+# (npm run start) on a connected device/emulator. A standalone release build
+# (embedded JS) can run them without Metro.
+flows:
+  - "*.yaml"
+executionOrder:
+  flowsOrder:
+    - Smoke - app launches and shell renders
+    - Bottom-tab navigation
+    - Settings screen
+    - Premium upsell (Free user)

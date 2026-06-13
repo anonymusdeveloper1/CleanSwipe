@@ -4,7 +4,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import {
   AppSettings,
   CompressedMediaItem,
-  CompressionQuality,
   AppStats,
   DeletedHistoryItem,
   MarkedForDeletionItem,
@@ -13,16 +12,16 @@ import {
   PhotoAsset,
   SwipeAction
 } from "@/models/photo";
-import { CompressionService } from "@/services/compression-service";
+import { recordCleanupEvent } from "@/store/cleanup-events-store";
 import { DeletionQueueService } from "@/services/deletion-queue-service";
 import { HistoryService } from "@/services/history-service";
-import { ImageCacheService } from "@/services/image-cache-service";
-import { NotificationService } from "@/services/notification-service";
 import { PermissionService } from "@/services/permission-service";
 import { PhotoLibraryService } from "@/services/photo-library-service";
 import { defaultSettings } from "@/services/settings-service";
 import { emptyStats, StatsService } from "@/services/stats-service";
-import { filterPhotosByScope } from "@/utils/months";
+import { MediaAccessLevel, selectIndexedMediaAssets, useMediaIndexStore } from "@/store/media-index-store";
+import { normalizeLanguagePreference } from "@/i18n/languages";
+import { filterMarkedItemsByScope, filterPhotosByScope } from "@/utils/months";
 
 type LastSwipe = {
   photo: PhotoAsset;
@@ -33,6 +32,9 @@ type LastSwipe = {
 type AppStore = {
   photos: PhotoAsset[];
   loadingPhotos: boolean;
+  loadingMorePhotos: boolean;
+  photosHasNextPage: boolean;
+  photosNextCursor?: string;
   requestingPermission: boolean;
   hasHydrated: boolean;
   photoLibrarySyncedAt?: number;
@@ -43,9 +45,6 @@ type AppStore = {
   reviewedPhotoIds: string[];
   markedForDeletion: MarkedForDeletionItem[];
   compressedMedia: CompressedMediaItem[];
-  compressingIds: string[];
-  compressionProgress: Record<string, number>;
-  compressionError?: string;
   history: DeletedHistoryItem[];
   stats: AppStats;
   settings: AppSettings;
@@ -54,7 +53,9 @@ type AppStore = {
   setHasHydrated: (hasHydrated: boolean) => void;
   loadInitialData: () => Promise<void>;
   refreshPhotos: () => Promise<void>;
+  loadMorePhotos: () => Promise<void>;
   requestPhotoPermission: () => Promise<void>;
+  refreshPermissionStatus: () => Promise<void>;
   setSelectedMonth: (key: string) => void;
   setSelectedMediaType: (mediaType: MediaTypeFilter) => void;
   swipeCurrentPhoto: (action: SwipeAction) => void;
@@ -62,9 +63,8 @@ type AppStore = {
   markPhotoForDeletion: (photo: PhotoAsset) => void;
   undoLastSwipe: () => void;
   restoreMarkedPhoto: (photoId: string) => void;
-  permanentlyDeleteMarked: (photoIds?: string[]) => Promise<{ deletedCount: number; clearedBytes: number }>;
-  compressMedia: (photoId: string, quality: CompressionQuality) => Promise<CompressedMediaItem>;
-  compressAllEligible: (quality: CompressionQuality, mediaType?: "all" | "video" | "photo") => Promise<CompressedMediaItem[]>;
+  permanentlyDeleteMarked: (photoIds?: string[], options?: { emitDeletionEvent?: boolean }) => Promise<{ deletedCount: number; clearedBytes: number }>;
+  restartCurrentSelection: () => { ok: boolean; blockedCount?: number };
   restoreHistoryItem: (historyId: string) => void;
   updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   visiblePhotos: () => PhotoAsset[];
@@ -73,12 +73,16 @@ type AppStore = {
 
 let initialLoadPromise: Promise<void> | undefined;
 let refreshPromise: Promise<void> | undefined;
+let loadMorePromise: Promise<void> | undefined;
 
 export const useAppStore = create<AppStore>()(
   persist(
     (set, get) => ({
       photos: [],
       loadingPhotos: false,
+      loadingMorePhotos: false,
+      photosHasNextPage: false,
+      photosNextCursor: undefined,
       requestingPermission: false,
       hasHydrated: false,
       permission: { status: "not-requested" },
@@ -88,8 +92,6 @@ export const useAppStore = create<AppStore>()(
       reviewedPhotoIds: [],
       markedForDeletion: [],
       compressedMedia: [],
-      compressingIds: [],
-      compressionProgress: {},
       history: [],
       stats: emptyStats,
       settings: defaultSettings,
@@ -102,12 +104,21 @@ export const useAppStore = create<AppStore>()(
         if (initialLoadPromise) return initialLoadPromise;
 
         initialLoadPromise = (async () => {
-          const cachedPhotos = get().photos;
-          const hasReadableCache = cachedPhotos.length > 0 && canReadMedia(get().permission);
+          const mediaIndex = useMediaIndexStore.getState();
+          const cachedCount = selectIndexedMediaAssets(mediaIndex).length;
 
-          set({ loadingPhotos: !hasReadableCache, error: undefined });
+          set({ loadingPhotos: cachedCount === 0, error: undefined });
 
-          const permission = await PermissionService.getMediaPermission();
+          let permission = await PermissionService.getMediaPermission();
+          // First launch: proactively surface the native Android permission
+          // dialog instead of dropping straight to the manual "Allow Access"
+          // screen. Only auto-request when the OS says we've never asked, so we
+          // never re-pop the dialog after the user has made a choice.
+          if (permission.status === "not-requested") {
+            set({ requestingPermission: true });
+            permission = await PermissionService.requestMediaPermission();
+            set({ requestingPermission: false });
+          }
           if (!canReadMedia(permission)) {
             set({
               permission,
@@ -118,22 +129,29 @@ export const useAppStore = create<AppStore>()(
             return;
           }
 
-          if (cachedPhotos.length > 0) {
-            set({ permission, loadingPhotos: false, error: undefined });
-            ImageCacheService.prefetchPhotos(cachedPhotos);
-            void get().refreshPhotos();
-            return;
+          // Only trust the cached index for an instant first paint when it was
+          // built under full access and we still hold full access. Otherwise
+          // (limited access, or a cache from a previous, broader grant) we must
+          // reconcile BEFORE rendering so we never show assets we can't read.
+          const liveAccessLevel: MediaAccessLevel = permission.status === "limited" ? "limited" : "full";
+          const cacheTrustworthy = cachedCount > 0 && liveAccessLevel === "full" && mediaIndex.accessLevel === "full";
+          if (!cacheTrustworthy) {
+            set({ loadingPhotos: true });
           }
 
-          const photos = await PhotoLibraryService.getPhotos({ first: 250 });
+          const accessLevel = await reconcileMediaIndex(permission);
           set({
             permission,
-            photos,
+            photos: [],
+            photosNextCursor: undefined,
+            photosHasNextPage: useMediaIndexStore.getState().hasNextPage,
             loadingPhotos: false,
             photoLibrarySyncedAt: Date.now(),
             error: undefined
           });
-          ImageCacheService.prefetchPhotos(photos);
+          if (accessLevel === "full") {
+            startInitialMediaIndexScan(getCompressedSourceIds());
+          }
         })().finally(() => {
           initialLoadPromise = undefined;
         });
@@ -148,13 +166,14 @@ export const useAppStore = create<AppStore>()(
           const state = get();
           const permission = await PermissionService.getMediaPermission();
           if (!canReadMedia(permission)) {
-            set({ permission, photos: [] });
+            set({ permission, photos: [], loadingPhotos: false });
             return;
           }
 
           const currentPhotoId = state.currentPhoto()?.id;
-          const photos = await PhotoLibraryService.getPhotos({ first: 250 });
-          const visiblePhotos = getVisiblePhotos(photos, state);
+          const accessLevel = await reconcileMediaIndex(permission);
+          const indexedPhotos = selectIndexedMediaAssets(useMediaIndexStore.getState());
+          const visiblePhotos = getVisiblePhotos(indexedPhotos, state);
           const matchingIndex = currentPhotoId
             ? visiblePhotos.findIndex((photo) => photo.id === currentPhotoId)
             : -1;
@@ -165,17 +184,66 @@ export const useAppStore = create<AppStore>()(
 
           set({
             permission,
-            photos,
+            photos: [],
+            photosNextCursor: undefined,
+            photosHasNextPage: useMediaIndexStore.getState().hasNextPage,
             currentIndex,
+            // Clear the loader that reconcileMediaIndex raises when pruning a
+            // stale index after a downgrade to limited access, so refreshPhotos
+            // can never strand the spinner.
+            loadingPhotos: false,
             photoLibrarySyncedAt: Date.now(),
             error: undefined
           });
-          ImageCacheService.prefetchPhotos(photos);
+          if (accessLevel === "full") {
+            startInitialMediaIndexScan(getCompressedSourceIds());
+          }
         })().finally(() => {
           refreshPromise = undefined;
         });
 
         return refreshPromise;
+      },
+
+      async loadMorePhotos() {
+        const state = get();
+        if (loadMorePromise) return loadMorePromise;
+        if (state.loadingPhotos || state.loadingMorePhotos) {
+          return;
+        }
+
+        loadMorePromise = (async () => {
+          set({ loadingMorePhotos: true, error: undefined });
+          const permission = await PermissionService.getMediaPermission();
+          if (!canReadMedia(permission)) {
+            set({
+              permission,
+              loadingMorePhotos: false,
+              photosHasNextPage: false,
+              photosNextCursor: undefined,
+              error: permission.message
+            });
+            return;
+          }
+
+          await useMediaIndexStore.getState().startFullScan({
+            force: true,
+            ignoredSourceIds: getCompressedSourceIds()
+          });
+          set(() => ({
+            permission,
+            photos: [],
+            photosNextCursor: undefined,
+            photosHasNextPage: useMediaIndexStore.getState().hasNextPage,
+            loadingMorePhotos: false,
+            photoLibrarySyncedAt: Date.now(),
+            error: undefined
+          }));
+        })().finally(() => {
+          loadMorePromise = undefined;
+        });
+
+        return loadMorePromise;
       },
 
       async requestPhotoPermission() {
@@ -192,7 +260,7 @@ export const useAppStore = create<AppStore>()(
           return;
         }
 
-        const hasCachedPhotos = get().photos.length > 0;
+        const hasCachedPhotos = selectIndexedMediaAssets(useMediaIndexStore.getState()).length > 0;
         set({
           permission,
           requestingPermission: false,
@@ -200,16 +268,28 @@ export const useAppStore = create<AppStore>()(
           error: undefined
         });
 
-        const photos = await PhotoLibraryService.getPhotos({ first: 250 });
+        const accessLevel = await reconcileMediaIndex(permission);
         set({
           permission,
-          photos,
+          photos: [],
+          photosNextCursor: undefined,
+          photosHasNextPage: useMediaIndexStore.getState().hasNextPage,
           photoLibrarySyncedAt: Date.now(),
           requestingPermission: false,
           loadingPhotos: false,
           error: undefined
         });
-        ImageCacheService.prefetchPhotos(photos);
+        if (accessLevel === "full") {
+          startInitialMediaIndexScan(getCompressedSourceIds());
+        }
+      },
+
+      async refreshPermissionStatus() {
+        // Lightweight, read-only check used by surfaces (e.g. Settings) that
+        // need the current access level without triggering a full reload or a
+        // permission prompt.
+        const permission = await PermissionService.getMediaPermission();
+        set({ permission });
       },
 
       setSelectedMonth(key) {
@@ -254,7 +334,7 @@ export const useAppStore = create<AppStore>()(
 
       keepPhoto(photoId) {
         set((state) => {
-          const photo = state.photos.find((item) => item.id === photoId);
+          const photo = useMediaIndexStore.getState().assetsById[photoId];
           if (!photo || state.reviewedPhotoIds.includes(photoId)) {
             return {};
           }
@@ -309,7 +389,7 @@ export const useAppStore = create<AppStore>()(
         }));
       },
 
-      async permanentlyDeleteMarked(photoIds) {
+      async permanentlyDeleteMarked(photoIds, options) {
         const state = get();
         const ids = photoIds ?? state.markedForDeletion.map((item) => item.photoId);
         const items = state.markedForDeletion.filter((item) => ids.includes(item.photoId));
@@ -325,69 +405,42 @@ export const useAppStore = create<AppStore>()(
           reviewedPhotoIds: state.reviewedPhotoIds.filter((id) => !ids.includes(id)),
           history: [...HistoryService.fromMarkedItems(items), ...state.history],
           stats: StatsService.withPermanentDelete(state.stats, items),
-          photos: state.photos.filter((photo) => !ids.includes(photo.id)),
+          photos: [],
           error: undefined
         });
+        useMediaIndexStore.getState().removeMediaIds(ids);
+        // Advanced-stats ledger: one batched event per delete op (after success).
+        // Callers that record their own deletion event (e.g. Smart Clean, whose
+        // ids aren't in markedForDeletion so items/bytes would be 0 here) opt out
+        // via emitDeletionEvent:false to avoid a zeroed duplicate entry.
+        if (options?.emitDeletionEvent !== false) {
+          recordCleanupEvent({ type: "itemDeleted", count: items.length, bytes: clearedBytes });
+        }
         return { deletedCount: items.length, clearedBytes };
       },
 
-      async compressMedia(photoId, quality) {
-        const asset = get().photos.find((photo) => photo.id === photoId);
-        if (!asset) {
-          throw new Error("Media item could not be found.");
+      restartCurrentSelection() {
+        const state = get();
+        const indexedPhotos = selectIndexedMediaAssets(useMediaIndexStore.getState());
+        const scopedPhotos = filterPhotosByScope(indexedPhotos, state.selectedMonthKey, state.selectedMediaType);
+        const scopedMarked = filterMarkedItemsByScope(
+          state.markedForDeletion,
+          state.selectedMonthKey,
+          state.selectedMediaType,
+          indexedPhotos
+        );
+
+        if (scopedMarked.length > 0) {
+          return { ok: false, blockedCount: scopedMarked.length };
         }
-        const notificationLabel = getNotificationLabel(asset);
 
-        set((state) => ({
-          compressingIds: state.compressingIds.includes(photoId) ? state.compressingIds : [...state.compressingIds, photoId],
-          compressionProgress: { ...state.compressionProgress, [photoId]: 0 },
-          compressionError: undefined
-        }));
-        void NotificationService.notifyCompressionStarted(notificationLabel);
-
-        try {
-          const result = await CompressionService.compress(asset, {
-            quality,
-            onProgress: (progress) => {
-              void NotificationService.notifyCompressionProgress(notificationLabel, progress);
-              set((state) => ({
-                compressionProgress: { ...state.compressionProgress, [photoId]: progress }
-              }));
-            }
-          });
-          void NotificationService.notifyCompressionComplete(notificationLabel);
-
-          set((state) => ({
-            compressedMedia: [result, ...state.compressedMedia.filter((item) => item.sourceId !== photoId)],
-            compressingIds: state.compressingIds.filter((id) => id !== photoId),
-            compressionProgress: { ...state.compressionProgress, [photoId]: 1 },
-            compressionError: undefined
-          }));
-          return result;
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Compression failed.";
-          void NotificationService.notifyCompressionFailed(message);
-          set((state) => ({
-            compressingIds: state.compressingIds.filter((id) => id !== photoId),
-            compressionProgress: { ...state.compressionProgress, [photoId]: 0 },
-            compressionError: message
-          }));
-          throw error;
-        }
-      },
-
-      async compressAllEligible(quality, mediaType = "all") {
-        const assets = get().photos.filter((photo) => {
-          if (!CompressionService.isCompressible(photo)) return false;
-          if (mediaType === "video") return photo.mediaType === "video";
-          if (mediaType === "photo") return photo.mediaType === "photo";
-          return photo.mediaType === "video" || photo.mediaType === "photo";
+        const scopedIds = new Set(scopedPhotos.map((photo) => photo.id));
+        set({
+          reviewedPhotoIds: state.reviewedPhotoIds.filter((id) => !scopedIds.has(id)),
+          currentIndex: 0,
+          lastSwipe: undefined
         });
-        const results: CompressedMediaItem[] = [];
-        for (const asset of assets) {
-          results.push(await get().compressMedia(asset.id, quality));
-        }
-        return results;
+        return { ok: true };
       },
 
       restoreHistoryItem(historyId) {
@@ -402,7 +455,7 @@ export const useAppStore = create<AppStore>()(
       },
 
       visiblePhotos() {
-        return getVisiblePhotos(get().photos, get());
+        return getVisiblePhotos(selectIndexedMediaAssets(useMediaIndexStore.getState()), get());
       },
 
       currentPhoto() {
@@ -415,11 +468,27 @@ export const useAppStore = create<AppStore>()(
       name: "swipeclean-free-store",
       storage: createJSONStorage(() => AsyncStorage),
       merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<AppStore>;
+        // persistedState is undefined on a fresh install (and can be malformed
+        // after a failed write). Default it so property reads below never throw
+        // during hydration — a throw here leaves `state` undefined in
+        // onRehydrateStorage, which would strand the app on the loading screen.
+        const persisted = (persistedState ?? {}) as Partial<AppStore>;
         return {
           ...currentState,
           ...persisted,
-          loadingPhotos: false,
+          photos: [],
+          photosHasNextPage: useMediaIndexStore.getState().hasNextPage,
+          photosNextCursor: undefined,
+          settings: normalizeSettings({
+            ...currentState.settings,
+            ...(persisted.settings ?? {})
+          }),
+          // Under "selected photos" access the cached index must be reconciled
+          // before it can be trusted, so show the loader on the very first frame
+          // (before loadInitialData's effect runs) rather than painting the
+          // potentially-stale cache. Full access keeps its instant cache paint.
+          loadingPhotos: persisted.permission?.status === "limited",
+          loadingMorePhotos: false,
           requestingPermission: false,
           hasHydrated: currentState.hasHydrated,
           selectedMediaType: persisted.selectedMediaType ?? currentState.selectedMediaType,
@@ -427,11 +496,16 @@ export const useAppStore = create<AppStore>()(
           markedForDeletion: dedupeMarkedItems(persisted.markedForDeletion ?? currentState.markedForDeletion)
         };
       },
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.warn("Failed to rehydrate SwipeClean store", error);
+        }
+        // Always clear the hydration gate, even if rehydration failed (state is
+        // undefined in that case), so the UI never hangs on the loading screen
+        // and can proceed to request media permission.
+        (state ?? useAppStore.getState()).setHasHydrated(true);
       },
       partialize: (state) => ({
-        photos: state.photos,
         permission: canReadMedia(state.permission) ? state.permission : { status: "not-requested" },
         photoLibrarySyncedAt: state.photoLibrarySyncedAt,
         selectedMonthKey: state.selectedMonthKey,
@@ -457,6 +531,60 @@ function getVisiblePhotos(photos: PhotoAsset[], state: Pick<AppStore, "selectedM
   return filterPhotosByScope(photos, state.selectedMonthKey, state.selectedMediaType).filter((photo) => !reviewedIds.has(photo.id) && !markedIds.has(photo.id));
 }
 
+function getCompressedSourceIds() {
+  return useAppStore.getState().compressedMedia.map((item) => item.sourceId);
+}
+
+function startInitialMediaIndexScan(ignoredSourceIds: string[]) {
+  const mediaIndex = useMediaIndexStore.getState();
+  if (mediaIndex.status === "scanning") return;
+  // startFullScan decides whether a rescan is actually needed (it reconciles on
+  // any access-level change and always under limited access, but no-ops a
+  // redundant full-access rescan).
+  void mediaIndex.startFullScan({ ignoredSourceIds });
+}
+
+// Reconciles the media index to the currently-accessible set. Under "selected
+// photos" (limited) access the accessible set is small and may differ from a
+// previously cached full-access index, so we run a pruning full scan and await
+// it before the UI renders. Under full access a quick newest-page refresh is
+// enough for first paint (a background full scan follows). Returns the access
+// level so callers can decide whether to kick off that background scan.
+async function reconcileMediaIndex(permission: PermissionResult): Promise<MediaAccessLevel> {
+  const accessLevel: MediaAccessLevel = permission.status === "limited" ? "limited" : "full";
+  if (accessLevel === "limited") {
+    // If the index was built under a broader/older grant it still lists assets
+    // we can no longer read, and pruning only happens when the scan completes.
+    // Raise the loader first so NO surface (Swipe, Cleanup, Stats) renders those
+    // stale, inaccessible assets mid-prune. (No-op once the index is already
+    // reconciled to limited access, so steady-state refreshes don't flicker.)
+    const needsPrune = useMediaIndexStore.getState().accessLevel !== "limited";
+    if (needsPrune) {
+      useAppStore.setState({ loadingPhotos: true });
+    }
+    const startedAt = Date.now();
+    await useMediaIndexStore.getState().startFullScan({ force: true, ignoredSourceIds: getCompressedSourceIds() });
+    // Drop queue/badge entries pointing at assets the reconcile just pruned, so
+    // the review list and counts never reference media we can no longer access.
+    // Only do this when a limited-access scan actually COMPLETED since we began:
+    // otherwise (a concurrently reset/superseded or half-built index) the asset
+    // map is not authoritative and pruning against it would wrongly drop valid
+    // queue entries. A later reconcile owns the prune in that case.
+    const mediaIndex = useMediaIndexStore.getState();
+    const reconciled = mediaIndex.accessLevel === "limited" && (mediaIndex.lastFullScanCompletedAt ?? 0) >= startedAt;
+    if (reconciled) {
+      const survivors = mediaIndex.assetsById;
+      useAppStore.setState((state) => ({
+        markedForDeletion: state.markedForDeletion.filter((item) => Boolean(survivors[item.photoId])),
+        reviewedPhotoIds: state.reviewedPhotoIds.filter((id) => Boolean(survivors[id]))
+      }));
+    }
+  } else {
+    await useMediaIndexStore.getState().refreshNewestPage();
+  }
+  return accessLevel;
+}
+
 function withReviewedPhoto(ids: string[], photoId: string) {
   return ids.includes(photoId) ? ids : [...ids, photoId];
 }
@@ -474,6 +602,9 @@ function dedupeMarkedItems(items: MarkedForDeletionItem[]) {
   });
 }
 
-function getNotificationLabel(asset: PhotoAsset) {
-  return asset.filename?.replace(/\.[^.]+$/, "").replaceAll("_", " ") || (asset.mediaType === "video" ? "Video" : "Photo");
+function normalizeSettings(settings: AppSettings): AppSettings {
+  return {
+    ...settings,
+    language: normalizeLanguagePreference(settings.language)
+  };
 }

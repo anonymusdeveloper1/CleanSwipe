@@ -1,0 +1,33 @@
+# Opens Settings, asserts the key sections render, and exercises the Dark Mode
+# toggle (tapped twice so it ends in its original state).
+appId: com.swipeclean.free
+name: Settings screen
+tags:
+  - settings
+---
+- launchApp
+- tapOn:
+    text: "Open Settings"   # header gear (accessibility label)
+- assertVisible: "Settings"
+- assertVisible: "Biometric Auth"
+- assertVisible: "App Lock"
+- assertVisible: "Dark Mode"
+- assertVisible: "Accent Color"
+- assertVisible: "Language"
+# Permissions section
+- scrollUntilVisible:
+    element:
+      text: "Photos & Videos"
+    direction: DOWN
+- assertVisible: "Photos & Videos"
+# Toggle dark mode and toggle back (interaction smoke; ends unchanged).
+- scrollUntilVisible:
+    element:
+      text: "Dark Mode"
+    direction: UP
+- tapOn: "Dark Mode"
+- tapOn: "Dark Mode"
+- assertVisible: "Dark Mode"
+# Return to the main shell.
+- back
+- assertVisible: "SwipeClean"

@@ -7,6 +7,20 @@ export type GetPhotosOptions = {
   after?: string;
 };
 
+export type GetPhotosPageResult = {
+  photos: PhotoAsset[];
+  endCursor?: string;
+  hasNextPage: boolean;
+  // Set only when the native getAssetsAsync read threw. This distinguishes a
+  // transient native failure from a genuine empty / end-of-library page (both of
+  // which otherwise look like `{ photos: [], hasNextPage: false }`). A failed
+  // page MUST NOT be mistaken for the end of the library: the full-library scan
+  // in media-index-store would otherwise "complete" and prune every not-yet-read
+  // asset, silently truncating the index. Callers that don't read this field
+  // keep their previous (treat-as-empty) behavior.
+  error?: boolean;
+};
+
 export type DeletePhotosResult = {
   success: boolean;
   deletedIds: string[];
@@ -15,6 +29,7 @@ export type DeletePhotosResult = {
 
 export interface IPhotoLibraryService {
   requestPermissions(): Promise<unknown>;
+  getPhotosPage(options?: GetPhotosOptions): Promise<GetPhotosPageResult>;
   getPhotos(options?: GetPhotosOptions): Promise<PhotoAsset[]>;
   deletePhotos(photoIds: string[]): Promise<DeletePhotosResult>;
   getLargestPhotos(limit: number): Promise<PhotoAsset[]>;
@@ -23,6 +38,33 @@ export interface IPhotoLibraryService {
 export const PhotoLibraryService: IPhotoLibraryService = {
   async requestPermissions() {
     return MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
+  },
+
+  async getPhotosPage(options = {}) {
+    try {
+      const permission = await MediaLibrary.getPermissionsAsync(false, ["photo", "video"]);
+      if (!permission.granted && permission.status !== "granted") {
+        return { photos: [], hasNextPage: false };
+      }
+
+      const result = await MediaLibrary.getAssetsAsync({
+        first: options.first ?? 250,
+        after: options.after,
+        mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
+        sortBy: [MediaLibrary.SortBy.creationTime]
+      });
+
+      const pagePhotos = await Promise.all(result.assets.map(mapAsset));
+      return {
+        photos: pagePhotos.filter(Boolean) as PhotoAsset[],
+        endCursor: result.endCursor,
+        hasNextPage: result.hasNextPage && Boolean(result.endCursor) && result.assets.length > 0
+      };
+    } catch {
+      // Flag the failure so a full-library scan can abort as an error instead of
+      // treating it as the end of the library (see the type doc above).
+      return { photos: [], hasNextPage: false, error: true };
+    }
   },
 
   async getPhotos(options = {}) {
@@ -38,21 +80,10 @@ export const PhotoLibraryService: IPhotoLibraryService = {
       const photos: PhotoAsset[] = [];
 
       while (hasNextPage) {
-        const result = await MediaLibrary.getAssetsAsync({
-          first: pageSize,
-          after,
-          mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
-          sortBy: [MediaLibrary.SortBy.creationTime]
-        });
-
-        const pagePhotos = await Promise.all(result.assets.map(mapAsset));
-        photos.push(...(pagePhotos.filter(Boolean) as PhotoAsset[]));
-
+        const result = await this.getPhotosPage({ first: pageSize, after });
+        photos.push(...result.photos);
         hasNextPage = result.hasNextPage;
         after = result.endCursor;
-        if (!after || result.assets.length === 0) {
-          hasNextPage = false;
-        }
       }
 
       return photos;

@@ -1,20 +1,23 @@
 import { router } from "expo-router";
 import { ArrowLeft, BrushCleaning, Trash2 } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CachedImage } from "@/components/cached-image";
+import { MediaThumbnail } from "@/components/media-thumbnail";
 import { EmptyState } from "@/components/empty-state";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useAppStore } from "@/store/app-store";
+import { useIndexedMediaAssets } from "@/store/media-index-store";
 import { formatBytes, sumBytes } from "@/utils/format";
 import { filterPhotosByMediaType, filterPhotosByScope, getMediaTypeAllLabel, getMediaTypeNoun, groupPhotosByMonth } from "@/utils/months";
 
 export function SelectedPhotosScreen() {
+  const { t } = useTranslation();
   const theme = useAppTheme();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const photos = useAppStore((state) => state.photos);
+  const photos = useIndexedMediaAssets();
   const selectedMonthKey = useAppStore((state) => state.selectedMonthKey);
   const selectedMediaType = useAppStore((state) => state.selectedMediaType);
   const mark = useAppStore((state) => state.markPhotoForDeletion);
@@ -57,7 +60,7 @@ export function SelectedPhotosScreen() {
         <View style={{ width: 46 }} />
       </View>
       {selectedPhotos.length === 0 ? (
-        <EmptyState icon={BrushCleaning} title={`No ${getMediaTypeNoun(selectedMediaType)} found.`} message={`No ${getMediaTypeNoun(selectedMediaType)} found for this selection.`} />
+        <EmptyState icon={BrushCleaning} title={t("swipe.noMediaTitle", { noun: getMediaTypeNoun(selectedMediaType) })} message={t("swipe.noMediaMessage", { noun: getMediaTypeNoun(selectedMediaType) })} />
       ) : (
         <FlatList
           data={selectedPhotos}
@@ -81,11 +84,11 @@ export function SelectedPhotosScreen() {
                   borderColor: isMarked ? theme.red : theme.border
                 }}
               >
-                <CachedImage uri={item.uri} contentFit="contain" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
+                <MediaThumbnail uri={item.uri} id={item.id} mediaType={item.mediaType} contentFit="contain" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
                 {isMarked ? <View style={{ position: "absolute", inset: 0, backgroundColor: "rgba(220,38,38,0.16)" }} /> : null}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={isMarked ? "Already marked for deletion" : "Mark photo for deletion"}
+                  accessibilityLabel={isMarked ? t("selected.alreadyMarkedForDeletion") : t("selected.markPhotoForDeletion")}
                   onPress={() => mark(item)}
                   disabled={isMarked}
                   style={{

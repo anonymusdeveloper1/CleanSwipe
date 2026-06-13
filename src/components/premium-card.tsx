@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Check, Star } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
 
 export function PremiumCard({ onPress, compact = false }: Props) {
   const theme = useAppTheme();
+  const { t } = useTranslation();
   return (
     <LinearGradient
       colors={[theme.accent, "#2d7df0"]}
@@ -22,21 +24,21 @@ export function PremiumCard({ onPress, compact = false }: Props) {
           </View>
           <View style={{ flexShrink: 1 }}>
             <Text selectable numberOfLines={1} style={{ color: "#fff", fontSize: compact ? 20 : 24, fontWeight: "900" }}>
-              SwipeClean Pro
+              {t("premium.title")}
             </Text>
             <Text selectable numberOfLines={1} style={{ color: "rgba(255,255,255,0.78)", fontSize: 13, fontWeight: "700" }}>
-              One-time app upgrade
+              {t("premium.oneTimeUpgrade")}
             </Text>
           </View>
         </View>
         <View style={{ backgroundColor: "#6ee7b7", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}>
           <Text selectable style={{ color: "#065f46", fontSize: 11, fontWeight: "900", letterSpacing: 0 }}>
-            SOON
+            {t("premium.soon")}
           </Text>
         </View>
       </View>
       <View style={{ gap: 8 }}>
-        {["No ads while cleaning", "Advanced storage stats", "Faster batch cleanup tools"].map((item) => (
+        {[t("premium.noAdsCleaning"), t("premium.advancedStorageStats"), t("premium.fasterBatchTools")].map((item) => (
           <View key={item} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Check size={17} color="#d1fae5" strokeWidth={3} />
             <Text selectable style={{ color: "rgba(255,255,255,0.9)", fontSize: 14, lineHeight: 19, fontWeight: "700", flexShrink: 1 }}>
@@ -47,7 +49,7 @@ export function PremiumCard({ onPress, compact = false }: Props) {
       </View>
       <Pressable onPress={onPress} style={{ marginTop: 2, backgroundColor: "#fff", minHeight: 54, borderRadius: 14, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 }}>
         <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: theme.accent, fontSize: 17, fontWeight: "900" }}>
-          Get SwipeClean Pro
+          {t("premium.getPro")}
         </Text>
       </Pressable>
     </LinearGradient>

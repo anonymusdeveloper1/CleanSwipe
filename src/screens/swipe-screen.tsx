@@ -1,7 +1,8 @@
 import { router } from "expo-router";
-import { BrushCleaning, Images, RotateCcw, Trash2 } from "lucide-react-native";
-import { useEffect, useMemo } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ArrowRight, BrushCleaning, CheckCircle2, Images, RotateCcw, Trash2 } from "lucide-react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import Svg, { Circle } from "react-native-svg";
 import { AppHeader } from "@/components/app-header";
 import { EmptyState } from "@/components/empty-state";
@@ -10,12 +11,15 @@ import { SwipePhotoCard } from "@/components/swipe-photo-card";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { PermissionService } from "@/services/permission-service";
 import { useAppStore } from "@/store/app-store";
+import { useIndexedMediaAssets } from "@/store/media-index-store";
 import { formatDate } from "@/utils/date";
 import { formatBytes, formatResolution } from "@/utils/format";
-import { filterMarkedItemsByScope, filterPhotosByScope, getMediaTypeNoun } from "@/utils/months";
+import { filterMarkedItemsByScope, filterPhotosByMediaType, filterPhotosByScope, getMediaTypeAllLabel, getMediaTypeNoun, groupPhotosByMonth } from "@/utils/months";
 
 export function SwipeScreen() {
   const theme = useAppTheme();
+  const { t } = useTranslation();
+  const [restartBlockedCount, setRestartBlockedCount] = useState<number | undefined>();
   const loadInitialData = useAppStore((state) => state.loadInitialData);
   const requestPhotoPermission = useAppStore((state) => state.requestPhotoPermission);
   const permission = useAppStore((state) => state.permission);
@@ -23,13 +27,15 @@ export function SwipeScreen() {
   const requestingPermission = useAppStore((state) => state.requestingPermission);
   const hasHydrated = useAppStore((state) => state.hasHydrated);
   const error = useAppStore((state) => state.error);
-  const photos = useAppStore((state) => state.photos);
+  const photos = useIndexedMediaAssets();
   const selectedMonthKey = useAppStore((state) => state.selectedMonthKey);
   const selectedMediaType = useAppStore((state) => state.selectedMediaType);
   const currentIndex = useAppStore((state) => state.currentIndex);
   const reviewedPhotoIds = useAppStore((state) => state.reviewedPhotoIds);
+  const setSelectedMonth = useAppStore((state) => state.setSelectedMonth);
   const swipe = useAppStore((state) => state.swipeCurrentPhoto);
   const undo = useAppStore((state) => state.undoLastSwipe);
+  const restartCurrentSelection = useAppStore((state) => state.restartCurrentSelection);
   const hasLastSwipe = useAppStore((state) => Boolean(state.lastSwipe));
   const markedItems = useAppStore((state) => state.markedForDeletion);
   const markedIds = useMemo(() => new Set(markedItems.map((item) => item.photoId)), [markedItems]);
@@ -39,10 +45,11 @@ export function SwipeScreen() {
     () => selectedPhotos.filter((item) => !reviewedIds.has(item.id) && !markedIds.has(item.id)),
     [markedIds, reviewedIds, selectedPhotos]
   );
-  const visibleMarkedCount = useMemo(
-    () => filterMarkedItemsByScope(markedItems, selectedMonthKey, selectedMediaType, photos).length,
+  const markedInSelection = useMemo(
+    () => filterMarkedItemsByScope(markedItems, selectedMonthKey, selectedMediaType, photos),
     [markedItems, photos, selectedMediaType, selectedMonthKey]
   );
+  const visibleMarkedCount = markedInSelection.length;
   const activeIndex = Math.min(currentIndex, Math.max(visiblePhotos.length - 1, 0));
   const photo = visiblePhotos[activeIndex];
   const swipeStackPhotos = useMemo(() => visiblePhotos.slice(activeIndex, activeIndex + 4), [activeIndex, visiblePhotos]);
@@ -52,6 +59,20 @@ export function SwipeScreen() {
   );
   const totalCount = selectedPhotos.length;
   const progress = totalCount > 0 ? clearedCount / totalCount : 0;
+  const monthOptions = useMemo(
+    () => groupPhotosByMonth(filterPhotosByMediaType(photos, selectedMediaType), getMediaTypeAllLabel(selectedMediaType)),
+    [photos, selectedMediaType]
+  );
+  const selectedMonthLabel =
+    monthOptions.find((month) => month.key === selectedMonthKey)?.label ?? getMediaTypeAllLabel(selectedMediaType);
+  const concreteMonths = useMemo(() => monthOptions.filter((month) => month.key !== "all"), [monthOptions]);
+  const nextMonth = useMemo(() => {
+    if (concreteMonths.length === 0) return undefined;
+    if (selectedMonthKey === "all") return concreteMonths[0];
+    const currentMonthIndex = concreteMonths.findIndex((month) => month.key === selectedMonthKey);
+    return currentMonthIndex >= 0 ? concreteMonths[currentMonthIndex + 1] : concreteMonths[0];
+  }, [concreteMonths, selectedMonthKey]);
+  const selectionComplete = selectedPhotos.length > 0 && visiblePhotos.length === 0;
 
   useEffect(() => {
     if (hasHydrated) {
@@ -61,6 +82,22 @@ export function SwipeScreen() {
 
   const needsMediaPermission = permission.status !== "granted" && permission.status !== "limited";
 
+  const handleStartOver = () => {
+    const result = restartCurrentSelection();
+    if (result.ok) return;
+
+    const blockedCount = result.blockedCount ?? visibleMarkedCount;
+    setRestartBlockedCount(blockedCount);
+  };
+
+  const handleNextMonth = () => {
+    if (nextMonth) {
+      setSelectedMonth(nextMonth.key);
+      return;
+    }
+    router.push("/month-selector");
+  };
+
   if (!hasHydrated) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -68,7 +105,7 @@ export function SwipeScreen() {
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14 }}>
           <ActivityIndicator color={theme.accent} size="large" />
           <Text selectable style={{ color: theme.muted, fontSize: 16, fontWeight: "800", textAlign: "center" }}>
-            Loading your media library...
+            {t("common.loadingMediaLibrary")}
           </Text>
         </View>
       </View>
@@ -81,14 +118,14 @@ export function SwipeScreen() {
         <AppHeader />
         <EmptyState
           icon={BrushCleaning}
-          title="Allow photo access"
-          message={error ?? "SwipeClean needs Photos and Videos access so you can review and clean your gallery."}
-          actionLabel={requestingPermission ? "Requesting..." : "Allow Access"}
+          title={t("permissions.photosTitle")}
+          message={error ?? t("permissions.photosMessage")}
+          actionLabel={requestingPermission ? t("common.requesting") : t("common.allowAccess")}
           onAction={requestPhotoPermission}
         />
         <View style={{ paddingHorizontal: 28 }}>
           <Pressable onPress={PermissionService.openSettings} style={{ alignItems: "center", padding: 16 }}>
-            <Text style={{ color: theme.accent, fontWeight: "800", fontSize: 16 }}>Open Settings</Text>
+            <Text style={{ color: theme.accent, fontWeight: "800", fontSize: 16 }}>{t("common.openSettings")}</Text>
           </Pressable>
         </View>
       </View>
@@ -99,14 +136,14 @@ export function SwipeScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <AppHeader />
       <View style={{ paddingHorizontal: 22, flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <ControlIconButton label="Undo last swipe" disabled={!hasLastSwipe} onPress={undo}>
+        <ControlIconButton label={t("swipe.undoLastSwipe")} disabled={!hasLastSwipe} onPress={undo}>
           <RotateCcw size={21} color={hasLastSwipe ? theme.accent : theme.faint} />
         </ControlIconButton>
-        <ControlIconButton label="View selected photos" onPress={() => router.push("/selected-photos")}>
+        <ControlIconButton label={t("swipe.viewSelectedPhotos")} onPress={() => router.push("/selected-photos")}>
           <Images size={22} color={theme.muted} />
         </ControlIconButton>
         <MonthSelector />
-        <ControlIconButton label="Open marked for deletion" badgeCount={visibleMarkedCount} onPress={() => router.push("/review-delete-list")}>
+        <ControlIconButton label={t("swipe.openMarkedForDeletion")} badgeCount={visibleMarkedCount} onPress={() => router.push("/review-delete-list")}>
           <Trash2 size={22} color={visibleMarkedCount > 0 ? theme.accent : theme.muted} />
         </ControlIconButton>
       </View>
@@ -130,11 +167,176 @@ export function SwipeScreen() {
               </Text>
             </View>
           </>
+        ) : selectionComplete ? (
+          <CompletedSelectionState
+            title={visibleMarkedCount > 0 ? t("swipe.monthReviewed") : t("swipe.monthComplete")}
+            message={
+              visibleMarkedCount > 0
+                ? t("swipe.markedMessage", { count: visibleMarkedCount, noun: getMediaTypeNoun(selectedMediaType, visibleMarkedCount), month: selectedMonthLabel })
+                : t("swipe.reviewedEverything", { month: selectedMonthLabel })
+            }
+            pendingDeleteCount={visibleMarkedCount}
+            nextMonthLabel={nextMonth?.label}
+            onReviewDelete={() => router.push("/review-delete-list")}
+            onStartOver={handleStartOver}
+            onNextMonth={handleNextMonth}
+          />
         ) : (
-          <EmptyState icon={BrushCleaning} title={`No ${getMediaTypeNoun(selectedMediaType)} found.`} message={`No ${getMediaTypeNoun(selectedMediaType)} found for this selection.`} />
+          <EmptyState icon={BrushCleaning} title={t("swipe.noMediaTitle", { noun: getMediaTypeNoun(selectedMediaType) })} message={t("swipe.noMediaMessage", { noun: getMediaTypeNoun(selectedMediaType) })} />
         )}
       </View>
+      <RestartBlockedDialog
+        visible={restartBlockedCount !== undefined}
+        count={restartBlockedCount ?? 0}
+        noun={getMediaTypeNoun(selectedMediaType, restartBlockedCount ?? 0)}
+        onCancel={() => setRestartBlockedCount(undefined)}
+        onReview={() => {
+          setRestartBlockedCount(undefined);
+          router.push("/review-delete-list");
+        }}
+      />
     </View>
+  );
+}
+
+function RestartBlockedDialog({
+  visible,
+  count,
+  noun,
+  onCancel,
+  onReview
+}: {
+  visible: boolean;
+  count: number;
+  noun: string;
+  onCancel: () => void;
+  onReview: () => void;
+}) {
+  const theme = useAppTheme();
+  const { t } = useTranslation();
+
+  return (
+    <Modal transparent animationType="fade" visible={visible} onRequestClose={onCancel}>
+      <View style={{ flex: 1, backgroundColor: "rgba(15,23,42,0.42)", justifyContent: "center", padding: 26 }}>
+        <View style={{ backgroundColor: theme.surface, borderRadius: 22, padding: 24, gap: 18 }}>
+          <View style={{ gap: 8 }}>
+            <Text selectable style={{ color: theme.text, fontSize: 25, fontWeight: "900" }}>
+              {t("swipe.deleteMarkedFirst")}
+            </Text>
+            <Text selectable style={{ color: theme.muted, fontSize: 16, lineHeight: 23 }}>
+              {t("swipe.deleteMarkedMessage", { count, noun })}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 12, justifyContent: "flex-end" }}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t("swipe.cancelStartOver")} onPress={onCancel} style={{ paddingVertical: 14, paddingHorizontal: 18 }}>
+              <Text style={{ color: theme.muted, fontSize: 16, fontWeight: "800" }}>{t("common.cancel")}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("swipe.reviewDeleteList")}
+              onPress={onReview}
+              style={{ paddingVertical: 14, paddingHorizontal: 18, backgroundColor: theme.accent, borderRadius: 14 }}
+            >
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>{t("swipe.reviewDeleteList")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+type CompletedSelectionStateProps = {
+  title: string;
+  message: string;
+  pendingDeleteCount: number;
+  nextMonthLabel?: string;
+  onReviewDelete: () => void;
+  onStartOver: () => void;
+  onNextMonth: () => void;
+};
+
+function CompletedSelectionState({
+  title,
+  message,
+  pendingDeleteCount,
+  nextMonthLabel,
+  onReviewDelete,
+  onStartOver,
+  onNextMonth
+}: CompletedSelectionStateProps) {
+  const theme = useAppTheme();
+  const { t } = useTranslation();
+  const hasPendingDeletes = pendingDeleteCount > 0;
+
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 12 }}>
+      <View style={{ width: 74, height: 74, borderRadius: 37, backgroundColor: theme.surfaceSoft, alignItems: "center", justifyContent: "center" }}>
+        <CheckCircle2 size={36} color={theme.accent} />
+      </View>
+      <View style={{ gap: 8, alignItems: "center" }}>
+        <Text selectable style={{ color: theme.text, fontSize: 25, fontWeight: "900", textAlign: "center" }}>
+          {title}
+        </Text>
+        <Text selectable style={{ color: theme.muted, fontSize: 16, lineHeight: 23, textAlign: "center" }}>
+          {message}
+        </Text>
+      </View>
+      <View style={{ width: "100%", gap: 10, paddingTop: 4 }}>
+        {hasPendingDeletes ? (
+          <CompletionButton label={t("swipe.reviewDeleteListCount", { count: pendingDeleteCount })} tone="primary" icon="trash" onPress={onReviewDelete} />
+        ) : null}
+        <CompletionButton label={t("swipe.startOver")} tone={hasPendingDeletes ? "secondary" : "primary"} icon="restart" onPress={onStartOver} />
+        <CompletionButton
+          label={nextMonthLabel ? t("swipe.nextMonth", { month: nextMonthLabel }) : t("swipe.chooseMonth")}
+          tone="secondary"
+          icon="next"
+          onPress={onNextMonth}
+        />
+      </View>
+    </View>
+  );
+}
+
+function CompletionButton({
+  label,
+  tone,
+  icon,
+  onPress
+}: {
+  label: string;
+  tone: "primary" | "secondary";
+  icon: "trash" | "restart" | "next";
+  onPress: () => void;
+}) {
+  const theme = useAppTheme();
+  const isPrimary = tone === "primary";
+  const color = isPrimary ? "#fff" : theme.text;
+  const Icon = icon === "trash" ? Trash2 : icon === "restart" ? RotateCcw : ArrowRight;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={{
+        minHeight: 52,
+        borderRadius: 14,
+        paddingHorizontal: 16,
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "row",
+        gap: 9,
+        backgroundColor: isPrimary ? theme.accent : theme.surfaceStrong,
+        borderWidth: isPrimary ? 0 : 1,
+        borderColor: theme.border
+      }}
+    >
+      <Icon size={19} color={color} />
+      <Text numberOfLines={1} adjustsFontSizeToFit style={{ color, fontSize: 16, fontWeight: "900" }}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 

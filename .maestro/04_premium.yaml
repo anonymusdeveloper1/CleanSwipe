@@ -1,0 +1,27 @@
+# Premium tab for a Free user: the upsell, the Pro feature list, and plan
+# selection. Does NOT tap the purchase CTA (that would start a real RevenueCat
+# checkout).
+appId: com.swipeclean.free
+name: Premium upsell (Free user)
+tags:
+  - premium
+---
+- launchApp
+- tapOn:
+    text: "^Premium$"
+- assertVisible: "SwipeClean Pro"
+- assertVisible: "What's included"
+- assertVisible: "Smart Clean"
+- assertVisible: "No ads"
+- assertVisible: "Choose your plan"
+- assertVisible: "Yearly"
+- assertVisible: "Monthly"
+# Plan selection interaction (no checkout).
+- tapOn: "Monthly"
+- tapOn: "Yearly"
+# Restore lives below the plans — scroll to it.
+- scrollUntilVisible:
+    element:
+      text: "Restore Purchases"
+    direction: DOWN
+- assertVisible: "Restore Purchases"

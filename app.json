@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SwipeClean Free",
+    "name": "SwipeClean",
     "slug": "swipeclean-free",
     "scheme": "swipeclean",
     "version": "0.1.0",
@@ -20,7 +20,11 @@
         "READ_MEDIA_IMAGES",
         "READ_MEDIA_VIDEO",
         "READ_EXTERNAL_STORAGE",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_DATA_SYNC",
+        "com.android.vending.BILLING"
       ]
     },
     "plugins": [
@@ -38,6 +42,22 @@
           "photosPermission": "SwipeClean needs access to your photos so you can review and clean your gallery.",
           "savePhotosPermission": "SwipeClean saves only when you choose to restore or share photos.",
           "isAccessMediaLocationEnabled": false
+        }
+      ],
+      "expo-video",
+      "expo-localization",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow SwipeClean to use Face ID to unlock the app."
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-5256708773143000~5412947073",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
     ],

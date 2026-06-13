@@ -1,0 +1,17 @@
+# Smoke: the app boots and the core shell (brand + 4 tabs) renders.
+appId: com.swipeclean.free
+name: Smoke - app launches and shell renders
+tags:
+  - smoke
+---
+- launchApp
+- assertVisible: "SwipeClean"
+# Bottom tab bar — anchored regex so "Compress" doesn't match "Compress All".
+- assertVisible:
+    text: "^Swipe$"
+- assertVisible:
+    text: "^Compress$"
+- assertVisible:
+    text: "^Stats$"
+- assertVisible:
+    text: "^Premium$"

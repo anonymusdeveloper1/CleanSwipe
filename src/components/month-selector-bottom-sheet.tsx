@@ -1,23 +1,28 @@
 import { router } from "expo-router";
 import { Check, X } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { MediaTypeFilter } from "@/models/photo";
 import { useAppStore } from "@/store/app-store";
+import { useIndexedMediaAssets } from "@/store/media-index-store";
 import { formatBytes } from "@/utils/format";
 import { filterPhotosByMediaType, filterPhotosByMonth, getMarkedItemMonthKey, getMediaTypeAllLabel, getMediaTypeNoun, groupPhotosByMonth } from "@/utils/months";
 
-const mediaTypeOptions: { key: MediaTypeFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "photo", label: "Photos" },
-  { key: "video", label: "Videos" }
+const mediaTypeOptions: { key: MediaTypeFilter; labelKey: string }[] = [
+  { key: "all", labelKey: "months.all" },
+  { key: "photo", labelKey: "months.photos" },
+  { key: "video", labelKey: "months.videos" }
 ];
 
 export function MonthSelectorBottomSheet() {
+  const { t } = useTranslation();
   const theme = useAppTheme();
-  const photos = useAppStore((state) => state.photos);
+  const insets = useSafeAreaInsets();
+  const photos = useIndexedMediaAssets();
   const selected = useAppStore((state) => state.selectedMonthKey);
   const selectedMediaType = useAppStore((state) => state.selectedMediaType);
   const reviewedPhotoIds = useAppStore((state) => state.reviewedPhotoIds);
@@ -53,7 +58,7 @@ export function MonthSelectorBottomSheet() {
         }}
       >
         <Text selectable style={{ color: theme.text, fontSize: 24, fontWeight: "900" }}>
-          Select Month
+          {t("months.title")}
         </Text>
         <Pressable onPress={() => router.back()} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}>
           <X size={24} color={theme.text} />
@@ -88,13 +93,13 @@ export function MonthSelectorBottomSheet() {
                   backgroundColor: active ? theme.surface : "transparent"
                 }}
               >
-                <Text style={{ color: active ? theme.accent : theme.muted, fontSize: 15, fontWeight: "900" }}>{option.label}</Text>
+                <Text style={{ color: active ? theme.accent : theme.muted, fontSize: 15, fontWeight: "900" }}>{t(option.labelKey)}</Text>
               </Pressable>
             );
           })}
         </View>
       </View>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 6 }}>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 16, gap: 6 }}>
         {months.map((month) => {
           const isSelected = month.key === selected;
           const monthPhotos = filterPhotosByMonth(scopedPhotos, month.key);

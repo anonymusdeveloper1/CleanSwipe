@@ -1,16 +1,18 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Check, Maximize2, Pause, Play, RotateCcw, Share2, Trash2 } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
-import { Linking, Pressable, Share, Text, View } from "react-native";
+import { ArrowLeft, Check, Pause, Play, RotateCcw, Share2, Trash2 } from "lucide-react-native";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Pressable, Share, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CachedImage } from "@/components/cached-image";
+import { VideoMediaPlayer } from "@/components/video-media-player";
 import { useAppStore } from "@/store/app-store";
+import { selectIndexedMediaAsset, useMediaIndexStore } from "@/store/media-index-store";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { PhotoAsset } from "@/models/photo";
-import { CompressionService } from "@/services/compression-service";
 import { formatDate } from "@/utils/date";
 import { formatBytes, formatResolution } from "@/utils/format";
 
@@ -28,16 +30,16 @@ type PreviewMedia = {
 };
 
 export function PhotoPreviewScreen() {
+  const { t } = useTranslation();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const photos = useAppStore((state) => state.photos);
+  const photo = useMediaIndexStore((state) => selectIndexedMediaAsset(state, id));
   const marked = useAppStore((state) => state.markedForDeletion);
   const history = useAppStore((state) => state.history);
   const keepPhoto = useAppStore((state) => state.keepPhoto);
   const mark = useAppStore((state) => state.markPhotoForDeletion);
   const restore = useAppStore((state) => state.restoreMarkedPhoto);
-  const photo = photos.find((item) => item.id === id);
   const markedItem = marked.find((item) => item.photoId === id);
   const historyItem = history.find((item) => item.photoId === id);
   const media = useMemo<PreviewMedia | undefined>(() => {
@@ -51,7 +53,7 @@ export function PhotoPreviewScreen() {
   if (!media) return null;
 
   const isVideo = media.mediaType === "video";
-  const title = media.filename ?? (isVideo ? "Video" : "Photo");
+  const title = media.filename ?? (isVideo ? t("common.video") : t("common.photo"));
 
   const handleShare = () => {
     void Share.share({ message: media.uri, url: media.uri }).catch(() => undefined);
@@ -86,10 +88,10 @@ export function PhotoPreviewScreen() {
         <>
           <LinearGradient pointerEvents="none" colors={["rgba(5,7,13,0.78)", "rgba(5,7,13,0)"]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 110 }} />
           <View style={{ position: "absolute", top: insets.top + 10, left: 14, right: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <IconButton label="Go back" onPress={() => router.back()}>
+            <IconButton label={t("preview.goBack")} onPress={() => router.back()}>
               <ArrowLeft size={25} color="#fff" />
             </IconButton>
-            <IconButton label="Share media" onPress={handleShare}>
+            <IconButton label={t("preview.shareMedia")} onPress={handleShare}>
               <Share2 size={23} color="#fff" />
             </IconButton>
           </View>
@@ -107,16 +109,16 @@ export function PhotoPreviewScreen() {
 
             <View style={{ flexDirection: "row", gap: 10 }}>
               {markedItem ? (
-                <ActionButton label="Restore" tone="neutral" onPress={handleRestore}>
+                <ActionButton label={t("preview.restore")} tone="neutral" onPress={handleRestore}>
                   <RotateCcw size={20} color="#fff" />
                 </ActionButton>
               ) : (
                 <>
-                  <ActionButton label="Keep" tone="green" onPress={handleKeep}>
+                  <ActionButton label={t("preview.keep")} tone="green" onPress={handleKeep}>
                     <Check size={20} color="#fff" />
                   </ActionButton>
                   {media.source ? (
-                    <ActionButton label="Delete" tone="red" onPress={handleDelete}>
+                    <ActionButton label={t("preview.delete")} tone="red" onPress={handleDelete}>
                       <Trash2 size={20} color="#fff" />
                     </ActionButton>
                   ) : null}
@@ -196,61 +198,33 @@ function ZoomablePhoto({ uri, controlsVisible, setControlsVisible }: { uri: stri
 }
 
 function VideoPreview({ media, controlsVisible, setControlsVisible }: { media: PreviewMedia; controlsVisible: boolean; setControlsVisible: (visible: boolean) => void }) {
-  const theme = useAppTheme();
-  const [thumbnailUri, setThumbnailUri] = useState(media.uri);
+  const { t } = useTranslation();
   const [playing, setPlaying] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
-    if (media.source) {
-      CompressionService.createThumbnail(media.source)
-        .then((thumbnail) => {
-          if (mounted) setThumbnailUri(thumbnail);
-        })
-        .catch(() => undefined);
-    }
-    return () => {
-      mounted = false;
-    };
-  }, [media.source]);
-
-  const openExternalPlayer = () => {
-    void Linking.openURL(media.uri).catch(() => undefined);
-  };
-
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={playing ? "Pause video preview" : "Play video preview"}
-      onPress={() => {
-        setPlaying((value) => !value);
-        setControlsVisible(true);
-      }}
-      onLongPress={openExternalPlayer}
-      delayLongPress={420}
-      style={{ flex: 1 }}
-    >
-      <CachedImage uri={thumbnailUri} contentFit="contain" backgroundColor="#05070d" style={{ flex: 1 }} />
-      <LinearGradient colors={["rgba(5,7,13,0.12)", "rgba(5,7,13,0.34)"]} style={{ position: "absolute", inset: 0 }} />
-      {!playing ? (
-        <View style={{ position: "absolute", alignSelf: "center", top: "44%", width: 76, height: 76, borderRadius: 38, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" }}>
-          <Play size={31} color="#fff" fill="#fff" />
-        </View>
-      ) : controlsVisible ? (
-        <View style={{ position: "absolute", alignSelf: "center", top: "44%", width: 76, height: 76, borderRadius: 38, backgroundColor: "rgba(255,255,255,0.14)", alignItems: "center", justifyContent: "center" }}>
-          <Pause size={30} color="#fff" />
-        </View>
+    <View style={{ flex: 1 }}>
+      <VideoMediaPlayer uri={media.uri} autoPlay loop paused={!playing} contentFit="contain" backgroundColor="#05070d" style={{ flex: 1 }} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("preview.toggleVideoControls")}
+        onPress={() => setControlsVisible(!controlsVisible)}
+        style={{ position: "absolute", inset: 0 }}
+      />
+      <LinearGradient pointerEvents="none" colors={["rgba(5,7,13,0.12)", "rgba(5,7,13,0.34)"]} style={{ position: "absolute", inset: 0 }} />
+      {controlsVisible || !playing ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={playing ? t("preview.pauseVideo") : t("preview.playVideo")}
+          onPress={() => {
+            setPlaying((value) => !value);
+            setControlsVisible(true);
+          }}
+          style={{ position: "absolute", alignSelf: "center", top: "43%", width: 78, height: 78, borderRadius: 39, backgroundColor: "rgba(255,255,255,0.17)", alignItems: "center", justifyContent: "center" }}
+        >
+          {playing ? <Pause size={31} color="#fff" /> : <Play size={32} color="#fff" fill="#fff" />}
+        </Pressable>
       ) : null}
-      {controlsVisible ? (
-        <View style={{ position: "absolute", top: "55%", alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 14, backgroundColor: "rgba(0,0,0,0.44)", paddingHorizontal: 12, paddingVertical: 8 }}>
-          <Maximize2 size={15} color="#fff" />
-          <Text style={{ color: "#fff", fontSize: 12, fontWeight: "800" }}>
-            Hold for fullscreen
-          </Text>
-        </View>
-      ) : null}
-      <View style={{ position: "absolute", top: 0, left: 0, width: 4, bottom: 0, backgroundColor: playing ? theme.accent : "transparent" }} />
-    </Pressable>
+    </View>
   );
 }
 

@@ -1,16 +1,21 @@
 import { Tabs } from "expo-router";
-import { BarChart3, BrushCleaning, Star } from "lucide-react-native";
+import { Archive, BarChart3, Layers, Star, Wand2 } from "lucide-react-native";
+import type { LucideIcon } from "lucide-react-native";
 import { View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 export default function TabsLayout() {
   const theme = useAppTheme();
+  const { t } = useTranslation();
+  const { isPro } = useFeatureAccess();
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 28);
 
   const tabIcon =
-    (Icon: typeof BrushCleaning) =>
+    (Icon: LucideIcon) =>
     ({ color, focused }: { color: string; focused: boolean }) => (
       <View
         style={{
@@ -51,10 +56,12 @@ export default function TabsLayout() {
         }
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Swipe", tabBarIcon: tabIcon(BrushCleaning) }} />
-      <Tabs.Screen name="history" options={{ title: "Cleanup", tabBarIcon: tabIcon(BrushCleaning) }} />
-      <Tabs.Screen name="stats" options={{ title: "Stats", tabBarIcon: tabIcon(BarChart3) }} />
-      <Tabs.Screen name="premium" options={{ title: "Premium", tabBarIcon: tabIcon(Star) }} />
+      <Tabs.Screen name="index" options={{ title: t("tabs.swipe"), tabBarIcon: tabIcon(Layers) }} />
+      <Tabs.Screen name="history" options={{ title: t("tabs.cleanup"), tabBarIcon: tabIcon(Archive) }} />
+      <Tabs.Screen name="stats" options={{ title: t("tabs.stats"), tabBarIcon: tabIcon(BarChart3) }} />
+      {/* Same route ("premium") for both tiers — only the label/icon change for
+          Pro, so the back-stack and /premium deep links are preserved. */}
+      <Tabs.Screen name="premium" options={{ title: isPro ? t("tabs.smartClean") : t("tabs.premium"), tabBarIcon: tabIcon(isPro ? Wand2 : Star) }} />
     </Tabs>
   );
 }

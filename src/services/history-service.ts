@@ -4,8 +4,8 @@ import { getMonthKey } from "@/utils/date";
 export const HistoryService = {
   fromMarkedItems(items: MarkedForDeletionItem[]): DeletedHistoryItem[] {
     const deletedAt = new Date().toISOString();
-    return items.map((item) => ({
-      id: `${item.photoId}-${Date.now()}`,
+    return items.map((item, index) => ({
+      id: `${item.photoId}-${deletedAt}-${index}`,
       photoId: item.photoId,
       uri: item.uri,
       filename: item.filename,

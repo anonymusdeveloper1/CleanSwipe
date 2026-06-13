@@ -1,19 +1,22 @@
 import { router } from "expo-router";
 import { ArrowLeft, Trash2 } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { FlatList, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CachedImage } from "@/components/cached-image";
+import { MediaThumbnail } from "@/components/media-thumbnail";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { PhotoAsset } from "@/models/photo";
 import { useAppStore } from "@/store/app-store";
+import { useIndexedMediaAssets } from "@/store/media-index-store";
 import { formatDate } from "@/utils/date";
 import { formatBytes, formatResolution } from "@/utils/format";
 
 export function LargestPhotosScreen() {
+  const { t } = useTranslation();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const photos = useAppStore((state) => state.photos);
+  const photos = useIndexedMediaAssets();
   const mark = useAppStore((state) => state.markPhotoForDeletion);
   const largest = [...photos].filter((photo) => photo.sizeBytes).sort((a, b) => (b.sizeBytes ?? 0) - (a.sizeBytes ?? 0)).slice(0, 25);
   const gap = 14;
@@ -26,7 +29,7 @@ export function LargestPhotosScreen() {
           <ArrowLeft size={30} color={theme.text} />
         </Pressable>
         <Text selectable style={{ color: theme.accent, fontSize: 18, fontWeight: "900" }}>
-          Largest Photos
+          {t("largest.title")}
         </Text>
         <View style={{ width: 46 }} />
       </View>
@@ -36,7 +39,7 @@ export function LargestPhotosScreen() {
         numColumns={2}
         contentInsetAdjustmentBehavior="automatic"
         columnWrapperStyle={{ gap }}
-        contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 6, gap, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 6, gap, paddingBottom: insets.bottom + 24 }}
         renderItem={({ item }) => (
           <LargestPhotoCard
             photo={item}
@@ -58,6 +61,7 @@ type LargestPhotoCardProps = {
 };
 
 function LargestPhotoCard({ photo, width, onDelete, onOpen }: LargestPhotoCardProps) {
+  const { t } = useTranslation();
   const theme = useAppTheme();
 
   return (
@@ -73,10 +77,10 @@ function LargestPhotoCard({ photo, width, onDelete, onOpen }: LargestPhotoCardPr
       }}
     >
       <View style={{ width: "100%", aspectRatio: 1, backgroundColor: theme.surfaceStrong }}>
-        <CachedImage uri={photo.uri} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
+        <MediaThumbnail uri={photo.uri} id={photo.id} mediaType={photo.mediaType} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Mark photo for deletion"
+          accessibilityLabel={t("largest.deleteButtonLabel")}
           onPress={onDelete}
           style={{
             position: "absolute",

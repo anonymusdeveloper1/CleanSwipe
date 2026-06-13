@@ -1,0 +1,25 @@
+# Navigates every bottom tab and asserts a screen-unique element on each.
+appId: com.swipeclean.free
+name: Bottom-tab navigation
+tags:
+  - navigation
+---
+- launchApp
+# Compress tab
+- tapOn:
+    text: "^Compress$"
+- assertVisible: "Ready to Compress"
+- assertVisible: "Filter"
+# Stats tab
+- tapOn:
+    text: "^Stats$"
+- assertVisible: "Storage Stats"
+- assertVisible: "Largest Photos"
+# Premium tab (Free user → upsell)
+- tapOn:
+    text: "^Premium$"
+- assertVisible: "SwipeClean Pro"
+# Back to Swipe
+- tapOn:
+    text: "^Swipe$"
+- assertVisible: "All Media"

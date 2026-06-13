@@ -14,6 +14,8 @@ export type PhotoAsset = {
 
 export type CompressionQuality = "low" | "medium" | "high";
 
+export type AfterCompressionOriginalPolicy = "ask_every_time" | "keep_original" | "delete_original_after_success";
+
 export type CompressedMediaItem = {
   id: string;
   sourceId: string;
@@ -28,6 +30,17 @@ export type CompressedMediaItem = {
   savedBytes: number;
   progress: number;
   compressedAt: string;
+};
+
+export type CompressionJob = {
+  mode: "single" | "batch";
+  activeId?: string;
+  activeLabel?: string;
+  activeFilename?: string;
+  activeMediaType?: "photo" | "video" | "unknown";
+  totalCount: number;
+  completedCount: number;
+  startedAt: number;
 };
 
 export type SwipeAction = "keep" | "delete" | "superLike" | "missed" | "restore";
@@ -66,17 +79,21 @@ export type AppStats = {
   totalDeletedSpaceBytes: number;
 };
 
+export type SupportedLanguage = "en" | "es" | "pt-BR" | "fr" | "de" | "it" | "id" | "hi" | "ar" | "ja";
+
+export type LanguagePreference = "system" | SupportedLanguage;
+
 export type AppSettings = {
   biometricAuthEnabled: boolean;
   appLockEnabled: boolean;
   darkModeEnabled: boolean;
   accentColor: "blue" | "purple" | "green" | "orange" | "pink";
-  language: "en" | "mk" | "de" | "es";
+  language: LanguagePreference;
   notificationsEnabled: boolean;
   cleanupRemindersEnabled: boolean;
-  analyticsCollectionEnabled: boolean;
-  usageDataCollectionEnabled: boolean;
-  errorReportingEnabled: boolean;
+  compressionRemindersEnabled: boolean;
+  proNotificationsEnabled: boolean;
+  afterCompressionOriginalPolicy: AfterCompressionOriginalPolicy;
 };
 
 export type PermissionStatus = "not-requested" | "granted" | "denied" | "limited" | "error";
