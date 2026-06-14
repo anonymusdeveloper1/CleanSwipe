@@ -1,21 +1,17 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { ArrowUp, BrushCleaning, Images, Pause, Play, RefreshCw, Settings, SlidersHorizontal, Square, Star } from "lucide-react-native";
+import { ArrowUp, BrushCleaning, Images, Play, RefreshCw, Settings, SlidersHorizontal } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, NativeScrollEvent, NativeSyntheticEvent, Platform, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AdBanner } from "@/components/ad-banner";
 import { AppLogo } from "@/components/app-logo";
 import { CachedImage } from "@/components/cached-image";
-import { CompressAllOriginalDialog } from "@/components/compress-all-original-dialog";
 import { CompressionFilterDialog } from "@/components/compression-filter-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { MediaCompressionOverlay } from "@/features/compression/components/media-compression-overlay";
 import { useCompressionStore } from "@/features/compression/compression.store";
-import { BatchOriginalPolicy } from "@/features/compression/compression.types";
-import { createCompressionJobInput } from "@/features/compression/compression.utils";
-import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { MediaTypeFilter, PhotoAsset } from "@/models/photo";
 import { CompressionService } from "@/services/compression-service";
@@ -38,8 +34,6 @@ export function HistoryScreen() {
   const { width } = useWindowDimensions();
   const [filter, setFilter] = useState<Filter>({ monthKey: "all", mediaType: "all" });
   const [filterVisible, setFilterVisible] = useState(false);
-  const [originalPromptVisible, setOriginalPromptVisible] = useState(false);
-  const [batching, setBatching] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlatList<IndexedMediaAsset>>(null);
@@ -57,17 +51,7 @@ export function HistoryScreen() {
   const lastFullScanCompletedAt = useMediaIndexStore((state) => state.lastFullScanCompletedAt);
   const startFullScan = useMediaIndexStore((state) => state.startFullScan);
   const completedCompressionMediaIds = useCompressionStore((state) => state.completedMediaIds);
-  const activeJobId = useCompressionStore((state) => state.activeJobId);
-  const queuedJobCount = useCompressionStore((state) => state.queue.length);
   const latestCompressionError = useCompressionStore((state) => state.lastErrorMessage);
-  const enqueueCompressionBatch = useCompressionStore((state) => state.enqueueCompressionBatch);
-  const compressionPaused = useCompressionStore((state) => state.paused);
-  const pauseCompression = useCompressionStore((state) => state.pauseCompression);
-  const resumeCompression = useCompressionStore((state) => state.resumeCompression);
-  const stopCompression = useCompressionStore((state) => state.stopCompression);
-  const { canUseFeature } = useFeatureAccess();
-  // "Compress All" (batch) is a Pro feature; Free users see an upgrade button.
-  const canBatch = canUseFeature("compressAll");
 
   useEffect(() => {
     if (hasHydrated) {
@@ -140,14 +124,11 @@ export function HistoryScreen() {
 
   const summaryText =
     filteredMedia.length > 0 ? t("cleanup.heavySummary", { size: formatBytes(totalHeavyBytes) }) : t("cleanup.emptySummary");
-  const isCompressing = Boolean(activeJobId || queuedJobCount > 0);
   const doneSourceKey = useMemo(() => [...doneSourceIds].sort().join("|"), [doneSourceIds]);
-  const scanIsComplete = Boolean(lastFullScanCompletedAt);
   const indexIsScanning = mediaIndexStatus === "scanning";
   const backgroundSavings = getBackgroundSavings(mediaIndexStatus, mediaIndexSummary.estimatedSavedBytes);
   const hasSavedEstimate = Boolean(lastFullScanCompletedAt);
   const isEstimating = mediaIndexStatus === "scanning";
-  const compressButtonDisabled = batching || isEstimating || !scanIsComplete || filteredMedia.length === 0;
 
   const mediaTypeLabel =
     filter.mediaType === "photo" ? t("months.photos") : filter.mediaType === "video" ? t("months.videos") : t("cleanup.bothMedia");
@@ -159,33 +140,6 @@ export function HistoryScreen() {
       force: true,
       ignoredSourceIds: doneSourceKey ? doneSourceKey.split("|") : []
     });
-  };
-
-  // Starts the batch (everything in the filtered scope, videos included) with the
-  // given original-file policy. "delete" removes each original after it is
-  // compressed and saved; "keep" keeps them all; "ask" defers to the post-batch
-  // decision sheet (the iOS path).
-  const runCompressAll = (originalPolicy: BatchOriginalPolicy) => {
-    setOriginalPromptVisible(false);
-    const jobs = filteredMedia
-      .map((asset) => createCompressionJobInput(asset, "medium"))
-      .filter((job): job is NonNullable<typeof job> => Boolean(job));
-    if (jobs.length === 0) return;
-    setBatching(true);
-    void enqueueCompressionBatch({ jobs, quality: "medium", originalPolicy }).finally(() => setBatching(false));
-  };
-
-  // Only Pro users reach this handler (Free users get the upgrade button).
-  // ANDROID-ONLY workflow: ask up front what to do with the originals BEFORE the
-  // batch runs. iOS keeps the legacy post-batch decision sheet (its compress
-  // workflow is owned by another agent), so it enqueues directly with "ask".
-  const handleCompressAll = () => {
-    if (compressButtonDisabled) return;
-    if (Platform.OS !== "android") {
-      runCompressAll("ask");
-      return;
-    }
-    setOriginalPromptVisible(true);
   };
 
   if (!hasHydrated) {
@@ -284,79 +238,6 @@ export function HistoryScreen() {
                   {filterSummary}
                 </Text>
               </Pressable>
-              {isCompressing ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={compressionPaused ? t("cleanup.resumeCompression") : t("cleanup.pauseCompression")}
-                    onPress={compressionPaused ? resumeCompression : pauseCompression}
-                    style={{ flex: 1, minHeight: 46, borderRadius: 10, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}
-                  >
-                    {compressionPaused ? <Play size={19} color="#fff" fill="#fff" /> : <Pause size={19} color="#fff" fill="#fff" />}
-                    <Text style={{ color: "#fff", fontSize: 15, fontWeight: "900" }}>
-                      {compressionPaused ? t("cleanup.resumeCompression") : t("cleanup.pauseCompression")}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("cleanup.stopCompression")}
-                    onPress={() => void stopCompression()}
-                    style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: theme.red, alignItems: "center", justifyContent: "center" }}
-                  >
-                    <Square size={18} color="#fff" fill="#fff" />
-                  </Pressable>
-                </View>
-              ) : filteredMedia.length > 0 ? (
-                canBatch ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("cleanup.compressAllA11y", { size: formatBytes(totalHeavyBytes) })}
-                    disabled={compressButtonDisabled}
-                    onPress={handleCompressAll}
-                    style={{
-                      minHeight: 46,
-                      borderRadius: 10,
-                      backgroundColor: theme.accent,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexDirection: "row",
-                      gap: 8,
-                      opacity: compressButtonDisabled ? 0.72 : 1
-                    }}
-                  >
-                    {batching ? <ActivityIndicator color="#fff" /> : <BrushCleaning size={20} color="#fff" />}
-                    <Text style={{ color: "#fff", fontSize: 15, fontWeight: "900" }}>
-                      {batching
-                        ? t("common.queueing")
-                        : isEstimating
-                          ? t("common.findingMedia")
-                          : !scanIsComplete
-                            ? t("common.estimateFirst")
-                          : isCompressing
-                            ? t("common.queueAll", { size: formatBytes(totalHeavyBytes) })
-                            : t("common.compressAll", { size: formatBytes(totalHeavyBytes) })}
-                    </Text>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("cleanup.upgradeToPro")}
-                    onPress={() => router.push("/premium")}
-                    style={{
-                      minHeight: 46,
-                      borderRadius: 10,
-                      backgroundColor: theme.accent,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexDirection: "row",
-                      gap: 8
-                    }}
-                  >
-                    <Star size={19} color="#fff" fill="#fff" />
-                    <Text style={{ color: "#fff", fontSize: 15, fontWeight: "900" }}>{t("cleanup.upgradeToPro")}</Text>
-                  </Pressable>
-                )
-              ) : null}
               {latestCompressionError ? (
                 <Text selectable style={{ color: theme.red, fontSize: 15, fontWeight: "700" }}>
                   {latestCompressionError}
@@ -401,14 +282,6 @@ export function HistoryScreen() {
         onSelectMonth={(monthKey) => setFilter((prev) => ({ ...prev, monthKey }))}
         onClose={() => setFilterVisible(false)}
       />
-      {Platform.OS === "android" ? (
-        <CompressAllOriginalDialog
-          visible={originalPromptVisible}
-          onCancel={() => setOriginalPromptVisible(false)}
-          onDelete={() => runCompressAll("delete")}
-          onKeep={() => runCompressAll("keep")}
-        />
-      ) : null}
     </View>
   );
 }

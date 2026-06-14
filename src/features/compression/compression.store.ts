@@ -3,10 +3,10 @@ import { AppStateStatus } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
-import { deleteCompressedMediaCopy, deleteOriginalMedia, deleteOriginalMediaBatch } from "@/features/compression/compression-deletion.service";
+import { deleteCompressedMediaCopy, deleteOriginalMedia } from "@/features/compression/compression-deletion.service";
 import { compressMediaJob } from "@/features/compression/compression.service";
 import { getJobByMediaId as selectJobByMediaId, isActiveCompressionJob } from "@/features/compression/compression.selectors";
-import { CompressionBatch, CompressionBatchInput, CompressionJob, CompressionJobInput, CompressionResult } from "@/features/compression/compression.types";
+import { CompressionJob, CompressionJobInput, CompressionResult } from "@/features/compression/compression.types";
 import { CompressionNotifications } from "@/features/compression/compression.notifications";
 import { InterstitialAdService } from "@/features/ads/interstitial.service";
 import { useSmartCleanStore } from "@/features/smart-clean/smart-clean-store";
@@ -18,22 +18,16 @@ type CompressionStore = {
   jobs: Record<string, CompressionJob>;
   jobIdByMediaId: Record<string, string>;
   completedMediaIds: Record<string, true>;
-  batches: Record<string, CompressionBatch>;
   activeJobId?: string;
   lastFinishedJobId?: string;
   lastErrorMessage?: string;
   queue: string[];
-  paused: boolean;
   enqueueCompression: (jobInput: CompressionJobInput) => Promise<string | undefined>;
-  enqueueCompressionBatch: (batchInput: CompressionBatchInput) => Promise<string[]>;
   startNextJob: () => Promise<void>;
   updateProgress: (jobId: string, progress: number) => boolean;
   markCompleted: (jobId: string, result: CompressionResult) => void;
   markFailed: (jobId: string, error: unknown) => void;
   cancelJob: (jobId: string) => Promise<void>;
-  pauseCompression: () => void;
-  resumeCompression: () => void;
-  stopCompression: () => Promise<void>;
   requestOriginalDeletionDecision: (jobId: string) => void;
   deferOriginalDecision: (jobId: string) => void;
   keepOriginal: (jobId: string) => Promise<void>;
@@ -42,10 +36,6 @@ type CompressionStore = {
   markOriginalDeleted: (jobId: string) => void;
   markOriginalDeleteFailed: (jobId: string, error: string) => void;
   dismissCompletionPrompt: (jobId: string) => void;
-  deleteAllOriginals: (batchId: string) => Promise<void>;
-  keepAllOriginals: (batchId: string) => Promise<void>;
-  reviewBatchItems: (batchId: string) => void;
-  dismissBatchPrompt: (batchId: string) => void;
   getJobByMediaId: (mediaId?: string) => CompressionJob | undefined;
   isMediaCompressing: (mediaId?: string) => boolean;
   isMediaQueued: (mediaId?: string) => boolean;
@@ -64,12 +54,10 @@ export const useCompressionStore = create<CompressionStore>()(
       jobs: {},
       jobIdByMediaId: {},
       completedMediaIds: {},
-      batches: {},
       activeJobId: undefined,
       lastFinishedJobId: undefined,
       lastErrorMessage: undefined,
       queue: [],
-      paused: false,
 
       async enqueueCompression(jobInput) {
         await CompressionNotifications.requestPermission();
@@ -88,75 +76,7 @@ export const useCompressionStore = create<CompressionStore>()(
         return job.id;
       },
 
-      async enqueueCompressionBatch({ jobs, quality, originalPolicy = "ask" }) {
-        await CompressionNotifications.requestPermission();
-        const compressedSourceIds = new Set(useAppStore.getState().compressedMedia.map((item) => item.sourceId));
-        const state = get();
-        const seenMediaIds = new Set<string>();
-        const inputs = jobs
-          .filter((input) => !compressedSourceIds.has(input.mediaId))
-          .filter((input) => {
-            if (seenMediaIds.has(input.mediaId)) return false;
-            seenMediaIds.add(input.mediaId);
-            const existing = getJobForMedia(state, input.mediaId);
-            return !(existing && (isActiveCompressionJob(existing) || existing.status === "completed"));
-          });
-
-        if (inputs.length === 0) return [];
-
-        const batchId = `batch-${Date.now()}`;
-        const batchJobs = inputs.map((input, index) =>
-          createCompressionJob(
-            {
-              ...input,
-              quality
-            },
-            {
-              batchId,
-              queuePosition: index + 1,
-              queueTotal: inputs.length
-            }
-          )
-        );
-
-        set((current) => ({
-          batches: {
-            ...current.batches,
-            [batchId]: {
-              id: batchId,
-              jobIds: batchJobs.map((job) => job.id),
-              status: "active",
-              totalOriginalSizeBytes: batchJobs.reduce((sum, job) => sum + (job.originalSizeBytes ?? 0), 0),
-              totalFinalSizeBytes: 0,
-              totalSavedBytes: 0,
-              completedCount: 0,
-              failedCount: 0,
-              shouldAskDeleteOriginals: false,
-              originalPolicy
-            }
-          },
-          jobs: batchJobs.reduce(
-            (nextJobs, job) => ({
-              ...nextJobs,
-              [job.id]: job
-            }),
-            current.jobs
-          ),
-          jobIdByMediaId: batchJobs.reduce(
-            (nextIndex, job) => ({
-              ...nextIndex,
-              [job.mediaId]: job.id
-            }),
-            current.jobIdByMediaId
-          ),
-          queue: [...current.queue, ...batchJobs.map((job) => job.id)]
-        }));
-        void get().startNextJob();
-        return batchJobs.map((job) => job.id);
-      },
-
       async startNextJob() {
-        if (get().paused) return;
         if (runnerPromise || get().activeJobId) {
           await runnerPromise;
           return;
@@ -167,7 +87,7 @@ export const useCompressionStore = create<CompressionStore>()(
 
         runnerPromise = runCompressionJob(nextJobId).finally(() => {
           runnerPromise = undefined;
-          if (!get().paused && !get().activeJobId && get().queue.length > 0) {
+          if (!get().activeJobId && get().queue.length > 0) {
             void get().startNextJob();
           }
         });
@@ -231,7 +151,6 @@ export const useCompressionStore = create<CompressionStore>()(
           compressedMedia: [result.item, ...state.compressedMedia.filter((item) => item.sourceId !== result.item.sourceId)]
         }));
         applyPostCompressionPolicy(jobId);
-        refreshBatchSummary(jobId);
         // Advanced-stats ledger. Guard on the POST-set status: the set() above
         // early-returns for cancelled jobs, so a cancelled job must not count.
         const completedJob = get().jobs[jobId];
@@ -410,108 +329,6 @@ export const useCompressionStore = create<CompressionStore>()(
         get().keepOriginal(jobId);
       },
 
-      async deleteAllOriginals(batchId) {
-        const batch = get().batches[batchId];
-        if (!batch) return;
-        const jobs = batch.jobIds.map((id) => get().jobs[id]).filter((job): job is CompressionJob => Boolean(job));
-        // Same defense-in-depth guard as deleteOriginal: only delete an original
-        // when a verified, durably saved compressed copy exists AND space was
-        // actually reclaimed. (Completed jobs always carry these, so this also
-        // safely excludes anything that somehow doesn't.)
-        const deletableJobs = jobs.filter(
-          (job) =>
-            job.status === "completed" &&
-            (job.savedBytes ?? 0) > 0 &&
-            !!job.outputUri &&
-            !!job.finalSizeBytes &&
-            job.finalSizeBytes > 0 &&
-            !!job.libraryAssetId
-        );
-        if (deletableJobs.length === 0) {
-          get().dismissBatchPrompt(batchId);
-          return;
-        }
-
-        // Mark all as in-progress before the native call.
-        set((state) => {
-          const nextJobs = { ...state.jobs };
-          for (const job of deletableJobs) {
-            const current = nextJobs[job.id];
-            if (current) nextJobs[job.id] = { ...current, originalAction: "delete_original", originalDeleteError: undefined };
-          }
-          return { jobs: nextJobs };
-        });
-
-        // Delete EVERY original in ONE native call so Android raises a single
-        // system delete-consent dialog for the whole batch (not one per image).
-        try {
-          await deleteOriginalMediaBatch(deletableJobs.map((job) => job.mediaId));
-          for (const job of deletableJobs) {
-            get().markOriginalDeleted(job.id);
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Could not delete originals.";
-          for (const job of deletableJobs) {
-            get().markOriginalDeleteFailed(job.id, message);
-          }
-        }
-        get().dismissBatchPrompt(batchId);
-      },
-
-      async keepAllOriginals(batchId) {
-        const batch = get().batches[batchId];
-        if (!batch) return;
-        for (const jobId of batch.jobIds) {
-          const job = get().jobs[jobId];
-          if (job?.status === "completed") {
-            await get().keepOriginal(jobId);
-          }
-        }
-        get().dismissBatchPrompt(batchId);
-      },
-
-      reviewBatchItems(batchId) {
-        const batch = get().batches[batchId];
-        if (!batch) return;
-        set((state) => ({
-          batches: {
-            ...state.batches,
-            [batchId]: {
-              ...batch,
-              shouldAskDeleteOriginals: false
-            }
-          },
-          jobs: batch.jobIds.reduce((jobs, jobId) => {
-            const job = jobs[jobId];
-            if (!job || job.status !== "completed") return jobs;
-            return {
-              ...jobs,
-              [jobId]: {
-                ...job,
-                originalAction: "pending_decision",
-                shouldAskDeleteOriginal: true
-              }
-            };
-          }, state.jobs)
-        }));
-      },
-
-      dismissBatchPrompt(batchId) {
-        set((state) => {
-          const batch = state.batches[batchId];
-          if (!batch) return state;
-          return {
-            batches: {
-              ...state.batches,
-              [batchId]: {
-                ...batch,
-                shouldAskDeleteOriginals: false
-              }
-            }
-          };
-        });
-      },
-
       markFailed(jobId, error) {
         const message = getFriendlyCompressionError(error);
         set((state) => {
@@ -533,7 +350,6 @@ export const useCompressionStore = create<CompressionStore>()(
             }
           };
         });
-        refreshBatchSummary(jobId);
         // Advanced-stats ledger. POST-set guard so cancelled jobs (whose set()
         // early-returns above) never inflate the failure count.
         const failedJob = get().jobs[jobId];
@@ -562,38 +378,6 @@ export const useCompressionStore = create<CompressionStore>()(
         if (wasActive) {
           await CompressionNotifications.stopActive();
         }
-      },
-
-      pauseCompression() {
-        // Queued jobs stay queued; the item currently encoding finishes (native
-        // image compression can't pause mid-encode), then the loop halts because
-        // startNextJob early-returns while `paused`.
-        set({ paused: true });
-      },
-
-      resumeCompression() {
-        set({ paused: false });
-        void get().startNextJob();
-      },
-
-      async stopCompression() {
-        const { activeJobId, queue } = get();
-        const ids = [...new Set([activeJobId, ...queue].filter((id): id is string => Boolean(id)))];
-        set((state) => {
-          const jobs = { ...state.jobs };
-          const now = Date.now();
-          for (const id of ids) {
-            const job = jobs[id];
-            if (job && job.status !== "completed") {
-              jobs[id] = { ...job, status: "cancelled", completedAt: now, errorMessage: undefined };
-            }
-          }
-          return { jobs, queue: [], activeJobId: undefined, paused: false };
-        });
-        // Tear down the foreground service + notification. The in-flight native
-        // task may still finish, but markCompleted/markFailed ignore a cancelled
-        // job, so its result is discarded and the original is never touched.
-        await CompressionNotifications.stopActive();
       },
 
       getJobByMediaId(mediaId) {
@@ -679,7 +463,6 @@ export const useCompressionStore = create<CompressionStore>()(
         jobs: state.jobs,
         jobIdByMediaId: state.jobIdByMediaId,
         completedMediaIds: state.completedMediaIds,
-        batches: state.batches,
         activeJobId: state.activeJobId,
         lastFinishedJobId: state.lastFinishedJobId,
         lastErrorMessage: state.lastErrorMessage,
@@ -782,26 +565,13 @@ async function notifyCompletedJob(jobId: string, result: CompressionResult) {
   const state = useCompressionStore.getState();
   const job = state.jobs[jobId];
   if (!job) return;
-
-  if (!job.batchId || !job.queueTotal || job.queueTotal <= 1) {
-    await CompressionNotifications.showCompleted(job, result);
-    return;
-  }
-
-  const batchJobs = Object.values(state.jobs).filter((item) => item.batchId === job.batchId);
-  const batchStillRunning = batchJobs.some((item) => item.status === "queued" || item.status === "preparing" || item.status === "compressing");
-  if (batchStillRunning) return;
-
-  const completedJobs = batchJobs.filter((item) => item.status === "completed");
-  const savedBytes = completedJobs.reduce((sum, item) => sum + (item.savedBytes ?? 0), 0);
-  await CompressionNotifications.showQueueCompleted(completedJobs.length, savedBytes);
+  await CompressionNotifications.showCompleted(job, result);
 }
 
 function applyPostCompressionPolicy(jobId: string) {
   const state = useCompressionStore.getState();
   const job = state.jobs[jobId];
   if (!job || job.status !== "completed") return;
-  if (job.batchId && job.queueTotal && job.queueTotal > 1) return;
 
   const policy = useAppStore.getState().settings.afterCompressionOriginalPolicy;
   if (policy === "keep_original") {
@@ -815,56 +585,6 @@ function applyPostCompressionPolicy(jobId: string) {
   }
 
   state.requestOriginalDeletionDecision(jobId);
-}
-
-function refreshBatchSummary(jobId: string) {
-  const state = useCompressionStore.getState();
-  const job = state.jobs[jobId];
-  if (!job?.batchId) return;
-
-  const batch = state.batches[job.batchId];
-  if (!batch) return;
-
-  const batchJobs = batch.jobIds.map((id) => state.jobs[id]).filter((item): item is CompressionJob => Boolean(item));
-  const completedJobs = batchJobs.filter((item) => item.status === "completed");
-  const failedJobs = batchJobs.filter((item) => item.status === "failed" || item.status === "cancelled");
-  const activeJobs = batchJobs.filter((item) => item.status === "queued" || item.status === "preparing" || item.status === "compressing");
-  const totalOriginalSizeBytes = completedJobs.reduce((sum, item) => sum + (item.originalSizeBytes ?? 0), 0);
-  const totalFinalSizeBytes = completedJobs.reduce((sum, item) => sum + (item.finalSizeBytes ?? 0), 0);
-  const totalSavedBytes = completedJobs.reduce((sum, item) => sum + (item.savedBytes ?? 0), 0);
-  const completedCount = completedJobs.length;
-  const failedCount = failedJobs.length;
-  const isDone = activeJobs.length === 0 && completedCount + failedCount === batch.jobIds.length;
-  const policy = batch.originalPolicy ?? "ask";
-  // Only the legacy "ask" policy defers to the post-batch decision sheet. With an
-  // upfront "delete"/"keep" choice we never show the sheet and auto-apply below.
-  const askAfterBatch = isDone && completedCount > 0 && policy === "ask";
-
-  useCompressionStore.setState((current) => ({
-    batches: {
-      ...current.batches,
-      [batch.id]: {
-        ...batch,
-        totalOriginalSizeBytes,
-        totalFinalSizeBytes,
-        totalSavedBytes,
-        completedCount,
-        failedCount,
-        status: !isDone ? "active" : completedCount === 0 ? "failed" : failedCount > 0 ? "partially_completed" : "completed",
-        shouldAskDeleteOriginals: askAfterBatch
-      }
-    }
-  }));
-
-  // Apply the upfront choice once the batch finishes (fires only on the final
-  // job's completion/failure, since isDone is reached exactly once). "delete"
-  // removes originals of completed jobs that actually saved space; "keep" marks
-  // them kept. Both no-op the post-batch prompt.
-  if (isDone && completedCount > 0 && policy !== "ask") {
-    const store = useCompressionStore.getState();
-    if (policy === "delete") void store.deleteAllOriginals(batch.id);
-    else void store.keepAllOriginals(batch.id);
-  }
 }
 
 function createCompressionJob(input: CompressionJobInput, batch?: Pick<CompressionJob, "batchId" | "queuePosition" | "queueTotal">): CompressionJob {

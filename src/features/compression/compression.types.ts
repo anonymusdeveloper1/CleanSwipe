@@ -13,13 +13,6 @@ export type CompressionOriginalAction =
   | "not_required"
   | "compressed_deleted";
 
-export type CompressionBatchStatus = "active" | "completed" | "failed" | "partially_completed";
-
-// What to do with the original files of a "Compress All" batch. Chosen UPFRONT
-// (before the batch runs): "delete"/"keep" are auto-applied when the batch
-// finishes; "ask" defers to the post-batch decision sheet (the legacy flow).
-export type BatchOriginalPolicy = "ask" | "delete" | "keep";
-
 export type CompressionJob = {
   id: string;
   mediaId: string;
@@ -70,13 +63,6 @@ export type CompressionJobInput = {
   quality: CompressionQuality;
 };
 
-export type CompressionBatchInput = {
-  jobs: CompressionJobInput[];
-  quality: CompressionQuality;
-  // Upfront original-file choice for the whole batch. Defaults to "ask".
-  originalPolicy?: BatchOriginalPolicy;
-};
-
 export type CompressionResult = {
   item: CompressedMediaItem;
   outputUri: string;
@@ -95,19 +81,4 @@ export type CompressionVerificationResult = {
   finalSizeBytes: number;
   savedBytes: number;
   reason?: string;
-};
-
-export type CompressionBatch = {
-  id: string;
-  jobIds: string[];
-  status: CompressionBatchStatus;
-  totalOriginalSizeBytes: number;
-  totalFinalSizeBytes: number;
-  totalSavedBytes: number;
-  completedCount: number;
-  failedCount: number;
-  shouldAskDeleteOriginals: boolean;
-  // Upfront original-file choice (see BatchOriginalPolicy). Auto-applied on
-  // batch completion unless "ask".
-  originalPolicy: BatchOriginalPolicy;
 };
