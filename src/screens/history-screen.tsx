@@ -2,7 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { ArrowUp, BrushCleaning, Images, Pause, Play, RefreshCw, Settings, SlidersHorizontal, Square, Star } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, FlatList, NativeScrollEvent, NativeSyntheticEvent, Platform, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AdBanner } from "@/components/ad-banner";
@@ -161,17 +161,10 @@ export function HistoryScreen() {
     });
   };
 
-  // Only Pro users reach this handler (Free users get the upgrade button). Ask
-  // upfront what to do with the originals BEFORE the batch runs, then start it
-  // with that choice in `runCompressAll`.
-  const handleCompressAll = () => {
-    if (compressButtonDisabled) return;
-    setOriginalPromptVisible(true);
-  };
-
   // Starts the batch (everything in the filtered scope, videos included) with the
-  // upfront original-file choice. "delete" removes each original after it is
-  // compressed and saved; "keep" keeps them all.
+  // given original-file policy. "delete" removes each original after it is
+  // compressed and saved; "keep" keeps them all; "ask" defers to the post-batch
+  // decision sheet (the iOS path).
   const runCompressAll = (originalPolicy: BatchOriginalPolicy) => {
     setOriginalPromptVisible(false);
     const jobs = filteredMedia
@@ -180,6 +173,19 @@ export function HistoryScreen() {
     if (jobs.length === 0) return;
     setBatching(true);
     void enqueueCompressionBatch({ jobs, quality: "medium", originalPolicy }).finally(() => setBatching(false));
+  };
+
+  // Only Pro users reach this handler (Free users get the upgrade button).
+  // ANDROID-ONLY workflow: ask up front what to do with the originals BEFORE the
+  // batch runs. iOS keeps the legacy post-batch decision sheet (its compress
+  // workflow is owned by another agent), so it enqueues directly with "ask".
+  const handleCompressAll = () => {
+    if (compressButtonDisabled) return;
+    if (Platform.OS !== "android") {
+      runCompressAll("ask");
+      return;
+    }
+    setOriginalPromptVisible(true);
   };
 
   if (!hasHydrated) {
@@ -395,12 +401,14 @@ export function HistoryScreen() {
         onSelectMonth={(monthKey) => setFilter((prev) => ({ ...prev, monthKey }))}
         onClose={() => setFilterVisible(false)}
       />
-      <CompressAllOriginalDialog
-        visible={originalPromptVisible}
-        onCancel={() => setOriginalPromptVisible(false)}
-        onDelete={() => runCompressAll("delete")}
-        onKeep={() => runCompressAll("keep")}
-      />
+      {Platform.OS === "android" ? (
+        <CompressAllOriginalDialog
+          visible={originalPromptVisible}
+          onCancel={() => setOriginalPromptVisible(false)}
+          onDelete={() => runCompressAll("delete")}
+          onKeep={() => runCompressAll("keep")}
+        />
+      ) : null}
     </View>
   );
 }
