@@ -23,6 +23,27 @@ export async function deleteOriginalMedia({
   }
 }
 
+// Deletes MANY originals in a single native call. On Android `deleteAssetsAsync`
+// raises ONE system delete-consent dialog for the whole set, so a "delete all
+// originals" batch asks the user once instead of once per image. Permission is
+// checked a single time up front.
+export async function deleteOriginalMediaBatch(mediaIds: string[]) {
+  if (mediaIds.length === 0) return;
+
+  const permission = await MediaLibrary.getPermissionsAsync(false, ["photo", "video"]);
+  if (!permission.granted && permission.status !== "granted") {
+    const requested = await MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
+    if (!requested.granted && requested.status !== "granted") {
+      throw new Error("SwipeClean needs photo library permission to delete the originals.");
+    }
+  }
+
+  const result = await PhotoLibraryService.deletePhotos(mediaIds);
+  if (!result.success) {
+    throw new Error(result.message ?? "SwipeClean could not delete the originals without permission.");
+  }
+}
+
 export async function deleteCompressedMediaCopy(libraryAssetId?: string) {
   if (!libraryAssetId) {
     throw new Error("The saved compressed copy could not be found.");

@@ -3,7 +3,7 @@ import { AppStateStatus } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
-import { deleteCompressedMediaCopy, deleteOriginalMedia } from "@/features/compression/compression-deletion.service";
+import { deleteCompressedMediaCopy, deleteOriginalMedia, deleteOriginalMediaBatch } from "@/features/compression/compression-deletion.service";
 import { compressMediaJob } from "@/features/compression/compression.service";
 import { getJobByMediaId as selectJobByMediaId, isActiveCompressionJob } from "@/features/compression/compression.selectors";
 import { CompressionBatch, CompressionBatchInput, CompressionJob, CompressionJobInput, CompressionResult } from "@/features/compression/compression.types";
@@ -414,9 +414,46 @@ export const useCompressionStore = create<CompressionStore>()(
         const batch = get().batches[batchId];
         if (!batch) return;
         const jobs = batch.jobIds.map((id) => get().jobs[id]).filter((job): job is CompressionJob => Boolean(job));
-        const deletableJobs = jobs.filter((job) => job.status === "completed" && (job.savedBytes ?? 0) > 0);
-        for (const job of deletableJobs) {
-          await get().deleteOriginal(job.id);
+        // Same defense-in-depth guard as deleteOriginal: only delete an original
+        // when a verified, durably saved compressed copy exists AND space was
+        // actually reclaimed. (Completed jobs always carry these, so this also
+        // safely excludes anything that somehow doesn't.)
+        const deletableJobs = jobs.filter(
+          (job) =>
+            job.status === "completed" &&
+            (job.savedBytes ?? 0) > 0 &&
+            !!job.outputUri &&
+            !!job.finalSizeBytes &&
+            job.finalSizeBytes > 0 &&
+            !!job.libraryAssetId
+        );
+        if (deletableJobs.length === 0) {
+          get().dismissBatchPrompt(batchId);
+          return;
+        }
+
+        // Mark all as in-progress before the native call.
+        set((state) => {
+          const nextJobs = { ...state.jobs };
+          for (const job of deletableJobs) {
+            const current = nextJobs[job.id];
+            if (current) nextJobs[job.id] = { ...current, originalAction: "delete_original", originalDeleteError: undefined };
+          }
+          return { jobs: nextJobs };
+        });
+
+        // Delete EVERY original in ONE native call so Android raises a single
+        // system delete-consent dialog for the whole batch (not one per image).
+        try {
+          await deleteOriginalMediaBatch(deletableJobs.map((job) => job.mediaId));
+          for (const job of deletableJobs) {
+            get().markOriginalDeleted(job.id);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Could not delete originals.";
+          for (const job of deletableJobs) {
+            get().markOriginalDeleteFailed(job.id, message);
+          }
         }
         get().dismissBatchPrompt(batchId);
       },
