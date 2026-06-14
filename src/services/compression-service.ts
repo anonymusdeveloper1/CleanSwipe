@@ -9,6 +9,13 @@ type CompressionProfile = {
   imageQuality: number;
   imageMaxSize: number;
   videoMaxSize: number;
+  // Video re-encode bitrate targeting. The actual target is
+  // min(videoTargetBitrate, sourceBitrate * videoBitrateRatio) so the output is
+  // ALWAYS below the source bitrate — react-native-compressor's "auto" method
+  // otherwise re-encodes low-bitrate clips at a HIGHER bitrate and produces a
+  // file larger than the original.
+  videoTargetBitrate: number; // hard cap, bits per second
+  videoBitrateRatio: number; // fraction of the source bitrate to target
   estimatedRatio: number;
 };
 
@@ -20,6 +27,8 @@ export const compressionProfiles: Record<CompressionQuality, CompressionProfile>
     imageQuality: 0.42,
     imageMaxSize: 1440,
     videoMaxSize: 720,
+    videoTargetBitrate: 1_800_000,
+    videoBitrateRatio: 0.5,
     estimatedRatio: 0.14
   },
   medium: {
@@ -29,6 +38,8 @@ export const compressionProfiles: Record<CompressionQuality, CompressionProfile>
     imageQuality: 0.62,
     imageMaxSize: 1920,
     videoMaxSize: 1080,
+    videoTargetBitrate: 3_500_000,
+    videoBitrateRatio: 0.6,
     estimatedRatio: 0.2
   },
   high: {
@@ -38,6 +49,8 @@ export const compressionProfiles: Record<CompressionQuality, CompressionProfile>
     imageQuality: 0.82,
     imageMaxSize: 2560,
     videoMaxSize: 1440,
+    videoTargetBitrate: 6_000_000,
+    videoBitrateRatio: 0.7,
     estimatedRatio: 0.34
   }
 };
@@ -45,6 +58,12 @@ export const compressionProfiles: Record<CompressionQuality, CompressionProfile>
 export const LARGE_PHOTO_MIN_BYTES = 5 * 1024 * 1024;
 export const LARGE_PHOTO_MIN_PIXELS = 8_000_000;
 export const VIDEO_MIN_BYTES = 20 * 1024 * 1024;
+// A video already at/below this bitrate is treated as already-optimized and is
+// NOT offered for compression: re-encoding it saves little and (with our target
+// bitrate) often can't beat the source, so it would just waste time and fail the
+// no-shrink check. Camera footage is far above this (1080p ≈ 17 Mbps, 4K ≈ 50
+// Mbps); already-compressed downloads/social clips sit below it.
+export const VIDEO_MIN_COMPRESSIBLE_BITRATE = 4_000_000; // 4 Mbps
 
 // Max source dimension we will decode a video frame from. Bounded by the heap:
 // with android:largeHeap="true" an 8K ARGB frame (~140 MB) fits; larger sources
@@ -62,7 +81,12 @@ export type CompressOptions = {
 export const CompressionService = {
   isCompressible(asset: PhotoAsset) {
     if (asset.mediaType === "video") {
-      return getOriginalBytes(asset) >= VIDEO_MIN_BYTES || (asset.duration ?? 0) >= 20;
+      const bitrate = getVideoBitrate(asset);
+      // Bitrate is the real signal: only re-encode footage whose bitrate is high
+      // enough that targeting a lower one actually shrinks it. When duration is
+      // unknown (bitrate 0) fall back to a generous size threshold.
+      if (bitrate > 0) return bitrate >= VIDEO_MIN_COMPRESSIBLE_BITRATE;
+      return getOriginalBytes(asset) >= VIDEO_MIN_BYTES;
     }
     if (asset.mediaType === "photo") {
       const pixels = (asset.width ?? 0) * (asset.height ?? 0);
@@ -73,8 +97,16 @@ export const CompressionService = {
 
   estimate(asset: PhotoAsset, quality: CompressionQuality = "medium") {
     const originalBytes = getOriginalBytes(asset);
-    const ratio = getEstimatedRatio(asset, quality);
-    const compressedBytes = Math.max(Math.round(originalBytes * ratio), 1);
+    let compressedBytes: number;
+    const bitrate = asset.mediaType === "video" ? getVideoBitrate(asset) : 0;
+    if (bitrate > 0) {
+      // Bitrate-based: the file size scales with bitrate (duration cancels out),
+      // so the realistic compressed size is original * (target / source).
+      const targetBitrate = getVideoTargetBitrate(bitrate, compressionProfiles[quality]);
+      compressedBytes = Math.min(originalBytes, Math.max(Math.round(originalBytes * (targetBitrate / bitrate)), 1));
+    } else {
+      compressedBytes = Math.max(Math.round(originalBytes * getEstimatedRatio(asset, quality)), 1);
+    }
     const savedBytes = Math.max(originalBytes - compressedBytes, 0);
     return {
       originalBytes,
@@ -247,15 +279,26 @@ function guessExtension(asset: PhotoAsset) {
 }
 
 async function compressVideo(asset: PhotoAsset, profile: CompressionProfile, options: CompressOptions) {
-  return Video.compress(
-    asset.uri,
-    {
-      compressionMethod: "auto",
-      maxSize: profile.videoMaxSize,
-      minimumFileSizeForCompress: 0
-    },
-    (progress) => options.onProgress?.(Math.max(0.08, Math.min(progress, 0.96)))
-  );
+  const onProgress = (progress: number) => options.onProgress?.(Math.max(0.08, Math.min(progress, 0.96)));
+  const bitrate = getVideoBitrate(asset);
+  if (bitrate > 0) {
+    // Manual bitrate targeting: encode BELOW the source bitrate so the output is
+    // genuinely smaller. "auto" picks a resolution-based bitrate that can exceed
+    // an already-low source bitrate and balloon the file (see Feature History).
+    return Video.compress(
+      asset.uri,
+      {
+        compressionMethod: "manual",
+        bitrate: getVideoTargetBitrate(bitrate, profile),
+        maxSize: profile.videoMaxSize,
+        minimumFileSizeForCompress: 0
+      },
+      onProgress
+    );
+  }
+  // Unknown duration/bitrate: fall back to auto (the no-shrink guard still
+  // rejects a larger output).
+  return Video.compress(asset.uri, { compressionMethod: "auto", maxSize: profile.videoMaxSize, minimumFileSizeForCompress: 0 }, onProgress);
 }
 
 async function compressImage(asset: PhotoAsset, profile: CompressionProfile) {
@@ -267,6 +310,21 @@ async function compressImage(asset: PhotoAsset, profile: CompressionProfile) {
     output: "jpg",
     returnableOutputType: "uri"
   });
+}
+
+// Approximate source bitrate (bits/sec) from size and duration. 0 when duration
+// is unknown so callers can fall back to size/ratio heuristics.
+function getVideoBitrate(asset: PhotoAsset) {
+  const duration = asset.duration ?? 0;
+  const bytes = getOriginalBytes(asset);
+  if (duration <= 0 || bytes <= 0) return 0;
+  return (bytes * 8) / duration;
+}
+
+// Target re-encode bitrate: a fraction of the source, hard-capped by the profile,
+// and never above the source — guaranteeing a smaller output.
+function getVideoTargetBitrate(sourceBitrate: number, profile: CompressionProfile) {
+  return Math.max(1, Math.min(profile.videoTargetBitrate, Math.floor(sourceBitrate * profile.videoBitrateRatio)));
 }
 
 export function getOriginalBytes(asset: PhotoAsset) {

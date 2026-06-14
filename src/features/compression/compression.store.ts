@@ -689,8 +689,16 @@ export const useCompressionStore = create<CompressionStore>()(
   )
 );
 
+// Minimum gap between mid-encode progress updates pushed to the store +
+// notification (~4/sec). Keeps the progress bar smooth without re-rendering the
+// compress grid on every native tick.
+const PROGRESS_THROTTLE_MS = 250;
+
 async function runCompressionJob(jobId: string) {
   const startedAt = Date.now();
+  // Timestamp of the last progress update we pushed to the store/notification —
+  // used to throttle mid-encode churn (see onProgress below). Per-job.
+  let lastProgressEmitAt = 0;
   useCompressionStore.setState((state) => {
     const job = state.jobs[jobId];
     if (!job) return {};
@@ -730,6 +738,15 @@ async function runCompressionJob(jobId: string) {
 
       await compressMediaJob(activeJob, {
         onProgress: (progress) => {
+          // Throttle mid-encode updates: a long video can emit progress dozens of
+          // times/sec, and each store write re-renders the compress grid + fires a
+          // native notification update — the source of the UI lag while a large
+          // video compresses. Always let the first tick and the near-complete tick
+          // through so the bar still starts and finishes smoothly.
+          const now = Date.now();
+          const isEdge = progress <= 0.001 || progress >= 0.95;
+          if (!isEdge && now - lastProgressEmitAt < PROGRESS_THROTTLE_MS) return;
+          lastProgressEmitAt = now;
           useCompressionStore.getState().updateProgress(jobId, progress);
           const notificationJob = useCompressionStore.getState().jobs[jobId];
           if (notificationJob) {
