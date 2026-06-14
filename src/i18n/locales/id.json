@@ -471,6 +471,16 @@
     "preparing": "Menyiapkan...",
     "compressing": "Mengompres {{progress}}%"
   },
+  "compressRun": {
+    "title": "Mengompres…",
+    "hint": "Biarkan layar ini terbuka saat file Anda dikompres.",
+    "deletePinTitle": "Konfirmasi untuk menghapus",
+    "deletePinHint": "Masukkan kode sandi untuk menghapus file asli.",
+    "deleteFailed": "File asli tidak dihapus.",
+    "failedFallback": "Tidak dapat mengompres file ini.",
+    "retry": "Coba lagi",
+    "close": "Tutup"
+  },
   "delete": {
     "title": "Hapus foto terpilih?",
     "message": "Ini akan menghapus foto-foto ini secara permanen dari perangkat Anda.",

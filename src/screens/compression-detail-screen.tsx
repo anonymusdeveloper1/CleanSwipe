@@ -15,7 +15,6 @@ import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useCompressionStore } from "@/features/compression/compression.store";
 import { FREE_DAILY_VIDEO_LIMIT, useFreeVideoQuotaStore } from "@/features/compression/free-video-quota.store";
 import { CompressionJob } from "@/features/compression/compression.types";
-import { createCompressionJobInput } from "@/features/compression/compression.utils";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { CompressionQuality, PhotoAsset } from "@/models/photo";
 import { CompressionService, compressionProfiles } from "@/services/compression-service";
@@ -43,7 +42,6 @@ export function CompressionDetailScreen() {
   const job = useCompressionStore((state) => state.getJobByMediaId(id));
   const activeJobId = useCompressionStore((state) => state.activeJobId);
   const queuedJobCount = useCompressionStore((state) => state.queue.length);
-  const enqueueCompression = useCompressionStore((state) => state.enqueueCompression);
   const cancelJob = useCompressionStore((state) => state.cancelJob);
   const keepOriginal = useCompressionStore((state) => state.keepOriginal);
   const deleteOriginal = useCompressionStore((state) => state.deleteOriginal);
@@ -107,12 +105,10 @@ export function CompressionDetailScreen() {
 
   const startCompression = () => {
     if (!asset) return;
-    // Free users always use the default (medium) quality; the advanced quality
-    // selector is gated behind Pro.
     const effectiveQuality = advancedUnlocked ? quality : "medium";
-    const jobInput = createCompressionJobInput(asset, effectiveQuality);
-    if (!jobInput) return;
-    void enqueueCompression(jobInput);
+    // Foreground flow: hand off to the dedicated compress-run screen which runs
+    // the compression, shows the result, and asks Keep/Delete original.
+    router.push(`/compress-run?id=${encodeURIComponent(asset.id)}&quality=${effectiveQuality}&origin=${encodeURIComponent(origin ?? "/(tabs)/history")}` as never);
   };
 
   const handleCompress = () => {

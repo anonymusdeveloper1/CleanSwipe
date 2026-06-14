@@ -471,6 +471,16 @@
     "preparing": "準備中...",
     "compressing": "圧縮中 {{progress}}%"
   },
+  "compressRun": {
+    "title": "圧縮中…",
+    "hint": "ファイルの圧縮中はこの画面を開いたままにしてください。",
+    "deletePinTitle": "削除の確認",
+    "deletePinHint": "元のファイルを削除するにはパスコードを入力してください。",
+    "deleteFailed": "元のファイルは削除されませんでした。",
+    "failedFallback": "このファイルを圧縮できませんでした。",
+    "retry": "再試行",
+    "close": "閉じる"
+  },
   "delete": {
     "title": "選択した写真を削除しますか？",
     "message": "これらの写真はデバイスから完全に削除されます。",

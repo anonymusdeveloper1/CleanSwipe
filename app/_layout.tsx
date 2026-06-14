@@ -1,20 +1,16 @@
 import "react-native-gesture-handler";
 import "@/i18n";
-import { router, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import mobileAds from "react-native-google-mobile-ads";
 import { AppLockGate } from "@/components/app-lock-gate";
-import { CompressionProgressNotification } from "@/components/compression-progress-notification";
 import { ProUpgradeSheet } from "@/components/pro-upgrade-sheet";
 import { AdsConsentService } from "@/features/ads/consent.service";
 import { InterstitialAdService } from "@/features/ads/interstitial.service";
 import { RewardedAdService } from "@/features/ads/rewarded.service";
-import { CompressionCompleteSheet } from "@/features/compression/components/compression-complete-sheet";
-import { CompressionLifecycle } from "@/features/compression/components/compression-lifecycle";
-import { CompressionNotifications } from "@/features/compression/compression.notifications";
 import { SmartCleanPreviewOverlay } from "@/features/smart-clean/components/smart-clean-preview-overlay";
 import { SmartCleanReviewSheet } from "@/features/smart-clean/components/smart-clean-review-sheet";
 import { SmartCleanScanNotifications } from "@/features/smart-clean/smart-clean-notifications";
@@ -32,10 +28,6 @@ export default function RootLayout() {
   usePhotoLibrarySync();
 
   useEffect(() => {
-    void CompressionNotifications.requestPermission();
-  }, []);
-
-  useEffect(() => {
     // GDPR/UMP: gather consent BEFORE initializing the Mobile Ads SDK. The gather
     // call fails open, so ad init always runs regardless of the consent outcome.
     void AdsConsentService.gather().finally(() => {
@@ -47,26 +39,6 @@ export default function RootLayout() {
         })
         .catch(() => undefined);
     });
-  }, []);
-
-  useEffect(() => {
-    let subscription: { remove: () => void } | undefined;
-    let mounted = true;
-
-    void CompressionNotifications.addResponseListener((url) => {
-      router.push(url as never);
-    }).then((listener) => {
-      if (!mounted) {
-        listener?.remove();
-        return;
-      }
-      subscription = listener;
-    });
-
-    return () => {
-      mounted = false;
-      subscription?.remove();
-    };
   }, []);
 
   // Smart Clean scan notification: clear any stale "Scanning…" notification left
@@ -117,10 +89,8 @@ export default function RootLayout() {
         <Stack.Screen name="photo-preview" options={{ presentation: "modal" }} />
         <Stack.Screen name="compression-media-viewer" options={{ presentation: "transparentModal", animation: "fade", contentStyle: { backgroundColor: "transparent" } }} />
         <Stack.Screen name="compression-detail" options={{ presentation: "card" }} />
+        <Stack.Screen name="compress-run" options={{ presentation: "card", gestureEnabled: false }} />
       </Stack>
-      <CompressionLifecycle />
-      <CompressionProgressNotification />
-      <CompressionCompleteSheet />
       <ProUpgradeSheet />
       {/* Mounted above the tab navigator so the review sheet overlays the bottom
           tab bar (an overlay inside a tab screen paints under it). */}

@@ -7,9 +7,7 @@ import { deleteCompressedMediaCopy, deleteOriginalMedia } from "@/features/compr
 import { compressMediaJob } from "@/features/compression/compression.service";
 import { getJobByMediaId as selectJobByMediaId, isActiveCompressionJob } from "@/features/compression/compression.selectors";
 import { CompressionJob, CompressionJobInput, CompressionResult } from "@/features/compression/compression.types";
-import { CompressionNotifications } from "@/features/compression/compression.notifications";
 import { InterstitialAdService } from "@/features/ads/interstitial.service";
-import { useSmartCleanStore } from "@/features/smart-clean/smart-clean-store";
 import { useAppStore } from "@/store/app-store";
 import { recordCleanupEvent } from "@/store/cleanup-events-store";
 import { useMediaIndexStore } from "@/store/media-index-store";
@@ -60,7 +58,6 @@ export const useCompressionStore = create<CompressionStore>()(
       queue: [],
 
       async enqueueCompression(jobInput) {
-        await CompressionNotifications.requestPermission();
         const existing = getJobForMedia(get(), jobInput.mediaId);
         if (existing && (isActiveCompressionJob(existing) || existing.status === "completed")) {
           return existing.id;
@@ -150,7 +147,6 @@ export const useCompressionStore = create<CompressionStore>()(
         useAppStore.setState((state) => ({
           compressedMedia: [result.item, ...state.compressedMedia.filter((item) => item.sourceId !== result.item.sourceId)]
         }));
-        applyPostCompressionPolicy(jobId);
         // Advanced-stats ledger. Guard on the POST-set status: the set() above
         // early-returns for cancelled jobs, so a cancelled job must not count.
         const completedJob = get().jobs[jobId];
@@ -361,7 +357,6 @@ export const useCompressionStore = create<CompressionStore>()(
       async cancelJob(jobId) {
         const job = get().jobs[jobId];
         if (!job) return;
-        const wasActive = get().activeJobId === jobId;
         set((state) => ({
           activeJobId: state.activeJobId === jobId ? undefined : state.activeJobId,
           queue: state.queue.filter((id) => id !== jobId),
@@ -375,9 +370,6 @@ export const useCompressionStore = create<CompressionStore>()(
             }
           }
         }));
-        if (wasActive) {
-          await CompressionNotifications.stopActive();
-        }
       },
 
       getJobByMediaId(mediaId) {
@@ -438,7 +430,7 @@ export const useCompressionStore = create<CompressionStore>()(
         ensureCompressionIndex(get, set);
         const state = get();
         const activeJob = state.activeJobId ? state.jobs[state.activeJobId] : undefined;
-        if (activeJob && !CompressionNotifications.isForegroundRunning()) {
+        if (activeJob) {
           get().markFailed(activeJob.id, new Error("Compression was interrupted. Please try again."));
         }
 
@@ -502,89 +494,36 @@ async function runCompressionJob(jobId: string) {
     };
   });
 
-  let completedResult: CompressionResult | undefined;
   const job = useCompressionStore.getState().jobs[jobId];
   if (!job) return;
 
-  // A backgrounded Smart Clean scan holds the singleton foreground service —
-  // yield it so this compression job can acquire it. Compression always has
-  // priority; the scan continues as plain JS and resumes the service when free.
-  await useSmartCleanStore.getState().releaseForegroundService();
-
+  // Foreground, inline: no background/foreground service. The compress-run screen
+  // watches the job's progress/status; the user stays on that screen the whole time.
   try {
-    await CompressionNotifications.runInForeground(job, async () => {
-      const activeJob = useCompressionStore.getState().jobs[jobId];
-      if (!activeJob) return;
-
-      useCompressionStore.getState().updateProgress(jobId, 0);
-      await CompressionNotifications.updateProgress(activeJob, 0);
-
-      await compressMediaJob(activeJob, {
-        onProgress: (progress) => {
-          // Throttle mid-encode updates: a long video can emit progress dozens of
-          // times/sec, and each store write re-renders the compress grid + fires a
-          // native notification update — the source of the UI lag while a large
-          // video compresses. Always let the first tick and the near-complete tick
-          // through so the bar still starts and finishes smoothly.
-          const now = Date.now();
-          const isEdge = progress <= 0.001 || progress >= 0.95;
-          if (!isEdge && now - lastProgressEmitAt < PROGRESS_THROTTLE_MS) return;
-          lastProgressEmitAt = now;
-          useCompressionStore.getState().updateProgress(jobId, progress);
-          const notificationJob = useCompressionStore.getState().jobs[jobId];
-          if (notificationJob) {
-            void CompressionNotifications.updateProgress(notificationJob, progress);
-          }
-        },
-        onCompleted: (result) => {
-          completedResult = result;
-          useCompressionStore.getState().markCompleted(jobId, result);
-        },
-        onError: (error) => {
-          useCompressionStore.getState().markFailed(jobId, error);
-        }
-      });
+    useCompressionStore.getState().updateProgress(jobId, 0);
+    await compressMediaJob(job, {
+      onProgress: (progress) => {
+        // Throttle mid-encode updates so a long video doesn't re-render the screen
+        // on every native tick. Always let the first/near-complete ticks through.
+        const now = Date.now();
+        const isEdge = progress <= 0.001 || progress >= 0.95;
+        if (!isEdge && now - lastProgressEmitAt < PROGRESS_THROTTLE_MS) return;
+        lastProgressEmitAt = now;
+        useCompressionStore.getState().updateProgress(jobId, progress);
+      },
+      onCompleted: (result) => {
+        useCompressionStore.getState().markCompleted(jobId, result);
+      },
+      onError: (error) => {
+        useCompressionStore.getState().markFailed(jobId, error);
+      }
     });
-
-    if (completedResult) {
-      await notifyCompletedJob(jobId, completedResult);
-    }
   } catch (error) {
     const currentJob = useCompressionStore.getState().jobs[jobId];
     if (currentJob?.status !== "failed") {
       useCompressionStore.getState().markFailed(jobId, error);
     }
-    const failedJob = useCompressionStore.getState().jobs[jobId];
-    if (failedJob) {
-      await CompressionNotifications.showFailed(failedJob, failedJob.errorMessage ?? "We could not compress this file. Please try again.");
-    }
   }
-}
-
-async function notifyCompletedJob(jobId: string, result: CompressionResult) {
-  const state = useCompressionStore.getState();
-  const job = state.jobs[jobId];
-  if (!job) return;
-  await CompressionNotifications.showCompleted(job, result);
-}
-
-function applyPostCompressionPolicy(jobId: string) {
-  const state = useCompressionStore.getState();
-  const job = state.jobs[jobId];
-  if (!job || job.status !== "completed") return;
-
-  const policy = useAppStore.getState().settings.afterCompressionOriginalPolicy;
-  if (policy === "keep_original") {
-    void state.keepOriginal(jobId);
-    return;
-  }
-
-  if (policy === "delete_original_after_success" && (job.savedBytes ?? 0) > 0) {
-    void state.deleteOriginal(jobId);
-    return;
-  }
-
-  state.requestOriginalDeletionDecision(jobId);
 }
 
 function createCompressionJob(input: CompressionJobInput, batch?: Pick<CompressionJob, "batchId" | "queuePosition" | "queueTotal">): CompressionJob {

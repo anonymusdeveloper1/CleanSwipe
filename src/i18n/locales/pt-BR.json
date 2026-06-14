@@ -471,6 +471,16 @@
     "preparing": "Preparando...",
     "compressing": "Comprimindo {{progress}}%"
   },
+  "compressRun": {
+    "title": "Comprimindo",
+    "hint": "Mantenha esta tela aberta enquanto seu arquivo é comprimido.",
+    "deletePinTitle": "Confirmar para excluir",
+    "deletePinHint": "Digite sua senha para excluir o original.",
+    "deleteFailed": "O original não foi excluído.",
+    "failedFallback": "Não foi possível comprimir este arquivo.",
+    "retry": "Tentar novamente",
+    "close": "Fechar"
+  },
   "delete": {
     "title": "Excluir as fotos selecionadas?",
     "message": "Isso removerá permanentemente essas fotos do seu dispositivo.",
