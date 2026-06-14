@@ -16,6 +16,7 @@ export const FREE_FEATURES = [
   "unlimitedVideoSwipeDelete",
   "photoCompression",
   "backgroundPhotoCompression",
+  "advancedCompressionSettings",
   "basicStats",
   "manualCleanup",
   "largeFileBrowsing",
@@ -26,7 +27,6 @@ export const FREE_FEATURES = [
 export const PRO_FEATURES = [
   "videoCompression",
   "batchVideoCompression",
-  "advancedCompressionSettings",
   "compressAll",
   "smartClean",
   "duplicatePhotoDetection",

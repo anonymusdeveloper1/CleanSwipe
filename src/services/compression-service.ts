@@ -22,36 +22,36 @@ type CompressionProfile = {
 export const compressionProfiles: Record<CompressionQuality, CompressionProfile> = {
   low: {
     label: "Low",
-    fidelity: "20%",
-    description: "Smallest files for quick sharing.",
-    imageQuality: 0.42,
-    imageMaxSize: 1440,
+    fidelity: "Max savings",
+    description: "Saves the most space — files end up around 80% smaller. Quality is noticeably reduced. Best when storage matters most.",
+    imageQuality: 0.35,
+    imageMaxSize: 1080,
     videoMaxSize: 720,
-    videoTargetBitrate: 1_800_000,
-    videoBitrateRatio: 0.5,
-    estimatedRatio: 0.14
+    videoTargetBitrate: 5_000_000,
+    videoBitrateRatio: 0.2,
+    estimatedRatio: 0.2
   },
   medium: {
     label: "Medium",
-    fidelity: "50%",
-    description: "Balances file size and visual fidelity. Recommended for social sharing and messaging.",
-    imageQuality: 0.62,
-    imageMaxSize: 1920,
+    fidelity: "Balanced",
+    description: "Balanced — about 50% smaller for about half the quality. A good middle ground for sharing.",
+    imageQuality: 0.55,
+    imageMaxSize: 1600,
     videoMaxSize: 1080,
-    videoTargetBitrate: 3_500_000,
-    videoBitrateRatio: 0.6,
-    estimatedRatio: 0.2
+    videoTargetBitrate: 10_000_000,
+    videoBitrateRatio: 0.5,
+    estimatedRatio: 0.5
   },
   high: {
     label: "High",
-    fidelity: "80%",
-    description: "Keeps more detail while still trimming heavy media.",
-    imageQuality: 0.82,
-    imageMaxSize: 2560,
-    videoMaxSize: 1440,
-    videoTargetBitrate: 6_000_000,
-    videoBitrateRatio: 0.7,
-    estimatedRatio: 0.34
+    fidelity: "Best quality",
+    description: "Keeps your original quality — compresses gently, so you save less space. Best when quality matters most.",
+    imageQuality: 0.9,
+    imageMaxSize: 4096,
+    videoMaxSize: 2160,
+    videoTargetBitrate: 25_000_000,
+    videoBitrateRatio: 0.8,
+    estimatedRatio: 0.8
   }
 };
 
