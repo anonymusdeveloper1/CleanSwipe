@@ -88,7 +88,7 @@ export const useCompressionStore = create<CompressionStore>()(
         return job.id;
       },
 
-      async enqueueCompressionBatch({ jobs, quality }) {
+      async enqueueCompressionBatch({ jobs, quality, originalPolicy = "ask" }) {
         await CompressionNotifications.requestPermission();
         const compressedSourceIds = new Set(useAppStore.getState().compressedMedia.map((item) => item.sourceId));
         const state = get();
@@ -131,7 +131,8 @@ export const useCompressionStore = create<CompressionStore>()(
               totalSavedBytes: 0,
               completedCount: 0,
               failedCount: 0,
-              shouldAskDeleteOriginals: false
+              shouldAskDeleteOriginals: false,
+              originalPolicy
             }
           },
           jobs: batchJobs.reduce(
@@ -780,6 +781,10 @@ function refreshBatchSummary(jobId: string) {
   const completedCount = completedJobs.length;
   const failedCount = failedJobs.length;
   const isDone = activeJobs.length === 0 && completedCount + failedCount === batch.jobIds.length;
+  const policy = batch.originalPolicy ?? "ask";
+  // Only the legacy "ask" policy defers to the post-batch decision sheet. With an
+  // upfront "delete"/"keep" choice we never show the sheet and auto-apply below.
+  const askAfterBatch = isDone && completedCount > 0 && policy === "ask";
 
   useCompressionStore.setState((current) => ({
     batches: {
@@ -792,10 +797,20 @@ function refreshBatchSummary(jobId: string) {
         completedCount,
         failedCount,
         status: !isDone ? "active" : completedCount === 0 ? "failed" : failedCount > 0 ? "partially_completed" : "completed",
-        shouldAskDeleteOriginals: isDone && completedCount > 0
+        shouldAskDeleteOriginals: askAfterBatch
       }
     }
   }));
+
+  // Apply the upfront choice once the batch finishes (fires only on the final
+  // job's completion/failure, since isDone is reached exactly once). "delete"
+  // removes originals of completed jobs that actually saved space; "keep" marks
+  // them kept. Both no-op the post-batch prompt.
+  if (isDone && completedCount > 0 && policy !== "ask") {
+    const store = useCompressionStore.getState();
+    if (policy === "delete") void store.deleteAllOriginals(batch.id);
+    else void store.keepAllOriginals(batch.id);
+  }
 }
 
 function createCompressionJob(input: CompressionJobInput, batch?: Pick<CompressionJob, "batchId" | "queuePosition" | "queueTotal">): CompressionJob {

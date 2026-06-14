@@ -451,6 +451,8 @@
     "storageSavedLabel": "स्टोरेज बचाया",
     "noneValue": "कोई नहीं",
     "batchDecisionPrompt": "आप मूल फ़ाइलों का क्या करना चाहते हैं?",
+    "compressAllTitle": "सभी को कंप्रेस करें",
+    "compressAllOriginalsPrompt": "हर फ़ाइल कंप्रेस होने के बाद, मूल फ़ाइलों का क्या करें?",
     "singleDecisionPrompt": "आप मूल फ़ाइल का क्या करना चाहते हैं?",
     "noStorageSavedWarning": "कोई स्टोरेज नहीं बचा। मूल रखना सबसे सुरक्षित है।",
     "deleteWarning": "मूल फ़ाइलें हटाने को पूर्ववत नहीं किया जा सकता।",

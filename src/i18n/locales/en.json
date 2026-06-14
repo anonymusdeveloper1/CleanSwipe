@@ -462,6 +462,8 @@
     "storageSavedLabel": "Storage saved",
     "noneValue": "None",
     "batchDecisionPrompt": "What do you want to do with the originals?",
+    "compressAllTitle": "Compress all media",
+    "compressAllOriginalsPrompt": "After each file is compressed, what should happen to the originals?",
     "singleDecisionPrompt": "What do you want to do with the original file?",
     "noStorageSavedWarning": "No storage was saved. Keeping the original is safest.",
     "deleteWarning": "Deleting originals cannot be undone.",

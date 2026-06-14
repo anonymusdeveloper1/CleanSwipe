@@ -451,6 +451,8 @@
     "storageSavedLabel": "Penyimpanan dihemat",
     "noneValue": "Tidak ada",
     "batchDecisionPrompt": "Apa yang ingin Anda lakukan dengan file asli?",
+    "compressAllTitle": "Kompres semua",
+    "compressAllOriginalsPrompt": "Setelah setiap file dikompres, apa yang harus dilakukan dengan file asli?",
     "singleDecisionPrompt": "Apa yang ingin Anda lakukan dengan file asli?",
     "noStorageSavedWarning": "Tidak ada penyimpanan yang dihemat. Menyimpan file asli paling aman.",
     "deleteWarning": "Menghapus file asli tidak dapat dibatalkan.",

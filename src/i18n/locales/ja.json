@@ -451,6 +451,8 @@
     "storageSavedLabel": "節約したストレージ",
     "noneValue": "なし",
     "batchDecisionPrompt": "元のファイルをどうしますか？",
+    "compressAllTitle": "すべて圧縮",
+    "compressAllOriginalsPrompt": "各ファイルの圧縮後、元のファイルをどうしますか？",
     "singleDecisionPrompt": "元のファイルをどうしますか？",
     "noStorageSavedWarning": "ストレージは節約されませんでした。元のファイルを保持するのが最も安全です。",
     "deleteWarning": "元のファイルの削除は取り消せません。",

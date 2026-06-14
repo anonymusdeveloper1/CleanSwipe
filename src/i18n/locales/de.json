@@ -451,6 +451,8 @@
     "storageSavedLabel": "Speicher gespart",
     "noneValue": "Keine",
     "batchDecisionPrompt": "Was möchtest du mit den Originalen tun?",
+    "compressAllTitle": "Alles komprimieren",
+    "compressAllOriginalsPrompt": "Was soll nach dem Komprimieren mit den Originalen geschehen?",
     "singleDecisionPrompt": "Was möchtest du mit der Originaldatei tun?",
     "noStorageSavedWarning": "Es wurde kein Speicher gespart. Das Original zu behalten ist am sichersten.",
     "deleteWarning": "Das Löschen von Originalen kann nicht rückgängig gemacht werden.",

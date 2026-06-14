@@ -451,6 +451,8 @@
     "storageSavedLabel": "Stockage économisé",
     "noneValue": "Aucun",
     "batchDecisionPrompt": "Que voulez-vous faire des originaux ?",
+    "compressAllTitle": "Tout compresser",
+    "compressAllOriginalsPrompt": "Une fois chaque fichier compressé, que faire des originaux ?",
     "singleDecisionPrompt": "Que voulez-vous faire du fichier original ?",
     "noStorageSavedWarning": "Aucun espace n'a été économisé. Conserver l'original est le plus sûr.",
     "deleteWarning": "La suppression des originaux est irréversible.",

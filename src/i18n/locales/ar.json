@@ -451,6 +451,8 @@
     "storageSavedLabel": "التخزين الموفّر",
     "noneValue": "لا شيء",
     "batchDecisionPrompt": "ماذا تريد أن تفعل بالأصول؟",
+    "compressAllTitle": "ضغط الكل",
+    "compressAllOriginalsPrompt": "بعد ضغط كل ملف، ماذا تريد أن تفعل بالملفات الأصلية؟",
     "singleDecisionPrompt": "ماذا تريد أن تفعل بالملف الأصلي؟",
     "noStorageSavedWarning": "لم يتم توفير أي مساحة تخزين. الاحتفاظ بالأصل هو الأكثر أماناً.",
     "deleteWarning": "لا يمكن التراجع عن حذف الأصول.",

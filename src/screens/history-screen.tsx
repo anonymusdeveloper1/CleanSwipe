@@ -8,10 +8,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AdBanner } from "@/components/ad-banner";
 import { AppLogo } from "@/components/app-logo";
 import { CachedImage } from "@/components/cached-image";
+import { CompressAllOriginalDialog } from "@/components/compress-all-original-dialog";
 import { CompressionFilterDialog } from "@/components/compression-filter-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { MediaCompressionOverlay } from "@/features/compression/components/media-compression-overlay";
 import { useCompressionStore } from "@/features/compression/compression.store";
+import { BatchOriginalPolicy } from "@/features/compression/compression.types";
 import { createCompressionJobInput } from "@/features/compression/compression.utils";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -36,6 +38,7 @@ export function HistoryScreen() {
   const { width } = useWindowDimensions();
   const [filter, setFilter] = useState<Filter>({ monthKey: "all", mediaType: "all" });
   const [filterVisible, setFilterVisible] = useState(false);
+  const [originalPromptVisible, setOriginalPromptVisible] = useState(false);
   const [batching, setBatching] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -158,16 +161,25 @@ export function HistoryScreen() {
     });
   };
 
-  // Only Pro users reach this handler (Free users get the upgrade button), so it
-  // batches everything currently in the filtered scope, videos included.
+  // Only Pro users reach this handler (Free users get the upgrade button). Ask
+  // upfront what to do with the originals BEFORE the batch runs, then start it
+  // with that choice in `runCompressAll`.
   const handleCompressAll = () => {
     if (compressButtonDisabled) return;
+    setOriginalPromptVisible(true);
+  };
+
+  // Starts the batch (everything in the filtered scope, videos included) with the
+  // upfront original-file choice. "delete" removes each original after it is
+  // compressed and saved; "keep" keeps them all.
+  const runCompressAll = (originalPolicy: BatchOriginalPolicy) => {
+    setOriginalPromptVisible(false);
     const jobs = filteredMedia
       .map((asset) => createCompressionJobInput(asset, "medium"))
       .filter((job): job is NonNullable<typeof job> => Boolean(job));
     if (jobs.length === 0) return;
     setBatching(true);
-    void enqueueCompressionBatch({ jobs, quality: "medium" }).finally(() => setBatching(false));
+    void enqueueCompressionBatch({ jobs, quality: "medium", originalPolicy }).finally(() => setBatching(false));
   };
 
   if (!hasHydrated) {
@@ -382,6 +394,12 @@ export function HistoryScreen() {
         onSelectMediaType={(mediaType) => setFilter({ mediaType, monthKey: "all" })}
         onSelectMonth={(monthKey) => setFilter((prev) => ({ ...prev, monthKey }))}
         onClose={() => setFilterVisible(false)}
+      />
+      <CompressAllOriginalDialog
+        visible={originalPromptVisible}
+        onCancel={() => setOriginalPromptVisible(false)}
+        onDelete={() => runCompressAll("delete")}
+        onKeep={() => runCompressAll("keep")}
       />
     </View>
   );
