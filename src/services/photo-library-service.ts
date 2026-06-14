@@ -97,7 +97,14 @@ export const PhotoLibraryService: IPhotoLibraryService = {
       const demoIds = photoIds.filter((id) => id.startsWith("demo-"));
       const nativeIds = photoIds.filter((id) => !id.startsWith("demo-"));
       if (nativeIds.length > 0) {
-        await MediaLibrary.deleteAssetsAsync(nativeIds);
+        // deleteAssetsAsync resolves `false` when nothing was deleted — most
+        // commonly because the user denied Android's system delete-consent
+        // dialog. Treat that as a failure so callers never record undeleted
+        // media as gone (which would lose track of files still on the device).
+        const deleted = await MediaLibrary.deleteAssetsAsync(nativeIds);
+        if (!deleted) {
+          return { success: false, deletedIds: [], message: "The photos were not deleted." };
+        }
       }
       return { success: true, deletedIds: [...nativeIds, ...demoIds] };
     } catch (error) {

@@ -49,9 +49,15 @@ export async function deleteCompressedMediaCopy(libraryAssetId?: string) {
     throw new Error("The saved compressed copy could not be found.");
   }
 
+  let deleted: boolean;
   try {
-    await MediaLibrary.deleteAssetsAsync([libraryAssetId]);
+    deleted = await MediaLibrary.deleteAssetsAsync([libraryAssetId]);
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "Could not delete the compressed copy.");
+  }
+  // deleteAssetsAsync resolves `false` when the deletion did not happen (e.g. the
+  // user denied the system dialog); don't report success in that case.
+  if (!deleted) {
+    throw new Error("Could not delete the compressed copy.");
   }
 }
