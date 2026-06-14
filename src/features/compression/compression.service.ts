@@ -92,6 +92,22 @@ export async function verifyCompressedOutput({
     };
   }
 
+  // Reject an output that did not actually shrink the file. Some sources are
+  // already efficiently encoded (e.g. a low-bitrate or short video), and a
+  // re-encode can produce a file the same size or LARGER than the original.
+  // Saving it would add a bigger copy to the gallery and report negative
+  // savings, so fail verification here — before saveToLibrary — which leaves
+  // the original untouched and surfaces an "already optimized" message.
+  if (finalSizeBytes >= knownOriginalSize) {
+    return {
+      isValid: false,
+      originalSizeBytes: knownOriginalSize,
+      finalSizeBytes,
+      savedBytes: 0,
+      reason: "This file is already optimized, so compressing it would not save space. Your original file was left unchanged."
+    };
+  }
+
   return {
     isValid: true,
     originalSizeBytes: knownOriginalSize,

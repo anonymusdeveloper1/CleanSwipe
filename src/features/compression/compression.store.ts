@@ -895,6 +895,12 @@ function createDebouncedStorage(delayMs: number): StateStorage {
 
 function getFriendlyCompressionError(error: unknown) {
   const technicalMessage = error instanceof Error ? error.message : String(error);
+  // Output wasn't smaller than the source — the file is already efficiently
+  // encoded. Check this FIRST: a generic "space" match below would otherwise
+  // swallow it. Surfaced as a calm, non-retry message.
+  if (/already optimized/i.test(technicalMessage)) {
+    return "This video is already optimized, so it was left unchanged — compressing it would not save space.";
+  }
   // Scoped-storage / "selected photos only" access: the file can't be read.
   if (/eacces|denied|permission to access|securityexception|filenotfound|open failed/i.test(technicalMessage)) {
     return "SwipeClean can only read your selected photos. Allow access to all photos and videos in Settings, then compress again.";
