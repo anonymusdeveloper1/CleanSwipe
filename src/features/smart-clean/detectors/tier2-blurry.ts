@@ -1,7 +1,7 @@
 import { SmartCleanDetector, SmartCleanGroup } from "@/features/smart-clean/smart-clean.types";
 import { featureCacheApi } from "@/features/smart-clean/feature-cache-store";
 import { probeCapability } from "@/features/smart-clean/native-capabilities";
-import { computeBlurVariance } from "@/features/smart-clean/detectors/image-pipeline";
+import { computeGrayFeatures } from "@/features/smart-clean/detectors/image-pipeline";
 import { BLUR_VARIANCE_THRESHOLD } from "@/features/smart-clean/detectors/hash-utils";
 import { finalizeResult, forEachYielding, modKeyOf, notAvailable, resolveReadableUri, toItem } from "@/features/smart-clean/detectors/shared";
 
@@ -24,8 +24,13 @@ export const blurryPhotosDetector: SmartCleanDetector = {
       let blurVar = featureCacheApi.get(asset.id, modKey)?.blurVar;
       if (blurVar === undefined) {
         const uri = await resolveReadableUri(asset);
-        blurVar = await computeBlurVariance(uri);
-        if (blurVar !== undefined) featureCacheApi.upsert(asset.id, modKey, { blurVar });
+        // Single decode → cache BOTH features so a later similar-scan reuses it
+        // (and vice-versa: similar already warmed blurVar for most photos).
+        const features = await computeGrayFeatures(uri);
+        if (features) {
+          featureCacheApi.upsert(asset.id, modKey, { dHash: features.dHash, blurVar: features.blurVar });
+          blurVar = features.blurVar;
+        }
       }
       if (blurVar !== undefined && blurVar < BLUR_VARIANCE_THRESHOLD) {
         groups.push({ id: `blurryPhotos:${asset.id}`, items: [toItem(asset)] });

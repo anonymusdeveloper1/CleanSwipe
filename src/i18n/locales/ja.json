@@ -118,6 +118,8 @@
     "stop": "停止",
     "scanning": "スキャン中…",
     "scanningProgress": "{{total}}件中{{current}}件をスキャン中…",
+    "analyzingPhotos": "写真を解析中 {{total}}件中{{current}}件…",
+    "scanKeepUsing": "実行中もアプリを使い続けられます。",
     "groupKeepBest": "最良の1枚を残す — 残りを確認",
     "keepBadge": "残す",
     "recommendationsSummary": "{{count}}件で約{{size}}を回収できます",

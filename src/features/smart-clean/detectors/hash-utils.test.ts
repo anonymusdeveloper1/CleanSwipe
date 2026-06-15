@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dHashFromGray,
+  downscaleGray,
   groupByHamming,
   hammingHex,
   laplacianVariance,
@@ -74,5 +75,31 @@ describe("rgbaToGrayMatrix", () => {
     const gray = rgbaToGrayMatrix(data, 2, 2);
     expect(gray).toHaveLength(2);
     expect(gray[0]).toHaveLength(2);
+  });
+});
+
+describe("downscaleGray (single-decode dHash derivation)", () => {
+  // The 64x64 blur grid is average-pooled to the 9x8 dHash grid so both come
+  // from one decode. These guard that derivation against accidental breakage.
+  it("downscales to the requested dimensions (9x8 dHash grid)", () => {
+    const big = Array.from({ length: 64 }, () => new Array(64).fill(100));
+    const small = downscaleGray(big, 9, 8);
+    expect(small).toHaveLength(8);
+    expect(small[0]).toHaveLength(9);
+  });
+
+  it("preserves a left→right gradient → dHash of all 1-bits", () => {
+    // Each row increases across columns; pooling to 9 cols stays increasing.
+    const gradient = Array.from({ length: 64 }, () => Array.from({ length: 64 }, (_c, x) => x));
+    expect(dHashFromGray(downscaleGray(gradient, 9, 8))).toBe("ffffffffffffffff");
+  });
+
+  it("yields all 0-bits for a flat image (no adjacent increase)", () => {
+    const flat = Array.from({ length: 64 }, () => new Array(64).fill(128));
+    expect(dHashFromGray(downscaleGray(flat, 9, 8))).toBe("0000000000000000");
+  });
+
+  it("returns [] for an empty matrix", () => {
+    expect(downscaleGray([], 9, 8)).toEqual([]);
   });
 });

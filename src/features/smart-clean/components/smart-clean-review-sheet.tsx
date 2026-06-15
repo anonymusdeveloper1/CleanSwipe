@@ -76,19 +76,6 @@ export function SmartCleanReviewSheet() {
     // Re-init the selection + pagination whenever the review target (its candidate set) changes.
   }, [visible, candidateIds]);
 
-  // Defer mounting thumbnails one frame so the FlatList cells are measured first;
-  // otherwise expo-image/Glide can capture SIZE_ORIGINAL and fail to decode large
-  // images (gray cells). Until then the cell background is the placeholder.
-  const [imagesReady, setImagesReady] = useState(false);
-  useEffect(() => {
-    if (!visible) {
-      setImagesReady(false);
-      return undefined;
-    }
-    const handle = setTimeout(() => setImagesReady(true), 60);
-    return () => clearTimeout(handle);
-  }, [visible]);
-
   // Android back closes the sheet (in-tree overlay, not an RN Modal).
   useEffect(() => {
     if (!visible) return undefined;
@@ -133,6 +120,15 @@ export function SmartCleanReviewSheet() {
   const cell = Math.floor((Math.min(width, 680) - horizontalPadding * 2 - gap * (columns - 1)) / columns);
   // Bound the list so the FlatList virtualizes instead of laying out every row.
   const listMaxHeight = Math.max(220, Math.round(height * 0.86) - 180);
+  // Fixed row height lets the FlatList skip measuring every row (O(1) scroll math).
+  const rowHeight = cell + gap;
+  const getItemLayout = useCallback(
+    (_data: ArrayLike<SmartCleanItem> | null | undefined, index: number) => {
+      const row = Math.floor(index / columns);
+      return { length: rowHeight, offset: rowHeight * row, index };
+    },
+    [columns, rowHeight]
+  );
 
   const handleConfirmed = () => {
     setConfirmVisible(false);
@@ -149,13 +145,12 @@ export function SmartCleanReviewSheet() {
         theme={theme}
         isKeeper={keeperIds.has(item.mediaId)}
         isSelected={selected.has(item.mediaId)}
-        imagesReady={imagesReady}
         keepLabel={t("smartClean.keepBadge")}
         onToggle={toggle}
         onPreview={openPreview}
       />
     ),
-    [cell, theme, keeperIds, selected, imagesReady, t, toggle, openPreview]
+    [cell, theme, keeperIds, selected, t, toggle, openPreview]
   );
 
   if (!visible) return null;
@@ -184,6 +179,7 @@ export function SmartCleanReviewSheet() {
           initialNumToRender={columns * 4}
           maxToRenderPerBatch={columns * 4}
           windowSize={5}
+          getItemLayout={getItemLayout}
           removeClippedSubviews
           onEndReached={loadMore}
           onEndReachedThreshold={0.6}
@@ -226,7 +222,6 @@ const ReviewCell = memo(function ReviewCell({
   theme,
   isKeeper,
   isSelected,
-  imagesReady,
   keepLabel,
   onToggle,
   onPreview
@@ -236,7 +231,6 @@ const ReviewCell = memo(function ReviewCell({
   theme: AppTheme;
   isKeeper: boolean;
   isSelected: boolean;
-  imagesReady: boolean;
   keepLabel: string;
   onToggle: (mediaId: string) => void;
   onPreview: (item: SmartCleanItem) => void;
@@ -250,13 +244,11 @@ const ReviewCell = memo(function ReviewCell({
       delayLongPress={260}
       style={{ width: cell, height: cell, borderRadius: 10, overflow: "hidden", backgroundColor: theme.surfaceStrong, borderWidth: isKeeper || isSelected ? 2 : 1, borderColor: isKeeper ? theme.green : isSelected ? theme.red : theme.border }}
     >
-      {imagesReady ? (
-        isVideoUri(item.uri) ? (
-          <MediaThumbnail uri={item.uri} id={item.mediaId} mediaType="video" contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ width: cell, height: cell }} />
-        ) : (
-          <Thumbnail sourceUri={item.uri} cacheKey={item.mediaId} cellDp={cell} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ width: cell, height: cell }} />
-        )
-      ) : null}
+      {isVideoUri(item.uri) ? (
+        <MediaThumbnail uri={item.uri} id={item.mediaId} mediaType="video" contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ width: cell, height: cell }} />
+      ) : (
+        <Thumbnail sourceUri={item.uri} cacheKey={item.mediaId} cellDp={cell} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ width: cell, height: cell }} />
+      )}
       {isKeeper ? (
         <View style={{ position: "absolute", left: 4, top: 4, flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: theme.green, borderRadius: 7, paddingHorizontal: 6, paddingVertical: 3 }}>
           <ShieldCheck size={12} color="#fff" />

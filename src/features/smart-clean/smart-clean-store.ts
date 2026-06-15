@@ -5,6 +5,7 @@ import { FeatureAccessService } from "@/features/subscription/feature-access.ser
 import { FeatureKey } from "@/features/subscription/feature-flags";
 import { SmartCleanDetectorKey, SmartCleanGroup, SmartCleanResult, SmartCleanStatus } from "@/features/smart-clean/smart-clean.types";
 import { SMART_CLEAN_SCAN_ORDER } from "@/features/smart-clean/smart-clean.service";
+import { prewarmPhotoFeatures } from "@/features/smart-clean/detectors/pre-pass";
 import { featureCacheApi } from "@/features/smart-clean/feature-cache-store";
 import { SmartCleanScanNotifications } from "@/features/smart-clean/smart-clean-notifications";
 import { BackgroundSmartCleanScanWorker } from "@/services/background-smart-clean-scan-worker";
@@ -64,6 +65,11 @@ type SmartCleanStore = {
    * "X of Y" counter on BOTH the screen and the notification (no off-by-one). */
   activeIndex: number;
   activeDetectorKey?: SmartCleanDetectorKey;
+  /** Coarse scan stage for the progress UI. "analyzing" = the photo pre-pass. */
+  stage?: "metadata" | "analyzing" | "grouping";
+  /** Photos with features computed so far / total photos (for the pre-pass label). */
+  analyzed: number;
+  analyzeTotal: number;
   resultsByKey: Record<string, SmartCleanResult>;
   /** Persisted compact results awaiting expansion against the media index. */
   restoredCompact: CompactResultMap | null;
@@ -198,6 +204,9 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
       progress: 0,
       activeIndex: 0,
       activeDetectorKey: undefined,
+      stage: undefined,
+      analyzed: 0,
+      analyzeTotal: 0,
       resultsByKey: {},
       restoredCompact: null,
       runSignature: undefined,
@@ -265,14 +274,24 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
           }
         }
         const total = SMART_CLEAN_SCAN_ORDER.length;
-        const firstUndone = SMART_CLEAN_SCAN_ORDER.findIndex((detector) => !seeded[detector.key]);
-        const beginAt = firstUndone === -1 ? total : firstUndone;
+        // Pixel detectors depend on the concurrent photo pre-pass; the rest are
+        // cheap metadata/MD5 passes that surface first. (duplicateVideos hashes
+        // video thumbnails itself — videos are few — so it runs in the pixel phase.)
+        const PIXEL_KEYS = new Set<SmartCleanDetectorKey>(["duplicateVideos", "similarPhotos", "blurryPhotos"]);
+        const cheapDetectors = SMART_CLEAN_SCAN_ORDER.filter((detector) => !PIXEL_KEYS.has(detector.key));
+        const pixelDetectors = SMART_CLEAN_SCAN_ORDER.filter((detector) => PIXEL_KEYS.has(detector.key));
+        // Progress bands: cheap [0, 0.10] → pre-pass [0.10, 0.85] → pixel [0.85, 1].
+        const CHEAP_END = 0.1;
+        const PREPASS_END = 0.85;
 
         set({
           phase: "scanning",
-          progress: beginAt / total,
-          activeIndex: Math.min(total, beginAt + 1),
+          progress: 0,
+          activeIndex: 1,
           activeDetectorKey: undefined,
+          stage: "metadata",
+          analyzed: 0,
+          analyzeTotal: 0,
           error: undefined,
           resultsByKey: seeded,
           restoredCompact: null,
@@ -281,45 +300,88 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
 
         const acc: Record<string, SmartCleanResult> = { ...seeded };
 
-        const scanBody = async () => {
-          for (let i = beginAt; i < total; i++) {
-            if (token !== runToken) return;
-            const detector = SMART_CLEAN_SCAN_ORDER[i];
-            set({ activeIndex: i + 1, activeDetectorKey: detector.key, progress: i / total });
-            updateScanNotification(i + 1, total, i / total);
-
-            if (!canUse(detector.featureKey)) {
-              acc[detector.key] = notAvailable(detector.key);
-              set({ resultsByKey: { ...acc }, progress: (i + 1) / total, lastCheckpointAt: Date.now() });
-              continue;
-            }
-            try {
-              const result = await detector.detect({
-                assets,
-                accessLevel,
-                signal,
-                cache: featureCacheApi,
-                onProgress: (fraction) => {
-                  if (token !== runToken) return;
-                  set({ progress: (i + fraction) / total });
-                  throttledNotify(i + 1, total, (i + fraction) / total);
-                }
-              });
-              if (token !== runToken) return;
-              acc[detector.key] = result;
-            } catch {
-              if (signal.aborted || token !== runToken) return;
-              acc[detector.key] = notAvailable(detector.key);
-            }
-            // Per-detector checkpoint (persist is debounced).
-            set({ resultsByKey: { ...acc }, progress: (i + 1) / total, lastCheckpointAt: Date.now() });
-            await sleep(SCAN_YIELD_MS);
+        // Run one detector within its progress band. Seeded detectors (resume) are
+        // skipped. Keeps the per-detector checkpoint + token/abort discipline.
+        const runDetector = async (
+          detector: (typeof SMART_CLEAN_SCAN_ORDER)[number],
+          bandStart: number,
+          bandEnd: number,
+          displayIndex: number
+        ) => {
+          if (token !== runToken) return;
+          if (seeded[detector.key]) {
+            set({ progress: bandEnd });
+            return;
           }
+          set({ activeIndex: displayIndex, activeDetectorKey: detector.key });
+          updateScanNotification(displayIndex, total, bandStart);
+          if (!canUse(detector.featureKey)) {
+            acc[detector.key] = notAvailable(detector.key);
+            set({ resultsByKey: { ...acc }, progress: bandEnd, lastCheckpointAt: Date.now() });
+            return;
+          }
+          try {
+            const result = await detector.detect({
+              assets,
+              accessLevel,
+              signal,
+              cache: featureCacheApi,
+              onProgress: (fraction) => {
+                if (token !== runToken) return;
+                const p = bandStart + (bandEnd - bandStart) * fraction;
+                set({ progress: p });
+                throttledNotify(displayIndex, total, p);
+              }
+            });
+            if (token !== runToken) return;
+            acc[detector.key] = result;
+          } catch {
+            if (signal.aborted || token !== runToken) return;
+            acc[detector.key] = notAvailable(detector.key);
+          }
+          // Per-detector checkpoint (persist is debounced).
+          set({ resultsByKey: { ...acc }, progress: bandEnd, lastCheckpointAt: Date.now() });
+          await sleep(SCAN_YIELD_MS);
+        };
+
+        const scanBody = async () => {
+          // Phase A — cheap metadata/MD5 detectors surface in seconds.
+          set({ stage: "metadata" });
+          for (let i = 0; i < cheapDetectors.length; i++) {
+            if (token !== runToken) return;
+            const start = (CHEAP_END * i) / cheapDetectors.length;
+            const end = (CHEAP_END * (i + 1)) / cheapDetectors.length;
+            await runDetector(cheapDetectors[i], start, end, i + 1);
+          }
+
+          // Phase B — ONE concurrent single-decode sweep warms the photo feature
+          // cache (the bulk of the work; resume skips already-cached photos).
+          if (token !== runToken) return;
+          set({ stage: "analyzing", activeDetectorKey: undefined, activeIndex: cheapDetectors.length });
+          updateScanNotification(cheapDetectors.length, total, CHEAP_END);
+          await prewarmPhotoFeatures(assets, signal, (fraction, analyzed, analyzeTotal) => {
+            if (token !== runToken) return;
+            const p = CHEAP_END + (PREPASS_END - CHEAP_END) * fraction;
+            set({ progress: p, analyzed, analyzeTotal });
+            throttledNotify(cheapDetectors.length, total, p);
+          });
+
+          // Phase C — pixel detectors now read the warm cache and surface together.
+          if (token !== runToken) return;
+          set({ stage: "grouping" });
+          for (let i = 0; i < pixelDetectors.length; i++) {
+            if (token !== runToken) return;
+            const start = PREPASS_END + ((1 - PREPASS_END) * i) / pixelDetectors.length;
+            const end = PREPASS_END + ((1 - PREPASS_END) * (i + 1)) / pixelDetectors.length;
+            await runDetector(pixelDetectors[i], start, end, cheapDetectors.length + i + 1);
+          }
+
           if (token !== runToken) return;
           set({
             phase: "complete",
             activeDetectorKey: undefined,
             activeIndex: total,
+            stage: undefined,
             progress: 1,
             lastRunAt: Date.now(),
             resultsByKey: { ...acc }
@@ -381,7 +443,7 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
         dismissAllScanNotifications();
         // Manual stop → phase "idle" (NOT "interrupted") so it does not auto-resume
         // on next launch. Completed detectors' results stay visible.
-        set({ phase: "idle", activeDetectorKey: undefined, activeIndex: 0 });
+        set({ phase: "idle", activeDetectorKey: undefined, activeIndex: 0, stage: undefined });
       },
 
       reset() {
@@ -396,6 +458,9 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
           phase: "idle",
           activeDetectorKey: undefined,
           activeIndex: 0,
+          stage: undefined,
+          analyzed: 0,
+          analyzeTotal: 0,
           progress: 0,
           resultsByKey: {},
           restoredCompact: null,

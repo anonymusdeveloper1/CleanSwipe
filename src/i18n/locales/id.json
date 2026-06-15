@@ -118,6 +118,8 @@
     "stop": "Hentikan",
     "scanning": "Memindai…",
     "scanningProgress": "Memindai {{current}} dari {{total}}…",
+    "analyzingPhotos": "Menganalisis foto {{current}} dari {{total}}…",
+    "scanKeepUsing": "Kamu tetap bisa memakai aplikasi selama proses ini.",
     "groupKeepBest": "Menyimpan yang terbaik — tinjau sisanya",
     "keepBadge": "SIMPAN",
     "recommendationsSummary": "Rebut kembali sekitar {{size}} dari {{count}} item",

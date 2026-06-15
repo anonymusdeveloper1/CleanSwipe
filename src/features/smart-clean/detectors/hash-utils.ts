@@ -102,6 +102,39 @@ export function groupByHamming(hashes: string[], maxDistance: number): number[][
   return [...groups.values()].filter((group) => group.length >= 2);
 }
 
+/**
+ * Average-pool a grayscale matrix down to (outWidth x outHeight). Used to derive
+ * the tiny 9x8 dHash grid from the larger 64x64 blur grid so BOTH features come
+ * from a SINGLE decode (see image-pipeline.computeGrayFeatures). Box-averaging is
+ * deterministic and smoother than a re-resize, so duplicates hash more stably.
+ */
+export function downscaleGray(gray: number[][], outWidth: number, outHeight: number): number[][] {
+  const inHeight = gray.length;
+  const inWidth = inHeight > 0 ? gray[0].length : 0;
+  if (inWidth === 0 || inHeight === 0) return [];
+  const out: number[][] = [];
+  for (let oy = 0; oy < outHeight; oy++) {
+    const y0 = Math.floor((oy * inHeight) / outHeight);
+    const y1 = Math.max(y0 + 1, Math.floor(((oy + 1) * inHeight) / outHeight));
+    const row: number[] = new Array(outWidth);
+    for (let ox = 0; ox < outWidth; ox++) {
+      const x0 = Math.floor((ox * inWidth) / outWidth);
+      const x1 = Math.max(x0 + 1, Math.floor(((ox + 1) * inWidth) / outWidth));
+      let sum = 0;
+      let count = 0;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          sum += gray[y][x];
+          count += 1;
+        }
+      }
+      row[ox] = count > 0 ? Math.round(sum / count) : 0;
+    }
+    out.push(row);
+  }
+  return out;
+}
+
 /** Convert decoded RGBA bytes (length w*h*4) to a row-major grayscale matrix. */
 export function rgbaToGrayMatrix(data: ArrayLike<number>, width: number, height: number): number[][] {
   const gray: number[][] = [];

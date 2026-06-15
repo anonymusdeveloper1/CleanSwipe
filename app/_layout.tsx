@@ -23,6 +23,7 @@ import { ReminderNotificationService } from "@/services/reminder-notification-se
 import { useAppStore } from "@/store/app-store";
 import { useMediaIndexStore } from "@/store/media-index-store";
 import { useSubscriptionStore } from "@/store/subscription-store";
+import { flushAllDebouncedStorages } from "@/utils/debounced-storage";
 
 export default function RootLayout() {
   const theme = useAppTheme();
@@ -206,6 +207,11 @@ function SmartCleanResumeSync() {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
         useSmartCleanStore.getState().resumeIfInterrupted();
+      } else if (state === "background" || state === "inactive") {
+        // Persist trailing scan + feature-cache writes immediately, before the OS
+        // suspends (iOS) or an aggressive OEM kills the task (Android), so a resumed
+        // scan continues from exactly where it stopped — no recomputed hashes.
+        void flushAllDebouncedStorages();
       }
     });
     return () => subscription.remove();

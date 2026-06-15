@@ -96,6 +96,21 @@ export const useSmartCleanFeatureCache = create<FeatureCacheStore>()(
       // writes on a large library). Periodic durability is fine — a hard kill
       // loses <1s of hashes, which recompute cheaply on resume.
       storage: createJSONStorage(() => createDebouncedStorage(800)),
+      // v1: photo dHash derivation changed from a direct 9x8 resize to a 64x64→9x8
+      // average-pool (single-decode pipeline). Old dHashes would compare wrong
+      // against new ones (false negatives), so drop them — they recompute on the
+      // next scan. blurVar (still 64x64), md5, and vHash (video, unchanged) are kept.
+      version: 1,
+      migrate: (persisted, fromVersion) => {
+        const state = (persisted ?? {}) as { entries?: Record<string, FeatureEntry>; order?: string[] };
+        if (fromVersion < 1 && state.entries) {
+          for (const id of Object.keys(state.entries)) {
+            const entry = state.entries[id];
+            if (entry && entry.dHash !== undefined) delete entry.dHash;
+          }
+        }
+        return state;
+      },
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.warn("Failed to rehydrate smart-clean feature cache", error);

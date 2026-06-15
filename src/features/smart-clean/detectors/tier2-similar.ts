@@ -2,7 +2,7 @@ import { IndexedMediaAsset } from "@/store/media-index-store";
 import { SmartCleanDetector, SmartCleanGroup } from "@/features/smart-clean/smart-clean.types";
 import { featureCacheApi } from "@/features/smart-clean/feature-cache-store";
 import { probeCapability } from "@/features/smart-clean/native-capabilities";
-import { computeDHash } from "@/features/smart-clean/detectors/image-pipeline";
+import { computeGrayFeatures } from "@/features/smart-clean/detectors/image-pipeline";
 import { DHASH_SIMILAR_MAX, groupByHamming } from "@/features/smart-clean/detectors/hash-utils";
 import { finalizeResult, forEachYielding, modKeyOf, notAvailable, resolveReadableUri, sizeOf, toItem } from "@/features/smart-clean/detectors/shared";
 
@@ -36,8 +36,13 @@ export const similarPhotosDetector: SmartCleanDetector = {
       let hash = featureCacheApi.get(asset.id, modKey)?.dHash;
       if (!hash) {
         const uri = await resolveReadableUri(asset);
-        hash = await computeDHash(uri);
-        if (hash) featureCacheApi.upsert(asset.id, modKey, { dHash: hash });
+        // Single decode → cache BOTH dHash and blurVar so the blurry detector
+        // reuses this decode (no second decode for the same photo).
+        const features = await computeGrayFeatures(uri);
+        if (features) {
+          featureCacheApi.upsert(asset.id, modKey, { dHash: features.dHash, blurVar: features.blurVar });
+          hash = features.dHash;
+        }
       }
       if (hash) withHash.push({ asset, hash });
     }, onProgress);
