@@ -70,6 +70,46 @@ export async function forEachYielding<T>(
 }
 
 /**
+ * Run `worker` over `items` with BOUNDED CONCURRENCY (up to `limit` in flight),
+ * yielding cooperatively and reporting progress. This is how the photo pre-pass
+ * overlaps the native decodes of several assets at once instead of awaiting them
+ * one-by-one. Aborts promptly when the signal fires; a worker that throws is the
+ * caller's concern (the pre-pass swallows per-asset failures), so one bad asset
+ * never rejects the whole batch.
+ */
+export async function mapWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  signal: AbortSignal | undefined,
+  worker: (item: T, index: number) => Promise<void>,
+  onProgress?: (done: number, total: number) => void
+): Promise<void> {
+  const total = items.length;
+  if (total === 0) {
+    onProgress?.(0, 0);
+    return;
+  }
+  let next = 0;
+  let done = 0;
+  const lane = async (): Promise<void> => {
+    for (;;) {
+      if (signal?.aborted) return;
+      const index = next++;
+      if (index >= total) return;
+      await worker(items[index], index);
+      done += 1;
+      if (done % 8 === 0 || done === total) {
+        onProgress?.(done, total);
+        await sleep(SCAN_YIELD_MS);
+      }
+    }
+  };
+  const lanes = Math.min(Math.max(1, limit), total);
+  await Promise.all(Array.from({ length: lanes }, () => lane()));
+  onProgress?.(done, total);
+}
+
+/**
  * Derive status + itemCount + estimatedReclaimableBytes from groups. Candidates
  * are every item EXCEPT each group's keeper (keepMediaId). For keeper-less
  * detectors every item is a candidate.

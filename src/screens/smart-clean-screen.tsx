@@ -41,6 +41,9 @@ export function SmartCleanScreen() {
 
   const phase = useSmartCleanStore((state) => state.phase);
   const progress = useSmartCleanStore((state) => state.progress);
+  const stage = useSmartCleanStore((state) => state.stage);
+  const analyzed = useSmartCleanStore((state) => state.analyzed);
+  const analyzeTotal = useSmartCleanStore((state) => state.analyzeTotal);
   const activeIndex = useSmartCleanStore((state) => state.activeIndex);
   const activeKey = useSmartCleanStore((state) => state.activeDetectorKey);
   const resultsByKey = useSmartCleanStore((state) => state.resultsByKey);
@@ -57,6 +60,12 @@ export function SmartCleanScreen() {
   // Counter tracks the discrete detector currently running — same value the
   // notification shows (no off-by-one). The bar uses the continuous `progress`.
   const current = Math.min(total, Math.max(1, activeIndex || 1));
+  // During the concurrent photo pre-pass ("analyzing") show the per-photo count;
+  // otherwise the detector "X of Y" counter.
+  const scanLabel =
+    stage === "analyzing" && analyzeTotal > 0
+      ? t("smartClean.analyzingPhotos", { current: analyzed, total: analyzeTotal })
+      : t("smartClean.scanningProgress", { current, total });
 
   // NOTE: we intentionally do NOT cancel the scan on unmount — like compression,
   // the scan keeps running when you leave the screen, surfaced by its own ongoing
@@ -208,7 +217,7 @@ export function SmartCleanScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <ActivityIndicator color={theme.accent} />
               <Text selectable style={{ flex: 1, color: theme.text, fontSize: 14, fontWeight: "800" }}>
-                {t("smartClean.scanningProgress", { current, total })}
+                {scanLabel}
               </Text>
               <Pressable accessibilityRole="button" accessibilityLabel={t("smartClean.stop")} onPress={cancel} style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, minHeight: 34, borderRadius: 9, borderWidth: 1, borderColor: theme.border }}>
                 <X size={14} color={theme.muted} />
@@ -218,6 +227,9 @@ export function SmartCleanScreen() {
             <View style={{ height: 6, borderRadius: 3, backgroundColor: theme.surfaceStrong, overflow: "hidden" }}>
               <View style={{ width: `${Math.round(progress * 100)}%`, height: 6, backgroundColor: theme.accent }} />
             </View>
+            <Text selectable style={{ color: theme.muted, fontSize: 12, lineHeight: 16 }}>
+              {t("smartClean.scanKeepUsing")}
+            </Text>
           </View>
         ) : (
           <Pressable

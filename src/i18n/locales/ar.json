@@ -118,6 +118,8 @@
     "stop": "إيقاف",
     "scanning": "جارٍ الفحص…",
     "scanningProgress": "جارٍ فحص {{current}} من {{total}}…",
+    "analyzingPhotos": "تحليل الصور {{current}} من {{total}}…",
+    "scanKeepUsing": "يمكنك متابعة استخدام التطبيق أثناء التشغيل.",
     "groupKeepBest": "نحتفظ بالأفضل — راجع الباقي",
     "keepBadge": "احتفاظ",
     "recommendationsSummary": "استعد نحو {{size}} عبر {{count}} عنصر",

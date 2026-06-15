@@ -118,6 +118,8 @@
     "stop": "रोकें",
     "scanning": "स्कैन हो रहा है…",
     "scanningProgress": "{{total}} में से {{current}} स्कैन हो रहा है…",
+    "analyzingPhotos": "{{total}} में से {{current}} फ़ोटो का विश्लेषण…",
+    "scanKeepUsing": "इस दौरान आप ऐप का उपयोग जारी रख सकते हैं।",
     "groupKeepBest": "सबसे अच्छी रखी जा रही है — बाकी की समीक्षा करें",
     "keepBadge": "रखें",
     "recommendationsSummary": "{{count}} आइटम में लगभग {{size}} वापस पाएँ",

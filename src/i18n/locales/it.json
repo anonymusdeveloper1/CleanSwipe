@@ -118,6 +118,8 @@
     "stop": "Interrompi",
     "scanning": "Analisi in corso…",
     "scanningProgress": "Analisi {{current}} di {{total}}…",
+    "analyzingPhotos": "Analisi foto {{current}} di {{total}}…",
+    "scanKeepUsing": "Puoi continuare a usare l’app durante l’operazione.",
     "groupKeepBest": "Manteniamo il migliore — rivedi gli altri",
     "keepBadge": "TIENI",
     "recommendationsSummary": "Recupera circa {{size}} su {{count}} elementi",

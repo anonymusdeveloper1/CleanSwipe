@@ -3,6 +3,7 @@ import {
   BLUR_RESIZE,
   DHASH_RESIZE,
   dHashFromGray,
+  downscaleGray,
   laplacianVariance,
   rgbaToGrayMatrix
 } from "@/features/smart-clean/detectors/hash-utils";
@@ -66,12 +67,26 @@ async function decodeGray(uri: string, size: { width: number; height: number }):
   }
 }
 
+/** dHash only (used for VIDEO thumbnails, which are already small single frames). */
 export async function computeDHash(uri: string): Promise<string | undefined> {
   const gray = await decodeGray(uri, DHASH_RESIZE);
   return gray ? dHashFromGray(gray) : undefined;
 }
 
-export async function computeBlurVariance(uri: string): Promise<number | undefined> {
+/**
+ * SINGLE-DECODE photo pipeline: decode ONCE at the 64x64 blur grid and derive
+ * BOTH the dHash (by average-pooling the 64x64 gray to 9x8) and the blur
+ * variance. This is the photo fast path used by the similar + blurry detectors
+ * and the concurrent pre-pass — a photo that feeds both is now decoded once, not
+ * twice. The blur grid is unchanged (64x64), so BLUR_VARIANCE_THRESHOLD stays
+ * valid; the dHash is now derived from the 64x64 downscale rather than a direct
+ * 9x8 resize, so the persisted feature cache is version-bumped to drop old
+ * dHashes (see feature-cache-store).
+ */
+export async function computeGrayFeatures(uri: string): Promise<{ dHash: string; blurVar: number } | undefined> {
   const gray = await decodeGray(uri, BLUR_RESIZE);
-  return gray ? laplacianVariance(gray) : undefined;
+  if (!gray) return undefined;
+  const blurVar = laplacianVariance(gray);
+  const dHash = dHashFromGray(downscaleGray(gray, DHASH_RESIZE.width, DHASH_RESIZE.height));
+  return { dHash, blurVar };
 }
