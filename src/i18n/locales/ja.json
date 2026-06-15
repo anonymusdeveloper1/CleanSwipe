@@ -1,4 +1,11 @@
 {
+  "customCompress": {
+    "button": "ファイルを選んで圧縮",
+    "adTitle": "どんなファイルも圧縮",
+    "adBody": "圧縮する写真または動画を選びます。短い広告を見ると1つ無料で使えます。",
+    "freeLeft": "本日 {{limit}} 件中 {{count}} 件無料",
+    "needsUpdate": "この機能にはアプリの更新版が必要です。最新バージョンを再インストールしてください。"
+  },
   "common": {
     "appName": "SwipeClean",
     "loadingMediaLibrary": "メディアライブラリを読み込み中...",

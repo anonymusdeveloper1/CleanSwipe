@@ -47,7 +47,7 @@ export const PhotoTile = memo(function PhotoTile({ item, size, onRestore, onOpen
         borderColor: theme.border
       }}
     >
-      <MediaThumbnail uri={item.uri} id={item.photoId} mediaType={item.mediaType} contentFit="contain" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
+      <MediaThumbnail uri={item.uri} id={item.photoId} mediaType={item.mediaType} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
       <Pressable
         accessibilityLabel={t("reviewDelete.restorePhoto")}
         onPress={() => onRestore(item.photoId)}

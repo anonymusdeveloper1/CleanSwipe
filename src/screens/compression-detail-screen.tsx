@@ -31,7 +31,9 @@ export function CompressionDetailScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { id, origin } = useLocalSearchParams<{ id: string; origin?: string }>();
-  const [quality, setQuality] = useState<CompressionQuality>("medium");
+  // Pre-select the global default; the user can still override it per item below.
+  const defaultQuality = useAppStore((state) => state.settings.defaultCompressionQuality);
+  const [quality, setQuality] = useState<CompressionQuality>(defaultQuality ?? "medium");
   const [adPromptRemaining, setAdPromptRemaining] = useState<number | null>(null);
   const { canUseFeature } = useFeatureAccess();
   const openPaywall = usePaywallStore((state) => state.open);

@@ -94,6 +94,9 @@ export type AppSettings = {
   compressionRemindersEnabled: boolean;
   proNotificationsEnabled: boolean;
   afterCompressionOriginalPolicy: AfterCompressionOriginalPolicy;
+  // Global default compression quality; the per-item picker on the detail screen
+  // pre-selects this but can override it for a single compression.
+  defaultCompressionQuality: CompressionQuality;
 };
 
 export type PermissionStatus = "not-requested" | "granted" | "denied" | "limited" | "error";

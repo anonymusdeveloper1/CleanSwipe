@@ -1,4 +1,11 @@
 {
+  "customCompress": {
+    "button": "Kompres file pilihan",
+    "adTitle": "Kompres file apa pun",
+    "adBody": "Pilih foto atau video untuk dikompres. Tonton iklan singkat untuk membuka satu gratis.",
+    "freeLeft": "{{count}} dari {{limit}} gratis hari ini",
+    "needsUpdate": "Fitur ini memerlukan versi aplikasi yang diperbarui. Silakan instal ulang versi terbaru."
+  },
   "common": {
     "appName": "SwipeClean",
     "loadingMediaLibrary": "Memuat pustaka media Anda...",

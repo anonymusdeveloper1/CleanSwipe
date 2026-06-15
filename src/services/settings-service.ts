@@ -12,5 +12,6 @@ export const defaultSettings: AppSettings = {
   cleanupRemindersEnabled: true,
   compressionRemindersEnabled: true,
   proNotificationsEnabled: true,
-  afterCompressionOriginalPolicy: "ask_every_time"
+  afterCompressionOriginalPolicy: "ask_every_time",
+  defaultCompressionQuality: "medium"
 };

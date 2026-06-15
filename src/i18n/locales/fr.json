@@ -1,4 +1,11 @@
 {
+  "customCompress": {
+    "button": "Compresser un fichier choisi",
+    "adTitle": "Compressez n'importe quel fichier",
+    "adBody": "Choisissez une photo ou une vidéo à compresser. Regardez une courte pub pour en débloquer un gratuitement.",
+    "freeLeft": "{{count}} sur {{limit}} gratuits aujourd'hui",
+    "needsUpdate": "Cette fonctionnalité nécessite une version mise à jour de l'application. Veuillez réinstaller la dernière version."
+  },
   "common": {
     "appName": "SwipeClean",
     "loadingMediaLibrary": "Chargement de votre médiathèque...",

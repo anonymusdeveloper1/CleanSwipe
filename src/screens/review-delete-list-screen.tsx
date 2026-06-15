@@ -151,24 +151,41 @@ export function ReviewDeleteListScreen() {
       </View>
     ) : null;
 
-  const listFooter =
+  // Fixed action bar pinned to the bottom (above the system nav bar via the
+  // safe-area inset), so the delete action is always reachable without scrolling
+  // to the end of a long marked list.
+  const bottomBar =
     marked.length > 0 ? (
-      <Pressable
-        onPress={() => setConfirmVisible(true)}
+      <View
         style={{
-          marginTop: 24,
-          backgroundColor: "#c9171d",
-          borderRadius: 12,
-          minHeight: 48,
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "row",
-          gap: 8
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingHorizontal: 10,
+          paddingTop: 10,
+          paddingBottom: insets.bottom + 10,
+          backgroundColor: theme.background,
+          borderTopWidth: 1,
+          borderTopColor: theme.border
         }}
       >
-        <Trash2 size={18} color="#fff" />
-        <Text style={{ color: "#fff", fontSize: 15, fontWeight: "700" }}>{t("reviewDelete.deleteSelectedButton", { count: marked.length })}</Text>
-      </Pressable>
+        <Pressable
+          onPress={() => setConfirmVisible(true)}
+          style={{
+            backgroundColor: "#c9171d",
+            borderRadius: 12,
+            minHeight: 48,
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "row",
+            gap: 8
+          }}
+        >
+          <Trash2 size={18} color="#fff" />
+          <Text style={{ color: "#fff", fontSize: 15, fontWeight: "700" }}>{t("reviewDelete.deleteSelectedButton", { count: marked.length })}</Text>
+        </Pressable>
+      </View>
     ) : null;
 
   return (
@@ -187,7 +204,6 @@ export function ReviewDeleteListScreen() {
         keyExtractor={(row) => row.key}
         renderItem={renderRow}
         ListHeaderComponent={listHeader}
-        ListFooterComponent={listFooter}
         ListEmptyComponent={
           <EmptyState
             icon={Images}
@@ -195,7 +211,10 @@ export function ReviewDeleteListScreen() {
             message={t("reviewDelete.emptyStateMessage", { mediaType: getMediaTypeNoun(selectedMediaType) })}
           />
         }
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 120, flexGrow: 1 }}
+        // paddingBottom clears the fixed bottom bar (≈48 button + 20 padding +
+        // 1 border + safe-area inset) plus a gap, so the last row never hides
+        // behind the Delete button.
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 88, flexGrow: 1 }}
         onEndReached={hasMore ? loadMore : undefined}
         onEndReachedThreshold={1.2}
         initialNumToRender={10}
@@ -204,6 +223,7 @@ export function ReviewDeleteListScreen() {
         removeClippedSubviews
         showsVerticalScrollIndicator
       />
+      {bottomBar}
       <DeleteConfirmationDialog visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={confirmDelete} />
     </View>
   );

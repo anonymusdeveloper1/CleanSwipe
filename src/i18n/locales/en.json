@@ -1,4 +1,11 @@
 {
+  "customCompress": {
+    "button": "Compress a custom file",
+    "adTitle": "Compress any file",
+    "adBody": "Pick a photo or video to compress. Watch a short ad to unlock one for free.",
+    "freeLeft": "{{count}} of {{limit}} free today",
+    "needsUpdate": "This feature needs an updated app build. Please reinstall the latest version."
+  },
   "common": {
     "appName": "SwipeClean",
     "loadingMediaLibrary": "Loading your media library...",

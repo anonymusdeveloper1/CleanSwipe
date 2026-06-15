@@ -28,6 +28,7 @@ export const PRO_FEATURES = [
   "videoCompression",
   "batchVideoCompression",
   "compressAll",
+  "customCompression",
   "smartClean",
   "duplicatePhotoDetection",
   "similarPhotoDetection",

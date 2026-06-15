@@ -605,6 +605,8 @@ function dedupeMarkedItems(items: MarkedForDeletionItem[]) {
 function normalizeSettings(settings: AppSettings): AppSettings {
   return {
     ...settings,
-    language: normalizeLanguagePreference(settings.language)
+    language: normalizeLanguagePreference(settings.language),
+    // Backfill for users persisted before this setting existed.
+    defaultCompressionQuality: settings.defaultCompressionQuality ?? "medium"
   };
 }

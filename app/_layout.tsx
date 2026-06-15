@@ -1,5 +1,6 @@
 import "react-native-gesture-handler";
 import "@/i18n";
+import { Image as ExpoImage } from "expo-image";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -70,6 +71,7 @@ export default function RootLayout() {
       <I18nPreferenceSync />
       <SubscriptionSync />
       <SmartCleanResumeSync />
+      <ImageCacheManager />
       <StatusBar style={theme.isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -204,6 +206,25 @@ function SmartCleanResumeSync() {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
         useSmartCleanStore.getState().resumeIfInterrupted();
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  return null;
+}
+
+/**
+ * Frees expo-image's in-memory bitmap cache when the app leaves the foreground.
+ * Decoded thumbnails live on the native heap and the memory cache retains them
+ * after they scroll off-screen; releasing it on background reclaims that memory
+ * (the disk cache is untouched, so images re-display instantly on return).
+ */
+function ImageCacheManager() {
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "background" || state === "inactive") {
+        void ExpoImage.clearMemoryCache();
       }
     });
     return () => subscription.remove();

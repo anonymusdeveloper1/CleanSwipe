@@ -10,6 +10,7 @@ import { CachedImage } from "@/components/cached-image";
 import { PasscodePad } from "@/components/passcode-pad";
 import { VideoMediaPlayer } from "@/components/video-media-player";
 import { useCompressionStore } from "@/features/compression/compression.store";
+import { useCustomCompressStore } from "@/features/compression/custom-compress.store";
 import { createCompressionJobInput } from "@/features/compression/compression.utils";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { CompressionQuality } from "@/models/photo";
@@ -31,9 +32,15 @@ export function CompressRunScreen() {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { id, quality, origin } = useLocalSearchParams<{ id: string; quality?: string; origin?: string }>();
+  const { id, quality, origin, custom } = useLocalSearchParams<{ id: string; quality?: string; origin?: string; custom?: string }>();
 
-  const asset = useMediaIndexStore((state) => selectIndexedMediaAsset(state, id));
+  // A custom (user-picked) file isn't in the media index — fall back to the
+  // transient custom-compress store. Custom files are Keep-only (their "original"
+  // is a picker cache copy, not a managed library asset), so we hide the delete.
+  const isCustom = custom === "1";
+  const indexedAsset = useMediaIndexStore((state) => selectIndexedMediaAsset(state, id));
+  const customTarget = useCustomCompressStore((state) => state.target);
+  const asset = indexedAsset ?? (isCustom && customTarget?.id === id ? customTarget : undefined);
   const enqueueCompression = useCompressionStore((state) => state.enqueueCompression);
   const keepOriginal = useCompressionStore((state) => state.keepOriginal);
   const deleteOriginal = useCompressionStore((state) => state.deleteOriginal);
@@ -224,29 +231,34 @@ export function CompressRunScreen() {
               <SummaryRow label={t("compression.compressedSizeLabel")} value={formatBytes(job?.finalSizeBytes ?? compressed?.compressedBytes ?? 0)} />
               <SummaryRow label={t("compression.youSavedLabel")} value={formatBytes(job?.savedBytes ?? compressed?.savedBytes ?? 0)} valueColor={theme.green} />
             </View>
-            <Text selectable style={{ color: theme.text, fontSize: 15, lineHeight: 21, fontWeight: "700", textAlign: "center" }}>
-              {t("compression.singleDecisionPrompt")}
-            </Text>
+            {!isCustom ? (
+              <Text selectable style={{ color: theme.text, fontSize: 15, lineHeight: 21, fontWeight: "700", textAlign: "center" }}>
+                {t("compression.singleDecisionPrompt")}
+              </Text>
+            ) : null}
             {deleteError ? (
               <Text selectable style={{ color: theme.red, fontSize: 13, fontWeight: "800", textAlign: "center" }}>
                 {deleteError}
               </Text>
             ) : null}
             <View style={{ gap: 11 }}>
-              <Pressable
-                disabled={deciding}
-                onPress={handleDeletePress}
-                style={{ minHeight: 52, borderRadius: 14, backgroundColor: `${theme.red}18`, borderWidth: 1, borderColor: theme.red, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, opacity: deciding ? 0.6 : 1 }}
-              >
-                <Trash2 size={18} color={theme.red} />
-                <Text style={{ color: theme.red, fontSize: 16, fontWeight: "900" }}>{t("compression.deleteSingleOriginalButton")}</Text>
-              </Pressable>
+              {/* Custom files: Keep-only (the source is a picker cache copy). */}
+              {!isCustom ? (
+                <Pressable
+                  disabled={deciding}
+                  onPress={handleDeletePress}
+                  style={{ minHeight: 52, borderRadius: 14, backgroundColor: `${theme.red}18`, borderWidth: 1, borderColor: theme.red, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, opacity: deciding ? 0.6 : 1 }}
+                >
+                  <Trash2 size={18} color={theme.red} />
+                  <Text style={{ color: theme.red, fontSize: 16, fontWeight: "900" }}>{t("compression.deleteSingleOriginalButton")}</Text>
+                </Pressable>
+              ) : null}
               <Pressable
                 disabled={deciding}
                 onPress={handleKeep}
                 style={{ minHeight: 52, borderRadius: 14, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", opacity: deciding ? 0.6 : 1 }}
               >
-                <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>{t("compression.keepOriginalButton")}</Text>
+                <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>{isCustom ? t("common.done") : t("compression.keepOriginalButton")}</Text>
               </Pressable>
             </View>
             <Text selectable style={{ color: theme.muted, fontSize: 12, lineHeight: 16, textAlign: "center" }}>

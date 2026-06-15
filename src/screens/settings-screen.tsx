@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, Shield, Star, ToggleLeft, XCircle } from "lucide-react-native";
+import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Gauge, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, Star, ToggleLeft, XCircle } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AppState, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -12,7 +12,8 @@ import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { accentColors } from "@/theme/colors";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { languageOptions } from "@/i18n/languages";
-import { AfterCompressionOriginalPolicy, LanguagePreference } from "@/models/photo";
+import { CompressionQuality, LanguagePreference } from "@/models/photo";
+import { compressionProfiles } from "@/services/compression-service";
 import { AppLockService, BiometricKind, PASSCODE_LENGTH } from "@/services/app-lock-service";
 import { PermissionService } from "@/services/permission-service";
 import { ReminderNotificationService } from "@/services/reminder-notification-service";
@@ -28,7 +29,7 @@ export function SettingsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
-  const [policyDialogVisible, setPolicyDialogVisible] = useState(false);
+  const [qualityDialogVisible, setQualityDialogVisible] = useState(false);
   const [passcodeFlow, setPasscodeFlow] = useState<PasscodeFlow | null>(null);
   const [bioCap, setBioCap] = useState<BioCapability>({ moduleAvailable: false, available: false, kind: "generic" });
   const [notifStatus, setNotifStatus] = useState<"granted" | "denied" | "undetermined">("undetermined");
@@ -160,9 +161,9 @@ export function SettingsScreen() {
       : t("settings.biometricSubtitle");
   const appLockSubtitle = AppLockService.isSecureStoreAvailable() ? t("settings.appLockSubtitle") : t("settings.featureAfterUpdate");
 
-  const handleSelectPolicy = (policy: AfterCompressionOriginalPolicy) => {
-    update("afterCompressionOriginalPolicy", policy);
-    setPolicyDialogVisible(false);
+  const handleSelectQuality = (quality: CompressionQuality) => {
+    update("defaultCompressionQuality", quality);
+    setQualityDialogVisible(false);
   };
 
   const setLanguage = (language: LanguagePreference) => {
@@ -226,7 +227,13 @@ export function SettingsScreen() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.compression")}>
-        <SettingsRow icon={Shield} title={t("settings.afterCompression")} subtitle={formatOriginalPolicy(settings.afterCompressionOriginalPolicy, t)} onPress={() => setPolicyDialogVisible(true)} trailing={chevron} />
+        <SettingsRow
+          icon={Gauge}
+          title={t("compressionDetail.compressionQualityHeading")}
+          subtitle={`${compressionProfiles[settings.defaultCompressionQuality].label} · ${compressionProfiles[settings.defaultCompressionQuality].fidelity}`}
+          onPress={() => setQualityDialogVisible(true)}
+          trailing={chevron}
+        />
       </SettingsSection>
 
       <SettingsSection title={t("settings.support")}>
@@ -257,11 +264,11 @@ export function SettingsScreen() {
         onSelect={setLanguage}
         onCancel={() => setLanguagePickerVisible(false)}
       />
-      <AfterCompressionDialog
-        visible={policyDialogVisible}
-        currentPolicy={settings.afterCompressionOriginalPolicy}
-        onSelect={handleSelectPolicy}
-        onCancel={() => setPolicyDialogVisible(false)}
+      <CompressionQualityDialog
+        visible={qualityDialogVisible}
+        currentQuality={settings.defaultCompressionQuality}
+        onSelect={handleSelectQuality}
+        onCancel={() => setQualityDialogVisible(false)}
       />
       <PasscodeDialog
         flow={passcodeFlow}
@@ -448,99 +455,67 @@ function PasscodeDialog({
   );
 }
 
-function AfterCompressionDialog({
+function CompressionQualityDialog({
   visible,
-  currentPolicy,
+  currentQuality,
   onSelect,
   onCancel
 }: {
   visible: boolean;
-  currentPolicy: AfterCompressionOriginalPolicy;
-  onSelect: (policy: AfterCompressionOriginalPolicy) => void;
+  currentQuality: CompressionQuality;
+  onSelect: (quality: CompressionQuality) => void;
   onCancel: () => void;
 }) {
   const theme = useAppTheme();
   const { t } = useTranslation();
-  // "options" lists the three policies; selecting the destructive one routes to
-  // an in-app confirm step (replaces the old nested native Alert).
-  const [view, setView] = useState<"options" | "confirmDelete">("options");
-
-  useEffect(() => {
-    if (visible) setView("options");
-  }, [visible]);
-
-  const options: { policy: AfterCompressionOriginalPolicy; label: string; destructive?: boolean }[] = [
-    { policy: "ask_every_time", label: t("policy.askEveryTime") },
-    { policy: "keep_original", label: t("policy.keepOriginal") },
-    { policy: "delete_original_after_success", label: t("policy.deleteOriginalVerified"), destructive: true }
-  ];
+  const options: CompressionQuality[] = ["low", "medium", "high"];
 
   return (
     <Modal transparent animationType="fade" visible={visible} onRequestClose={onCancel}>
       <View style={{ flex: 1, backgroundColor: "rgba(15,23,42,0.42)", justifyContent: "center", padding: 24 }}>
         <View style={{ backgroundColor: theme.surface, borderRadius: 20, padding: 18, gap: 14 }}>
-          {view === "options" ? (
-            <>
-              <View style={{ gap: 5, paddingHorizontal: 2 }}>
-                <Text selectable style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>{t("policy.title")}</Text>
-                <Text selectable style={{ color: theme.muted, fontSize: 14, lineHeight: 20 }}>{t("policy.message")}</Text>
-              </View>
-              <View style={{ gap: 8 }}>
-                {options.map((option) => {
-                  const selected = currentPolicy === option.policy;
-                  const tint = option.destructive ? theme.red : theme.accent;
-                  return (
-                    <Pressable
-                      key={option.policy}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => (option.destructive ? setView("confirmDelete") : onSelect(option.policy))}
-                      style={{
-                        minHeight: 52,
-                        borderRadius: 12,
-                        paddingHorizontal: 14,
-                        paddingVertical: 10,
-                        backgroundColor: selected ? theme.surfaceSoft : "transparent",
-                        borderWidth: 1,
-                        borderColor: selected ? tint : theme.border,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 12
-                      }}
-                    >
-                      <Text selectable style={{ flex: 1, color: option.destructive ? theme.red : theme.text, fontSize: 15, fontWeight: "700" }}>
-                        {option.label}
-                      </Text>
-                      {selected ? (
-                        <Check size={20} color={tint} strokeWidth={3} />
-                      ) : option.destructive ? (
-                        <ChevronRight size={18} color={theme.red} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <Pressable accessibilityRole="button" accessibilityLabel={t("common.cancel")} onPress={onCancel} style={{ alignSelf: "flex-end", paddingHorizontal: 14, paddingVertical: 8 }}>
-                <Text style={{ color: theme.accent, fontSize: 16, fontWeight: "900" }}>{t("common.cancel")}</Text>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <View style={{ gap: 8, paddingHorizontal: 2 }}>
-                <Text selectable style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>{t("policy.confirmTitle")}</Text>
-                <Text selectable style={{ color: theme.muted, fontSize: 14, lineHeight: 20 }}>{t("policy.confirmMessage")}</Text>
-              </View>
-              <View style={{ flexDirection: "row", gap: 10, justifyContent: "flex-end", alignItems: "center" }}>
-                <Pressable accessibilityRole="button" onPress={() => setView("options")} style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-                  <Text style={{ color: theme.muted, fontSize: 16, fontWeight: "700" }}>{t("common.cancel")}</Text>
+          <View style={{ gap: 5, paddingHorizontal: 2 }}>
+            <Text selectable style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>{t("compressionDetail.compressionQualityHeading")}</Text>
+          </View>
+          <View style={{ gap: 8 }}>
+            {options.map((option) => {
+              const profile = compressionProfiles[option];
+              const selected = currentQuality === option;
+              return (
+                <Pressable
+                  key={option}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  onPress={() => onSelect(option)}
+                  style={{
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    backgroundColor: selected ? theme.surfaceSoft : "transparent",
+                    borderWidth: 1,
+                    borderColor: selected ? theme.accent : theme.border,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12
+                  }}
+                >
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text selectable style={{ color: theme.text, fontSize: 15, fontWeight: "900" }}>
+                      {profile.label} · {profile.fidelity}
+                    </Text>
+                    <Text selectable style={{ color: theme.muted, fontSize: 12, lineHeight: 17 }}>
+                      {profile.description}
+                    </Text>
+                  </View>
+                  {selected ? <Check size={20} color={theme.accent} strokeWidth={3} /> : null}
                 </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => onSelect("delete_original_after_success")} style={{ paddingVertical: 12, paddingHorizontal: 18, backgroundColor: theme.red, borderRadius: 12 }}>
-                  <Text style={{ color: "#fff", fontSize: 15, fontWeight: "800" }}>{t("policy.enableAutoDelete")}</Text>
-                </Pressable>
-              </View>
-            </>
-          )}
+              );
+            })}
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("common.cancel")} onPress={onCancel} style={{ alignSelf: "flex-end", paddingHorizontal: 14, paddingVertical: 8 }}>
+            <Text style={{ color: theme.accent, fontSize: 16, fontWeight: "900" }}>{t("common.cancel")}</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -616,10 +591,4 @@ function LanguagePickerDialog({
       </View>
     </Modal>
   );
-}
-
-function formatOriginalPolicy(policy: AfterCompressionOriginalPolicy, t: (key: string) => string) {
-  if (policy === "keep_original") return t("policy.keepOriginal");
-  if (policy === "delete_original_after_success") return t("policy.deleteOriginalVerified");
-  return t("policy.askEveryTime");
 }

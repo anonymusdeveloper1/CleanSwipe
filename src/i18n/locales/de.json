@@ -1,4 +1,11 @@
 {
+  "customCompress": {
+    "button": "Eigene Datei komprimieren",
+    "adTitle": "Beliebige Datei komprimieren",
+    "adBody": "Wähle ein Foto oder Video zum Komprimieren. Sieh dir eine kurze Anzeige an, um eines gratis freizuschalten.",
+    "freeLeft": "{{count}} von {{limit}} heute gratis",
+    "needsUpdate": "Diese Funktion benötigt einen aktualisierten App-Build. Bitte installiere die neueste Version neu."
+  },
   "common": {
     "appName": "SwipeClean",
     "loadingMediaLibrary": "Deine Mediathek wird geladen...",

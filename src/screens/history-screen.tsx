@@ -1,19 +1,25 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { ArrowUp, BrushCleaning, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
+import { ArrowUp, BrushCleaning, FileUp, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { AdBanner } from "@/components/ad-banner";
 import { AppHeader } from "@/components/app-header";
 import { CachedImage } from "@/components/cached-image";
 import { CompressionFilterDialog } from "@/components/compression-filter-dialog";
+import { CustomCompressAdDialog } from "@/components/custom-compress-ad-dialog";
 import { EmptyState } from "@/components/empty-state";
+import { RewardedAdService } from "@/features/ads/rewarded.service";
 import { MediaCompressionOverlay } from "@/features/compression/components/media-compression-overlay";
 import { useCompressionStore } from "@/features/compression/compression.store";
+import { useCustomCompressStore } from "@/features/compression/custom-compress.store";
+import { FREE_DAILY_CUSTOM_LIMIT, useFreeCustomCompressQuotaStore } from "@/features/compression/free-custom-compress-quota.store";
+import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { MediaTypeFilter, PhotoAsset } from "@/models/photo";
 import { CompressionService } from "@/services/compression-service";
+import { isCustomPickerAvailable, pickMediaForCompression } from "@/services/custom-media-picker";
 import { PermissionService } from "@/services/permission-service";
 import { useAppStore } from "@/store/app-store";
 import { IndexedMediaAsset, MediaIndexStatus, useIndexedMediaAssets, useMediaIndexStore } from "@/store/media-index-store";
@@ -51,6 +57,10 @@ export function HistoryScreen() {
   const startFullScan = useMediaIndexStore((state) => state.startFullScan);
   const completedCompressionMediaIds = useCompressionStore((state) => state.completedMediaIds);
   const latestCompressionError = useCompressionStore((state) => state.lastErrorMessage);
+  const { canUseFeature } = useFeatureAccess();
+  const defaultCompressionQuality = useAppStore((state) => state.settings.defaultCompressionQuality);
+  const [customAdVisible, setCustomAdVisible] = useState(false);
+  const [customRemaining, setCustomRemaining] = useState(0);
 
   useEffect(() => {
     if (hasHydrated) {
@@ -140,6 +150,50 @@ export function HistoryScreen() {
       ignoredSourceIds: doneSourceKey ? doneSourceKey.split("|") : []
     });
   };
+
+  // Open the picker, then route the chosen file into the foreground compress-run
+  // flow (custom=1 → Keep-only). Custom files aren't in the media index, so the
+  // synthetic asset is carried via the custom-compress store.
+  const runCustomPick = useCallback(async () => {
+    const asset = await pickMediaForCompression();
+    if (!asset) return; // cancelled or unavailable
+    useCustomCompressStore.getState().setTarget(asset);
+    router.push(
+      `/compress-run?id=${encodeURIComponent(asset.id)}&quality=${defaultCompressionQuality ?? "medium"}&origin=${encodeURIComponent("/(tabs)/history")}&custom=1` as never
+    );
+  }, [defaultCompressionQuality]);
+
+  // Pro: pick straight away. Free: gate behind a daily quota (1/day) + a rewarded
+  // ad, mirroring the free-video flow. The picker is a native module, so on a
+  // pre-rebuild APK we show a "needs an updated build" notice instead.
+  const handleCustomCompress = useCallback(() => {
+    if (!isCustomPickerAvailable()) {
+      Alert.alert(t("customCompress.needsUpdate"));
+      return;
+    }
+    if (canUseFeature("customCompression")) {
+      void runCustomPick();
+      return;
+    }
+    const remaining = useFreeCustomCompressQuotaStore.getState().remainingToday();
+    if (remaining <= 0) {
+      router.push("/premium");
+      return;
+    }
+    setCustomRemaining(remaining);
+    setCustomAdVisible(true);
+  }, [canUseFeature, runCustomPick, t]);
+
+  const handleCustomWatchAd = useCallback(async () => {
+    setCustomAdVisible(false);
+    const earned = await RewardedAdService.showForReward();
+    if (!earned) {
+      Alert.alert(t("compressionDetail.adNotReady"));
+      return;
+    }
+    useFreeCustomCompressQuotaStore.getState().recordCustomCompression();
+    void runCustomPick();
+  }, [runCustomPick, t]);
 
   if (!hasHydrated) {
     return (
@@ -237,6 +291,26 @@ export function HistoryScreen() {
                   {filterSummary}
                 </Text>
               </Pressable>
+              {/* Pick any photo/video to compress (Pro: unlimited; Free: 1/day via a rewarded ad). */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("customCompress.button")}
+                onPress={handleCustomCompress}
+                style={{
+                  minHeight: 46,
+                  borderRadius: 10,
+                  paddingHorizontal: 14,
+                  backgroundColor: theme.surfaceSoft,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8
+                }}
+              >
+                <FileUp size={18} color={theme.accent} />
+                <Text style={{ color: theme.text, fontSize: 15, fontWeight: "900" }}>{t("customCompress.button")}</Text>
+              </Pressable>
               {latestCompressionError ? (
                 <Text selectable style={{ color: theme.red, fontSize: 15, fontWeight: "700" }}>
                   {latestCompressionError}
@@ -280,6 +354,13 @@ export function HistoryScreen() {
         onSelectMediaType={(mediaType) => setFilter({ mediaType, monthKey: "all" })}
         onSelectMonth={(monthKey) => setFilter((prev) => ({ ...prev, monthKey }))}
         onClose={() => setFilterVisible(false)}
+      />
+      <CustomCompressAdDialog
+        visible={customAdVisible}
+        remaining={customRemaining}
+        limit={FREE_DAILY_CUSTOM_LIMIT}
+        onCancel={() => setCustomAdVisible(false)}
+        onConfirm={handleCustomWatchAd}
       />
     </View>
   );

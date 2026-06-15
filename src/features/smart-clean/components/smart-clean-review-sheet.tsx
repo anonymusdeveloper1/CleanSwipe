@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { Check, ShieldCheck } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, BackHandler, FlatList, Pressable, Text, View, useWindowDimensions } from "react-native";
@@ -6,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { MediaThumbnail } from "@/components/media-thumbnail";
+import { Thumbnail } from "@/components/thumbnail";
 import { isVideoUri } from "@/components/video-thumb-placeholder";
 import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-review-store";
 import { SmartCleanItem } from "@/features/smart-clean/smart-clean.types";
@@ -183,7 +183,8 @@ export function SmartCleanReviewSheet() {
           showsVerticalScrollIndicator={false}
           initialNumToRender={columns * 4}
           maxToRenderPerBatch={columns * 4}
-          windowSize={7}
+          windowSize={5}
+          removeClippedSubviews
           onEndReached={loadMore}
           onEndReachedThreshold={0.6}
           ListFooterComponent={hasMore ? <ActivityIndicator color={theme.accent} style={{ paddingVertical: 14 }} /> : null}
@@ -253,7 +254,7 @@ const ReviewCell = memo(function ReviewCell({
         isVideoUri(item.uri) ? (
           <MediaThumbnail uri={item.uri} id={item.mediaId} mediaType="video" contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ width: cell, height: cell }} />
         ) : (
-          <Image source={{ uri: item.uri }} style={{ width: cell, height: cell }} contentFit="cover" cachePolicy="memory-disk" transition={120} recyclingKey={item.uri} />
+          <Thumbnail sourceUri={item.uri} cacheKey={item.mediaId} cellDp={cell} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ width: cell, height: cell }} />
         )
       ) : null}
       {isKeeper ? (

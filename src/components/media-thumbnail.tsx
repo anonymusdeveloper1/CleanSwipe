@@ -1,19 +1,19 @@
 import { ImageContentFit } from "expo-image";
 import { Play } from "lucide-react-native";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
-import { CachedImage } from "@/components/cached-image";
+import { Thumbnail } from "@/components/thumbnail";
 import { VideoThumbPlaceholder, isVideoUri } from "@/components/video-thumb-placeholder";
 import { selectIndexedMediaAsset, useMediaIndexStore } from "@/store/media-index-store";
 
-// A video's first frame is decoded at FULL resolution (expo-image/Glide and
-// react-native-compressor both use MediaMetadataRetriever.getFrameAtTime). A ≤4K
-// frame is ~33 MB; an 8K frame is ~140 MB (ARGB_8888). With android:largeHeap="true"
-// (~512 MB heap, set in AndroidManifest.xml) an 8K frame fits with headroom, so we
-// decode real thumbnails up to 8K. We keep a ceiling rather than removing the gate
-// so a pathological >8K source can't blow even the larger heap; those still get a
-// non-decoding placeholder. (Resolution-independent fix would be a native
-// getScaledFrameAtTime extractor — deferred.) Keep in sync with compression-service.
-const SAFE_MAX_DIMENSION = 8192;
+// A video's first frame is decoded at FULL resolution by the native extractor
+// (MediaMetadataRetriever.getFrameAtTime). A ≤4K frame is ~33 MB; an 8K frame is
+// ~140 MB+ (ARGB_8888). Even though ThumbnailService immediately downscales the
+// extracted frame to a tiny cached JPEG, that ONE full-res frame still lands in
+// native memory during extraction — and several in flight during a fast scroll
+// is what OOM'd the app. So we keep a ceiling and route only ≤4K videos through
+// the extractor; larger sources get a non-decoding placeholder. (A resolution-
+// independent fix would be a native getScaledFrameAtTime extractor — deferred.)
+const SAFE_MAX_DIMENSION = 4096;
 
 type Props = {
   uri: string;
@@ -29,10 +29,11 @@ type Props = {
 };
 
 /**
- * Media thumbnail for grids/lists. Photos render straight through CachedImage.
- * Videos render their frame ONLY when it is safe to decode (≤4K source), with a
+ * Media thumbnail for grids/lists. Photos and (≤4K) video frames both render
+ * through ThumbnailService via <Thumbnail/> — a small, disk-cached, downscaled
+ * copy, so the decoder never receives a full-resolution source. Videos get a
  * play badge overlaid; oversized or unknown-resolution videos fall back to a
- * placeholder tile (also play-badged) so they can never OOM the app.
+ * non-decoding placeholder tile (also play-badged) so they can never OOM.
  */
 export function MediaThumbnail({ uri, id, mediaType, width, height, contentFit = "cover", style, backgroundColor }: Props) {
   const isVideo = mediaType === "video" || isVideoUri(uri);
@@ -41,7 +42,7 @@ export function MediaThumbnail({ uri, id, mediaType, width, height, contentFit =
   );
 
   if (!isVideo) {
-    return <CachedImage uri={uri} contentFit={contentFit} style={style} backgroundColor={backgroundColor} />;
+    return <Thumbnail sourceUri={uri} cacheKey={id ?? uri} contentFit={contentFit} style={style} backgroundColor={backgroundColor} />;
   }
 
   const w = width ?? indexed?.width;
@@ -54,7 +55,14 @@ export function MediaThumbnail({ uri, id, mediaType, width, height, contentFit =
 
   return (
     <View style={[{ overflow: "hidden" }, style]}>
-      <CachedImage uri={uri} allowVideo contentFit={contentFit} style={StyleSheet.absoluteFill} backgroundColor={backgroundColor} />
+      <Thumbnail
+        sourceUri={uri}
+        cacheKey={id ?? uri}
+        isVideo
+        contentFit={contentFit}
+        backgroundColor={backgroundColor}
+        style={StyleSheet.absoluteFill}
+      />
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
         <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center" }}>
           <Play size={17} color="#fff" fill="#fff" />

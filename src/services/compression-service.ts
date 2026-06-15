@@ -57,12 +57,16 @@ export const compressionProfiles: Record<CompressionQuality, CompressionProfile>
 
 export const LARGE_PHOTO_MIN_BYTES = 5 * 1024 * 1024;
 export const LARGE_PHOTO_MIN_PIXELS = 8_000_000;
-export const VIDEO_MIN_BYTES = 20 * 1024 * 1024;
-// A video already at/below this bitrate is treated as already-optimized and is
-// NOT offered for compression: re-encoding it saves little and (with our target
-// bitrate) often can't beat the source, so it would just waste time and fail the
-// no-shrink check. Camera footage is far above this (1080p ≈ 17 Mbps, 4K ≈ 50
-// Mbps); already-compressed downloads/social clips sit below it.
+// A video is offered for compression if it is large by SIZE (>= this) OR has a
+// high enough bitrate (see below). The size floor catches long / lower-bitrate
+// clips that still shrink — the re-encode always targets below the source
+// bitrate, so they compress (just with a bit more visible quality loss). This
+// floor also doubles as the fallback when a video's duration/bitrate is unknown.
+export const VIDEO_MIN_BYTES = 8 * 1024 * 1024;
+// Bitrate at/above which even a small-on-disk clip is worth compressing — e.g. a
+// short 4K clip is tiny in MB but high bitrate. Camera footage is far above this
+// (1080p ≈ 17 Mbps, 4K ≈ 50 Mbps). A clip below this AND under the size floor is
+// treated as already-optimized and hidden.
 export const VIDEO_MIN_COMPRESSIBLE_BITRATE = 4_000_000; // 4 Mbps
 
 // Max source dimension we will decode a video frame from. Bounded by the heap:
@@ -81,12 +85,14 @@ export type CompressOptions = {
 export const CompressionService = {
   isCompressible(asset: PhotoAsset) {
     if (asset.mediaType === "video") {
-      const bitrate = getVideoBitrate(asset);
-      // Bitrate is the real signal: only re-encode footage whose bitrate is high
-      // enough that targeting a lower one actually shrinks it. When duration is
-      // unknown (bitrate 0) fall back to a generous size threshold.
-      if (bitrate > 0) return bitrate >= VIDEO_MIN_COMPRESSIBLE_BITRATE;
-      return getOriginalBytes(asset) >= VIDEO_MIN_BYTES;
+      // Large by SIZE or high BITRATE. Size catches long / lower-bitrate clips
+      // that still shrink (the re-encode always targets below the source
+      // bitrate); bitrate catches short clips that are small on disk but
+      // high-bitrate (e.g. a brief 4K clip). The size check also covers the
+      // unknown-duration case — getOriginalBytes estimates from pixels when the
+      // real size is missing.
+      if (getOriginalBytes(asset) >= VIDEO_MIN_BYTES) return true;
+      return getVideoBitrate(asset) >= VIDEO_MIN_COMPRESSIBLE_BITRATE;
     }
     if (asset.mediaType === "photo") {
       const pixels = (asset.width ?? 0) * (asset.height ?? 0);
