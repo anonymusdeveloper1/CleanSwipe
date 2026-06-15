@@ -1,12 +1,11 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { ArrowUp, BrushCleaning, Images, Play, RefreshCw, Settings, SlidersHorizontal } from "lucide-react-native";
+import { ArrowUp, BrushCleaning, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AdBanner } from "@/components/ad-banner";
-import { AppLogo } from "@/components/app-logo";
+import { AppHeader } from "@/components/app-header";
 import { CachedImage } from "@/components/cached-image";
 import { CompressionFilterDialog } from "@/components/compression-filter-dialog";
 import { EmptyState } from "@/components/empty-state";
@@ -145,7 +144,7 @@ export function HistoryScreen() {
   if (!hasHydrated) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <CompactCleanupHeader />
+        <AppHeader />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14 }}>
           <ActivityIndicator color={theme.accent} size="large" />
           <Text selectable style={{ color: theme.muted, fontSize: 16, fontWeight: "800", textAlign: "center" }}>
@@ -159,7 +158,7 @@ export function HistoryScreen() {
   if (needsMediaPermission) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <CompactCleanupHeader />
+        <AppHeader />
         <EmptyState
           icon={BrushCleaning}
           title={t("permissions.mediaTitle")}
@@ -199,7 +198,7 @@ export function HistoryScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         ListHeaderComponent={
           <View>
-            <CompactCleanupHeader />
+            <AppHeader />
             <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 14, gap: 10 }}>
               <View style={{ gap: 5 }}>
                 <Text selectable style={{ color: theme.text, fontSize: 24, lineHeight: 29, fontWeight: "900" }}>
@@ -368,33 +367,6 @@ function getBackgroundSavings(status: MediaIndexStatus, estimatedSavedBytes: num
   };
 }
 
-function CompactCleanupHeader() {
-  const theme = useAppTheme();
-  const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
-
-  return (
-    <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 20, paddingBottom: 12 }}>
-      {/* Brand lockup (logo + wordmark) left-aligned; settings on the right. */}
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 9, flexShrink: 1 }}>
-          <AppLogo size={28} color={theme.accent} />
-          <Text selectable numberOfLines={1} style={{ color: theme.accent, fontSize: 24, fontWeight: "900", flexShrink: 1 }}>
-            {t("common.appName")}
-          </Text>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("common.openSettings")}
-          onPress={() => router.push("/settings")}
-          style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}
-        >
-          <Settings size={27} color={theme.text} strokeWidth={2.4} />
-        </Pressable>
-      </View>
-    </View>
-  );
-}
 
 const MediaCard = memo(function MediaCard({ asset, width }: { asset: IndexedMediaAsset; width: number }) {
   const theme = useAppTheme();

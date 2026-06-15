@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import { useMemo } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/empty-state";
 import { StatsCard } from "@/components/stats-card";
@@ -14,7 +14,7 @@ import {
 } from "@/features/advanced-stats/cleanup-report.selectors";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useCleanupEventsStore } from "@/store/cleanup-events-store";
-import { BarChart3 } from "lucide-react-native";
+import { AlertTriangle, Archive, ArrowDown, BarChart3, Trash2, Wand2, type LucideIcon } from "lucide-react-native";
 import { formatBytes } from "@/utils/format";
 import { formatDate } from "@/utils/date";
 
@@ -78,8 +78,8 @@ export function AdvancedStatsSection() {
 
           <StorageTrendChart trend={trend} />
 
-          <HistoryList title={t("advancedStats.cleanupHistory")} events={cleanupHistory} renderLabel={(e) => cleanupRowLabel(e, t)} />
-          <HistoryList title={t("advancedStats.compressionHistory")} events={compressionHistory} renderLabel={(e) => compressionRowLabel(e, t)} />
+          <HistoryList title={t("advancedStats.cleanupHistory")} events={cleanupHistory} renderLabel={(e) => cleanupRowLabel(e, t)} emptyIcon={Trash2} />
+          <HistoryList title={t("advancedStats.compressionHistory")} events={compressionHistory} renderLabel={(e) => compressionRowLabel(e, t)} emptyIcon={Archive} />
         </>
       )}
     </View>
@@ -115,39 +115,106 @@ function StorageTrendChart({ trend }: { trend: { weeksAgo: number; reclaimedByte
   );
 }
 
-function HistoryList({ title, events, renderLabel }: { title: string; events: CleanupEvent[]; renderLabel: (event: CleanupEvent) => string }) {
+function HistoryList({
+  title,
+  events,
+  renderLabel,
+  emptyIcon
+}: {
+  title: string;
+  events: CleanupEvent[];
+  renderLabel: (event: CleanupEvent) => string;
+  emptyIcon: LucideIcon;
+}) {
   const theme = useAppTheme();
   const { t } = useTranslation();
+  const EmptyIcon = emptyIcon;
   return (
     <View style={{ gap: 8 }}>
       <Text selectable style={{ color: theme.text, fontSize: 16, fontWeight: "900" }}>
         {title}
       </Text>
-      {events.length === 0 ? (
-        <Text selectable style={{ color: theme.faint, fontSize: 13, fontWeight: "700" }}>
-          {t("advancedStats.noEntries")}
-        </Text>
-      ) : (
-        events.map((event) => (
-          <View key={event.id} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: theme.border }}>
-            <Text selectable numberOfLines={1} style={{ flex: 1, color: theme.text, fontSize: 14, fontWeight: "700" }}>
-              {renderLabel(event)}
-            </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              {(event.bytes ?? 0) > 0 ? (
-                <Text selectable style={{ color: theme.green, fontSize: 13, fontWeight: "800" }}>
-                  {formatBytes(event.bytes)}
-                </Text>
-              ) : null}
-              <Text selectable style={{ color: theme.muted, fontSize: 12, fontWeight: "700" }}>
-                {formatDate(event.at)}
-              </Text>
+      <View style={{ backgroundColor: theme.surfaceSoft, borderRadius: 14, borderWidth: 1, borderColor: theme.border, paddingHorizontal: 4, paddingVertical: 4 }}>
+        {events.length === 0 ? (
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 18 }}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: withAlpha(theme.faint, 0.18) }}>
+              <EmptyIcon size={16} color={theme.faint} />
             </View>
+            <Text selectable style={{ color: theme.faint, fontSize: 13, fontWeight: "700" }}>
+              {t("advancedStats.noEntries")}
+            </Text>
           </View>
-        ))
-      )}
+        ) : (
+          events.map((event, index) => {
+            const { Icon, colorKey } = eventVisual(event);
+            const color = theme[colorKey];
+            const isLast = index === events.length - 1;
+            return (
+              <View
+                key={event.id}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+                  borderBottomColor: theme.border
+                }}
+              >
+                <View style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: withAlpha(color, 0.14) }}>
+                  <Icon size={18} strokeWidth={2.2} color={color} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text selectable numberOfLines={1} style={{ color: theme.text, fontSize: 14, fontWeight: "800" }}>
+                    {renderLabel(event)}
+                  </Text>
+                  <Text selectable style={{ color: theme.muted, fontSize: 12, fontWeight: "600" }}>
+                    {formatDate(event.at)}
+                  </Text>
+                </View>
+                {(event.bytes ?? 0) > 0 ? (
+                  <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 9, backgroundColor: withAlpha(theme.green, 0.14) }}>
+                    <Text selectable style={{ color: theme.green, fontSize: 12, fontWeight: "800", fontVariant: ["tabular-nums"] }}>
+                      {formatBytes(event.bytes)}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            );
+          })
+        )}
+      </View>
     </View>
   );
+}
+
+// Appends an alpha channel to a 6-digit hex (theme tokens are all #RRGGBB) to make
+// soft tinted badges without new color tokens; non-hex input is returned as-is.
+function withAlpha(hex: string, alpha: number): string {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+  const a = Math.round(Math.max(0, Math.min(alpha, 1)) * 255)
+    .toString(16)
+    .padStart(2, "0");
+  return `${hex}${a}`;
+}
+
+// Maps each cleanup/compression event type to its badge icon + theme color key.
+function eventVisual(event: CleanupEvent): { Icon: LucideIcon; colorKey: "red" | "green" | "accent" | "muted" } {
+  switch (event.type) {
+    case "smartCleanActionConfirmed":
+      return { Icon: Wand2, colorKey: "accent" };
+    case "itemCompressed":
+      return { Icon: Archive, colorKey: "green" };
+    case "originalDeletedAfterCompression":
+      return { Icon: ArrowDown, colorKey: "accent" };
+    case "compressionFailed":
+      return { Icon: AlertTriangle, colorKey: "red" };
+    case "itemDeleted":
+      return { Icon: Trash2, colorKey: "red" };
+    default:
+      return { Icon: Trash2, colorKey: "muted" };
+  }
 }
 
 function cleanupRowLabel(event: CleanupEvent, t: TFunction): string {

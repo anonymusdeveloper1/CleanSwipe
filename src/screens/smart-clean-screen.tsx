@@ -174,9 +174,10 @@ export function SmartCleanScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <AppHeader />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 28, gap: 14 }}>
-        <View style={{ gap: 4, paddingTop: 2 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 28 }}>
+        <AppHeader />
+        <View style={{ paddingHorizontal: 20, gap: 14 }}>
+          <View style={{ gap: 4, paddingTop: 2 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Wand2 size={24} color={theme.accent} />
             <Text selectable style={{ color: theme.text, fontSize: 24, fontWeight: "900" }}>
@@ -273,7 +274,8 @@ export function SmartCleanScreen() {
           );
         })}
 
-        <AdBanner />
+          <AdBanner />
+        </View>
       </ScrollView>
     </View>
   );

@@ -43,7 +43,7 @@ export function PremiumScreen() {
   const contentWidth = Math.min(width - horizontalPadding * 2, 680);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: theme.background }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingBottom: 28 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: theme.background }} contentInsetAdjustmentBehavior="never" contentContainerStyle={{ paddingBottom: 28 }}>
       <AppHeader />
       <View style={{ width: contentWidth, alignSelf: "center", gap: 16 }}>
         <UpgradeView />

@@ -167,7 +167,7 @@ export function CompressionDetailScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         style={{ flex: 1 }}
-        contentInsetAdjustmentBehavior="automatic"
+        contentInsetAdjustmentBehavior="never"
         contentContainerStyle={{ paddingBottom: (compact ? 88 : 104) + insets.bottom }}
       >
         <DetailHeader compact={compact} />

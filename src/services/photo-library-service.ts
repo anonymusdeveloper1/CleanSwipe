@@ -32,7 +32,6 @@ export interface IPhotoLibraryService {
   getPhotosPage(options?: GetPhotosOptions): Promise<GetPhotosPageResult>;
   getPhotos(options?: GetPhotosOptions): Promise<PhotoAsset[]>;
   deletePhotos(photoIds: string[]): Promise<DeletePhotosResult>;
-  getLargestPhotos(limit: number): Promise<PhotoAsset[]>;
 }
 
 export const PhotoLibraryService: IPhotoLibraryService = {
@@ -114,14 +113,6 @@ export const PhotoLibraryService: IPhotoLibraryService = {
         message: error instanceof Error ? error.message : "Unable to delete these photos."
       };
     }
-  },
-
-  async getLargestPhotos(limit: number) {
-    const photos = await this.getPhotos({ first: 250 });
-    return [...photos]
-      .filter((photo) => typeof photo.sizeBytes === "number")
-      .sort((a, b) => (b.sizeBytes ?? 0) - (a.sizeBytes ?? 0))
-      .slice(0, limit);
   }
 };
 

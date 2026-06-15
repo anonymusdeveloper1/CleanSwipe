@@ -315,11 +315,7 @@
     "totalUsed": "Total utilisé",
     "spaceCleared": "Espace libéré",
     "photosScanned": "Photos analysées",
-    "marked": "Marquées",
-    "largestPhotos": "Photos les plus volumineuses",
-    "viewAllLargest": "Voir toutes les plus volumineuses",
-    "emptyTitle": "Commencez à balayer pour voir vos statistiques de nettoyage.",
-    "emptyMessage": "Les analyses des photos les plus volumineuses apparaissent une fois les photos chargées."
+    "marked": "Marquées"
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -347,10 +343,6 @@
     "restore": "Restaurer",
     "keep": "Garder",
     "delete": "Supprimer"
-  },
-  "largest": {
-    "title": "Photos les plus volumineuses",
-    "deleteButtonLabel": "Marquer la photo pour suppression"
   },
   "reviewDelete": {
     "heading": "Marqués pour suppression",
@@ -479,7 +471,13 @@
     "deleteFailed": "L'original n'a pas été supprimé.",
     "failedFallback": "Impossible de compresser ce fichier.",
     "retry": "Réessayer",
-    "close": "Fermer"
+    "close": "Fermer",
+    "cancelTitle": "Annuler la compression ?",
+    "cancelMessage": "Ce fichier ne sera pas compressé. Votre original reste inchangé.",
+    "keepCompressing": "Continuer la compression",
+    "cancelConfirm": "Annuler la compression",
+    "original": "Original",
+    "compressed": "Compressé"
   },
   "delete": {
     "title": "Supprimer les photos sélectionnées ?",
@@ -499,7 +497,9 @@
     "deleted": "Supprimées",
     "favorite": "Favoris",
     "restored": "Restaurées",
-    "missed": "Manquées"
+    "missed": "Manquées",
+    "emptyTitle": "Aucun balayage pour l'instant",
+    "emptyMessage": "Commencez à balayer des photos pour voir votre répartition entre gardées, supprimées et favorites."
   },
   "media": {
     "allMedia": "Tous les médias",

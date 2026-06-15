@@ -66,7 +66,7 @@ export function SelectedPhotosScreen() {
           data={selectedPhotos}
           keyExtractor={(item) => item.id}
           numColumns={3}
-          contentInsetAdjustmentBehavior="automatic"
+          contentInsetAdjustmentBehavior="never"
           columnWrapperStyle={{ gap: tileGap }}
           contentContainerStyle={{ padding: 22, gap: tileGap, paddingBottom: 40 }}
           renderItem={({ item }) => {

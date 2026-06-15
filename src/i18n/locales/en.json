@@ -315,11 +315,7 @@
     "totalUsed": "Total Used",
     "spaceCleared": "Space Cleared",
     "photosScanned": "Photos Scanned",
-    "marked": "Marked",
-    "largestPhotos": "Largest Photos",
-    "viewAllLargest": "View All Largest",
-    "emptyTitle": "Start swiping to see your cleanup stats.",
-    "emptyMessage": "Largest photo insights appear once photos are loaded."
+    "marked": "Marked"
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -358,10 +354,6 @@
     "restore": "Restore",
     "keep": "Keep",
     "delete": "Delete"
-  },
-  "largest": {
-    "title": "Largest Photos",
-    "deleteButtonLabel": "Mark photo for deletion"
   },
   "reviewDelete": {
     "heading": "Marked for Deletion",
@@ -490,7 +482,13 @@
     "deleteFailed": "The original was not deleted.",
     "failedFallback": "We couldn't compress this file.",
     "retry": "Try again",
-    "close": "Close"
+    "close": "Close",
+    "cancelTitle": "Cancel compression?",
+    "cancelMessage": "This file won't be compressed. Your original stays unchanged.",
+    "keepCompressing": "Keep compressing",
+    "cancelConfirm": "Cancel compression",
+    "original": "Original",
+    "compressed": "Compressed"
   },
   "delete": {
     "title": "Delete selected photos?",
@@ -510,6 +508,8 @@
     "deleted": "Deleted",
     "favorite": "Favorite",
     "restored": "Restored",
-    "missed": "Missed"
+    "missed": "Missed",
+    "emptyTitle": "No swipes yet",
+    "emptyMessage": "Start swiping photos to see your keep, delete and favorite breakdown."
   }
 }

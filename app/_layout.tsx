@@ -85,7 +85,6 @@ export default function RootLayout() {
         />
         <Stack.Screen name="review-delete-list" options={{ presentation: "card" }} />
         <Stack.Screen name="selected-photos" options={{ presentation: "card" }} />
-        <Stack.Screen name="largest-photos" options={{ presentation: "card" }} />
         <Stack.Screen name="photo-preview" options={{ presentation: "modal" }} />
         <Stack.Screen name="compression-media-viewer" options={{ presentation: "transparentModal", animation: "fade", contentStyle: { backgroundColor: "transparent" } }} />
         <Stack.Screen name="compression-detail" options={{ presentation: "card" }} />

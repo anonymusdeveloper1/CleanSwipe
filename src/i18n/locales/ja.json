@@ -315,11 +315,7 @@
     "totalUsed": "合計使用量",
     "spaceCleared": "解放した容量",
     "photosScanned": "スキャンした写真",
-    "marked": "予定済み",
-    "largestPhotos": "最大の写真",
-    "viewAllLargest": "すべての最大を表示",
-    "emptyTitle": "スワイプを始めるとクリーンアップ統計が表示されます。",
-    "emptyMessage": "写真が読み込まれると、最大の写真のインサイトが表示されます。"
+    "marked": "予定済み"
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -347,10 +343,6 @@
     "restore": "復元",
     "keep": "保持",
     "delete": "削除"
-  },
-  "largest": {
-    "title": "最大の写真",
-    "deleteButtonLabel": "写真を削除予定にする"
   },
   "reviewDelete": {
     "heading": "削除予定",
@@ -479,7 +471,13 @@
     "deleteFailed": "元のファイルは削除されませんでした。",
     "failedFallback": "このファイルを圧縮できませんでした。",
     "retry": "再試行",
-    "close": "閉じる"
+    "close": "閉じる",
+    "cancelTitle": "圧縮をキャンセルしますか？",
+    "cancelMessage": "このファイルは圧縮されません。元のファイルはそのまま残ります。",
+    "keepCompressing": "圧縮を続ける",
+    "cancelConfirm": "圧縮をキャンセル",
+    "original": "オリジナル",
+    "compressed": "圧縮済み"
   },
   "delete": {
     "title": "選択した写真を削除しますか？",
@@ -499,7 +497,9 @@
     "deleted": "削除",
     "favorite": "お気に入り",
     "restored": "復元",
-    "missed": "未処理"
+    "missed": "未処理",
+    "emptyTitle": "まだスワイプがありません",
+    "emptyMessage": "写真をスワイプして、保持・削除・お気に入りの内訳を確認しましょう。"
   },
   "media": {
     "allMedia": "すべてのメディア",

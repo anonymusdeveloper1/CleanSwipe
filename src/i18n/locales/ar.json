@@ -315,11 +315,7 @@
     "totalUsed": "إجمالي المستخدم",
     "spaceCleared": "المساحة المحررة",
     "photosScanned": "الصور المفحوصة",
-    "marked": "محدد",
-    "largestPhotos": "أكبر الصور",
-    "viewAllLargest": "عرض كل الأكبر",
-    "emptyTitle": "ابدأ التمرير لرؤية إحصائيات التنظيف.",
-    "emptyMessage": "تظهر رؤى أكبر الصور بمجرد تحميل الصور."
+    "marked": "محدد"
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -347,10 +343,6 @@
     "restore": "استعادة",
     "keep": "احتفاظ",
     "delete": "حذف"
-  },
-  "largest": {
-    "title": "أكبر الصور",
-    "deleteButtonLabel": "تحديد الصورة للحذف"
   },
   "reviewDelete": {
     "heading": "المحدد للحذف",
@@ -479,7 +471,13 @@
     "deleteFailed": "لم يتم حذف الملف الأصلي.",
     "failedFallback": "تعذّر ضغط هذا الملف.",
     "retry": "إعادة المحاولة",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "cancelTitle": "إلغاء الضغط؟",
+    "cancelMessage": "لن يتم ضغط هذا الملف. سيبقى الأصل دون تغيير.",
+    "keepCompressing": "متابعة الضغط",
+    "cancelConfirm": "إلغاء الضغط",
+    "original": "الأصلي",
+    "compressed": "مضغوط"
   },
   "delete": {
     "title": "حذف الصور المحددة؟",
@@ -499,7 +497,9 @@
     "deleted": "محذوفة",
     "favorite": "مفضلة",
     "restored": "مستعادة",
-    "missed": "فائتة"
+    "missed": "فائتة",
+    "emptyTitle": "لا توجد عمليات سحب بعد",
+    "emptyMessage": "ابدأ بسحب الصور لرؤية توزيع الاحتفاظ والحذف والمفضلة."
   },
   "media": {
     "allMedia": "كل الوسائط",

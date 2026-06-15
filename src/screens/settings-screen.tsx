@@ -176,7 +176,7 @@ export function SettingsScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: theme.background }}
-      contentInsetAdjustmentBehavior="automatic"
+      contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingHorizontal: 18, paddingTop: insets.top + 16, gap: 18, paddingBottom: insets.bottom + 28 }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>

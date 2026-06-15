@@ -315,11 +315,7 @@
     "totalUsed": "Total Terpakai",
     "spaceCleared": "Ruang Dibersihkan",
     "photosScanned": "Foto Dipindai",
-    "marked": "Ditandai",
-    "largestPhotos": "Foto Terbesar",
-    "viewAllLargest": "Lihat Semua Terbesar",
-    "emptyTitle": "Mulai menggeser untuk melihat statistik pembersihan Anda.",
-    "emptyMessage": "Wawasan foto terbesar muncul setelah foto dimuat."
+    "marked": "Ditandai"
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -347,10 +343,6 @@
     "restore": "Pulihkan",
     "keep": "Simpan",
     "delete": "Hapus"
-  },
-  "largest": {
-    "title": "Foto Terbesar",
-    "deleteButtonLabel": "Tandai foto untuk dihapus"
   },
   "reviewDelete": {
     "heading": "Ditandai untuk Dihapus",
@@ -479,7 +471,13 @@
     "deleteFailed": "File asli tidak dihapus.",
     "failedFallback": "Tidak dapat mengompres file ini.",
     "retry": "Coba lagi",
-    "close": "Tutup"
+    "close": "Tutup",
+    "cancelTitle": "Batalkan kompresi?",
+    "cancelMessage": "File ini tidak akan dikompres. File asli Anda tetap tidak berubah.",
+    "keepCompressing": "Lanjutkan kompresi",
+    "cancelConfirm": "Batalkan kompresi",
+    "original": "Asli",
+    "compressed": "Terkompres"
   },
   "delete": {
     "title": "Hapus foto terpilih?",
@@ -499,7 +497,9 @@
     "deleted": "Dihapus",
     "favorite": "Favorit",
     "restored": "Dipulihkan",
-    "missed": "Terlewat"
+    "missed": "Terlewat",
+    "emptyTitle": "Belum ada gesekan",
+    "emptyMessage": "Mulai geser foto untuk melihat rincian disimpan, dihapus, dan favorit Anda."
   },
   "media": {
     "allMedia": "Semua Media",

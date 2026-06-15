@@ -315,11 +315,7 @@
     "totalUsed": "Gesamt belegt",
     "spaceCleared": "Speicher freigegeben",
     "photosScanned": "Gescannte Fotos",
-    "marked": "Markiert",
-    "largestPhotos": "Größte Fotos",
-    "viewAllLargest": "Alle größten ansehen",
-    "emptyTitle": "Wische los, um deine Aufräum-Statistik zu sehen.",
-    "emptyMessage": "Einblicke zu den größten Fotos erscheinen, sobald Fotos geladen sind."
+    "marked": "Markiert"
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -347,10 +343,6 @@
     "restore": "Wiederherstellen",
     "keep": "Behalten",
     "delete": "Löschen"
-  },
-  "largest": {
-    "title": "Größte Fotos",
-    "deleteButtonLabel": "Foto zum Löschen markieren"
   },
   "reviewDelete": {
     "heading": "Zum Löschen markiert",
@@ -479,7 +471,13 @@
     "deleteFailed": "Das Original wurde nicht gelöscht.",
     "failedFallback": "Wir konnten diese Datei nicht komprimieren.",
     "retry": "Erneut versuchen",
-    "close": "Schließen"
+    "close": "Schließen",
+    "cancelTitle": "Komprimierung abbrechen?",
+    "cancelMessage": "Diese Datei wird nicht komprimiert. Dein Original bleibt unverändert.",
+    "keepCompressing": "Weiter komprimieren",
+    "cancelConfirm": "Komprimierung abbrechen",
+    "original": "Original",
+    "compressed": "Komprimiert"
   },
   "delete": {
     "title": "Ausgewählte Fotos löschen?",
@@ -499,7 +497,9 @@
     "deleted": "Gelöscht",
     "favorite": "Favorit",
     "restored": "Wiederhergestellt",
-    "missed": "Verpasst"
+    "missed": "Verpasst",
+    "emptyTitle": "Noch keine Swipes",
+    "emptyMessage": "Beginne zu swipen, um deine Aufteilung aus Behalten, Löschen und Favoriten zu sehen."
   },
   "media": {
     "allMedia": "Alle Medien",
