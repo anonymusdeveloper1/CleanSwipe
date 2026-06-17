@@ -92,7 +92,8 @@ export function SmartCleanScreen() {
   }, [resultsByKey]);
 
   const handleScan = async () => {
-    if (limitedAccess) return;
+    // Runs under limited ("selected photos") access too — the scan operates on
+    // whatever the media index holds, which is exactly the accessible set.
     if (!useMediaIndexStore.getState().lastFullScanCompletedAt) {
       await useMediaIndexStore.getState().startFullScan();
     }
@@ -146,9 +147,12 @@ export function SmartCleanScreen() {
   const handleConfirmDelete = async (detectorKey: string, ids: string[], bytes: number) => {
     if (ids.length === 0) return;
     const reviewStore = useSmartCleanReviewStore.getState();
-    // Never delete under "selected photos" access. Read fresh — this runs from the
-    // root-mounted sheet's callback, not the screen's render closure.
-    if (useAppStore.getState().permission.status !== "granted") {
+    // Block only when we can't read media at all. Limited ("selected photos")
+    // access CAN delete the accessible assets on both iOS and Android, so it's
+    // allowed. Read fresh — this runs from the root-mounted sheet's callback,
+    // not the screen's render closure.
+    const status = useAppStore.getState().permission.status;
+    if (status !== "granted" && status !== "limited") {
       reviewStore.close();
       void PermissionService.openSettings();
       return;
@@ -199,20 +203,14 @@ export function SmartCleanScreen() {
         </View>
 
         {limitedAccess ? (
-          <View style={{ backgroundColor: theme.surfaceSoft, borderRadius: 14, borderWidth: 1, borderColor: theme.border, padding: 16, gap: 10 }}>
-            <Text selectable style={{ color: theme.text, fontSize: 14, lineHeight: 20, fontWeight: "700" }}>
-              {t("smartClean.permissionNeeded")}
+          <View style={{ backgroundColor: theme.surfaceSoft, borderRadius: 14, borderWidth: 1, borderColor: theme.border, padding: 16 }}>
+            <Text selectable style={{ color: theme.muted, fontSize: 13, lineHeight: 19 }}>
+              {t("smartClean.limitedNotice")}
             </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("smartClean.grantAccess")}
-              onPress={PermissionService.openSettings}
-              style={{ minHeight: 42, borderRadius: 11, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center" }}
-            >
-              <Text style={{ color: "#fff", fontSize: 14, fontWeight: "900" }}>{t("smartClean.grantAccess")}</Text>
-            </Pressable>
           </View>
-        ) : scanning ? (
+        ) : null}
+
+        {scanning ? (
           <View style={{ backgroundColor: theme.surfaceSoft, borderRadius: 14, borderWidth: 1, borderColor: theme.border, padding: 16, gap: 10 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <ActivityIndicator color={theme.accent} />

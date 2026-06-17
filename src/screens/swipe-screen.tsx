@@ -113,6 +113,10 @@ export function SwipeScreen() {
   }
 
   if (needsMediaPermission) {
+    // Show the in-app OS dialog while the OS still allows prompting; only route
+    // to system Settings once it won't prompt anymore (Android flips
+    // canAskAgain:false after repeated denials, iOS after the first denial).
+    const permanentlyDenied = permission.status === "denied" && permission.canAskAgain === false;
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
         <AppHeader />
@@ -120,14 +124,18 @@ export function SwipeScreen() {
           icon={BrushCleaning}
           title={t("permissions.photosTitle")}
           message={error ?? t("permissions.photosMessage")}
-          actionLabel={requestingPermission ? t("common.requesting") : t("common.allowAccess")}
-          onAction={requestPhotoPermission}
+          actionLabel={
+            permanentlyDenied ? t("common.openSettings") : requestingPermission ? t("common.requesting") : t("common.allowAccess")
+          }
+          onAction={permanentlyDenied ? PermissionService.openSettings : requestPhotoPermission}
         />
-        <View style={{ paddingHorizontal: 28 }}>
-          <Pressable onPress={PermissionService.openSettings} style={{ alignItems: "center", padding: 16 }}>
-            <Text style={{ color: theme.accent, fontWeight: "800", fontSize: 16 }}>{t("common.openSettings")}</Text>
-          </Pressable>
-        </View>
+        {permanentlyDenied ? null : (
+          <View style={{ paddingHorizontal: 28 }}>
+            <Pressable onPress={PermissionService.openSettings} style={{ alignItems: "center", padding: 16 }}>
+              <Text style={{ color: theme.accent, fontWeight: "800", fontSize: 16 }}>{t("common.openSettings")}</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     );
   }

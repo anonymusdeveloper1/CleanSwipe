@@ -563,7 +563,11 @@ async function reconcileMediaIndex(permission: PermissionResult): Promise<MediaA
       useAppStore.setState({ loadingPhotos: true });
     }
     const startedAt = Date.now();
-    await useMediaIndexStore.getState().startFullScan({ force: true, ignoredSourceIds: getCompressedSourceIds() });
+    // restart:true so a reconcile fired right after the selected set changed
+    // preempts any in-flight scan (which captured the OLD selection) and reads
+    // the CURRENT accessible set — otherwise expanding "selected photos" could
+    // await a stale scan and never surface the newly granted assets.
+    await useMediaIndexStore.getState().startFullScan({ force: true, restart: true, ignoredSourceIds: getCompressedSourceIds() });
     // Drop queue/badge entries pointing at assets the reconcile just pruned, so
     // the review list and counts never reference media we can no longer access.
     // Only do this when a limited-access scan actually COMPLETED since we began:

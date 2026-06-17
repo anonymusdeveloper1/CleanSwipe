@@ -1,5 +1,5 @@
 export function formatBytes(bytes?: number) {
-  if (!bytes || bytes <= 0) return "size unavailable";
+  if (!bytes || bytes <= 0) return "0 MB";
   const units = ["B", "KB", "MB", "GB", "TB"];
   let value = bytes;
   let unit = 0;

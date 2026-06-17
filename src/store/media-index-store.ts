@@ -45,7 +45,7 @@ type MediaIndexStore = {
   summary: MediaIndexSummary;
   error?: string;
   refreshNewestPage: () => Promise<void>;
-  startFullScan: (options?: { force?: boolean; ignoredSourceIds?: string[] }) => Promise<void>;
+  startFullScan: (options?: { force?: boolean; restart?: boolean; ignoredSourceIds?: string[] }) => Promise<void>;
   removeMediaIds: (ids: string[]) => void;
   resetIndex: () => void;
 };
@@ -217,7 +217,19 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
         // in-flight scan: every caller then awaits the same scan and only
         // proceeds once it has actually completed and pruned the index.
         if (options.force) forceRescanRequested = true;
-        if (fullScanPromise) return fullScanPromise;
+        if (fullScanPromise) {
+          // Default: JOIN the in-flight scan (callers await the same completion).
+          // With { restart: true } (used by the limited-access reconcile after the
+          // selected set may have changed) we instead PREEMPT it: bump the token so
+          // the running loop bails at its next `token !== scanToken` check, and drop
+          // its promise so a fresh scan reads the CURRENT accessible set rather than
+          // awaiting one that captured the stale selection. The preempted scan's
+          // `.finally` is guarded by `token === scanToken`, so it won't clobber the
+          // new run's state.
+          if (!options.restart) return fullScanPromise;
+          scanToken += 1;
+          fullScanPromise = undefined;
+        }
 
         const token = ++scanToken;
         const ignoredSourceIds = new Set(options.ignoredSourceIds ?? []);

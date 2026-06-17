@@ -55,7 +55,8 @@
     "statusLimited": "制限あり — 選択した写真のみ",
     "statusNone": "未許可 — タップして許可",
     "notificationsGranted": "許可済み — リマインダーを送信できます",
-    "notificationsNone": "未許可 — タップして許可"
+    "notificationsNone": "未許可 — タップして許可",
+    "fullAccess": "フルアクセス"
   },
   "paywall": {
     "title": "これはPro機能です",
@@ -159,7 +160,8 @@
         "title": "大きな写真",
         "desc": "圧縮または削除するための最大の写真を見つけます。"
       }
-    }
+    },
+    "limitedNotice": "スマートクリーンは選択した写真のみをスキャンします。"
   },
   "advancedStats": {
     "title": "高度な統計",

@@ -55,7 +55,8 @@
     "statusLimited": "Limited — only selected photos",
     "statusNone": "Not granted — tap to allow",
     "notificationsGranted": "Allowed — reminders can be sent",
-    "notificationsNone": "Not allowed — tap to enable"
+    "notificationsNone": "Not allowed — tap to enable",
+    "fullAccess": "Full Access"
   },
   "paywall": {
     "title": "This is a Pro feature",
@@ -159,7 +160,8 @@
         "title": "Large photos",
         "desc": "Find the largest photos to compress or remove."
       }
-    }
+    },
+    "limitedNotice": "Smart Clean is scanning only your selected photos."
   },
   "advancedStats": {
     "title": "Advanced stats",

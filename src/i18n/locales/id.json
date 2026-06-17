@@ -55,7 +55,8 @@
     "statusLimited": "Terbatas — hanya foto terpilih",
     "statusNone": "Belum diizinkan — ketuk untuk mengizinkan",
     "notificationsGranted": "Diizinkan — pengingat dapat dikirim",
-    "notificationsNone": "Tidak diizinkan — ketuk untuk mengaktifkan"
+    "notificationsNone": "Tidak diizinkan — ketuk untuk mengaktifkan",
+    "fullAccess": "Akses Penuh"
   },
   "paywall": {
     "title": "Ini fitur Pro",
@@ -159,7 +160,8 @@
         "title": "Foto besar",
         "desc": "Temukan foto terbesar untuk dikompres atau dihapus."
       }
-    }
+    },
+    "limitedNotice": "Smart Clean hanya memindai foto pilihan Anda."
   },
   "advancedStats": {
     "title": "Statistik lanjutan",

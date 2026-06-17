@@ -76,20 +76,33 @@ export function SettingsScreen() {
         ? t("permissions.statusLimited")
         : t("permissions.statusNone");
 
+  // The single "Photos & Videos" row adapts its action to the live permission
+  // state: limited → change the selected set in-app via the OS picker (then
+  // reconcile); full access or permanently-denied → manage in system Settings;
+  // otherwise (askable) → surface the in-app OS permission dialog.
   const handleMediaAccessPress = () => {
-    if (mediaAccessGranted) {
-      void PermissionService.openSettings();
-    } else {
-      void requestPhotoPermission();
+    if (permission.status === "limited") {
+      void PermissionService.presentLimitedPicker().then(() => useAppStore.getState().refreshPhotos());
+      return;
     }
+    const permanentlyDenied = permission.status === "denied" && permission.canAskAgain === false;
+    if (mediaAccessGranted || permanentlyDenied) {
+      void PermissionService.openSettings();
+      return;
+    }
+    void requestPhotoPermission();
   };
 
   const handleNotificationAccessPress = () => {
-    if (notifStatus === "granted") {
-      void PermissionService.openSettings();
-    } else {
+    // Only an undetermined (never-asked) state can still surface the in-app OS
+    // permission dialog. When notifications are already granted (to manage them)
+    // OR denied/won't-prompt-again, the OS won't show a dialog — so send the user
+    // to system Settings where they can change it.
+    if (notifStatus === "undetermined") {
       void ReminderNotificationService.requestPermission().then(() => refreshNotifStatus());
+      return;
     }
+    void PermissionService.openSettings();
   };
 
   // --- Account & Security ---------------------------------------------------
@@ -206,7 +219,26 @@ export function SettingsScreen() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.permissions")}>
-        <SettingsRow icon={Images} title={t("settings.mediaAccess")} subtitle={mediaAccessLabel} onPress={handleMediaAccessPress} trailing={<Checkbox checked={mediaAccessGranted} />} />
+        <SettingsRow
+          icon={Images}
+          title={t("settings.mediaAccess")}
+          subtitle={mediaAccessLabel}
+          onPress={handleMediaAccessPress}
+          trailing={
+            permission.status === "limited" ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("permissions.fullAccess")}
+                onPress={PermissionService.openSettings}
+                style={{ paddingHorizontal: 12, minHeight: 32, borderRadius: 8, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center" }}
+              >
+                <Text style={{ color: "#fff", fontSize: 12.5, fontWeight: "800" }}>{t("permissions.fullAccess")}</Text>
+              </Pressable>
+            ) : (
+              <Checkbox checked={mediaAccessGranted} />
+            )
+          }
+        />
         <SettingsRow
           icon={Bell}
           title={t("settings.notificationsPermission")}

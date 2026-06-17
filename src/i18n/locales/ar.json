@@ -55,7 +55,8 @@
     "statusLimited": "محدود — الصور المحددة فقط",
     "statusNone": "غير مُمنوح — اضغط للسماح",
     "notificationsGranted": "مسموح — يمكن إرسال التذكيرات",
-    "notificationsNone": "غير مسموح — اضغط للتفعيل"
+    "notificationsNone": "غير مسموح — اضغط للتفعيل",
+    "fullAccess": "وصول كامل"
   },
   "paywall": {
     "title": "هذه ميزة Pro",
@@ -159,7 +160,8 @@
         "title": "الصور الكبيرة",
         "desc": "اعثر على أكبر الصور لضغطها أو إزالتها."
       }
-    }
+    },
+    "limitedNotice": "يفحص التنظيف الذكي الصور المحددة فقط."
   },
   "advancedStats": {
     "title": "إحصائيات متقدمة",

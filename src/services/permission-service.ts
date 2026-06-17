@@ -19,20 +19,19 @@ export const PermissionService = {
       if (current.status === "granted" || current.status === "limited") {
         return current;
       }
-      if (current.status === "denied" && current.canAskAgain === false) {
-        await this.openSettings();
-        return {
-          ...current,
-          message: "Photo access was denied. Enable Photos and Videos from Android settings."
-        };
-      }
 
+      // Always attempt the in-app OS dialog. When the user has permanently
+      // denied (Android `canAskAgain === false` after repeated denials, or iOS
+      // after the first denial), this resolves immediately as denied WITHOUT a
+      // dialog — no crash. We do NOT navigate to Settings here: a "request"
+      // must never have the hidden side effect of leaving the app. The UI
+      // decides when to offer Settings, based on `canAskAgain`.
       const permission = await MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
       const result = mapMediaPermission(permission);
       if (result.status === "denied" && result.canAskAgain === false) {
         return {
           ...result,
-          message: "Photo access was denied. Enable Photos and Videos from Android settings."
+          message: "Photo access was denied. Enable Photos and Videos from Settings."
         };
       }
       return result;
@@ -43,6 +42,20 @@ export const PermissionService = {
 
   async openSettings() {
     await Linking.openSettings();
+  },
+
+  // Lets a "selected photos" (limited) user change which assets the app can
+  // read, in-app, without a trip to system Settings. The system modal only
+  // shows when access is currently limited (otherwise it's a no-op). Available
+  // on iOS and Android 14+; on older OSes the call rejects, so we fall back to
+  // Settings. It does NOT report whether the selection changed — callers must
+  // refresh the media index afterward.
+  async presentLimitedPicker() {
+    try {
+      await MediaLibrary.presentPermissionsPickerAsync(["photo", "video"]);
+    } catch {
+      await PermissionService.openSettings();
+    }
   }
 };
 

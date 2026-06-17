@@ -55,7 +55,8 @@
     "statusLimited": "Limité — seulement les photos sélectionnées",
     "statusNone": "Non autorisé — appuyez pour autoriser",
     "notificationsGranted": "Autorisé — les rappels peuvent être envoyés",
-    "notificationsNone": "Non autorisé — appuyez pour activer"
+    "notificationsNone": "Non autorisé — appuyez pour activer",
+    "fullAccess": "Accès complet"
   },
   "paywall": {
     "title": "Une fonctionnalité Pro",
@@ -159,7 +160,8 @@
         "title": "Photos volumineuses",
         "desc": "Trouvez les photos les plus volumineuses à compresser ou à supprimer."
       }
-    }
+    },
+    "limitedNotice": "Smart Clean analyse uniquement vos photos sélectionnées."
   },
   "advancedStats": {
     "title": "Statistiques avancées",

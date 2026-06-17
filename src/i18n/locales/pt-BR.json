@@ -55,7 +55,8 @@
     "statusLimited": "Limitado — apenas fotos selecionadas",
     "statusNone": "Não concedido — toque para permitir",
     "notificationsGranted": "Permitido — lembretes podem ser enviados",
-    "notificationsNone": "Não permitido — toque para ativar"
+    "notificationsNone": "Não permitido — toque para ativar",
+    "fullAccess": "Acesso total"
   },
   "paywall": {
     "title": "Este é um recurso Pro",
@@ -159,7 +160,8 @@
         "title": "Fotos grandes",
         "desc": "Encontre as maiores fotos para comprimir ou remover."
       }
-    }
+    },
+    "limitedNotice": "O Smart Clean analisa apenas suas fotos selecionadas."
   },
   "advancedStats": {
     "title": "Estatísticas avançadas",
