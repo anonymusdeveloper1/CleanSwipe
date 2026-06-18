@@ -51,6 +51,7 @@ export function CompressRunScreen() {
 
   const startedRef = useRef(false);
   const [deciding, setDeciding] = useState(false);
+  const [cancelVisible, setCancelVisible] = useState(false);
   const [pinVisible, setPinVisible] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
@@ -61,6 +62,7 @@ export function CompressRunScreen() {
   const isRunning = !status || status === "queued" || status === "preparing" || status === "compressing";
   const isDone = status === "completed";
   const isFailed = status === "failed";
+  const hasTerminalResult = isDone || isFailed || status === "cancelled" || Boolean(compressed);
   const progressPercent = Math.round(Math.max(0, Math.min(1, job?.progress ?? 0)) * 100);
 
   const goHome = useCallback(() => {
@@ -108,9 +110,21 @@ export function CompressRunScreen() {
 
   // Block hardware back while compressing or applying a decision (no roaming).
   useEffect(() => {
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => isRunning || deciding || pinVisible);
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (cancelVisible) {
+        setCancelVisible(false);
+        return true;
+      }
+      return isRunning || deciding || pinVisible;
+    });
     return () => sub.remove();
-  }, [isRunning, deciding, pinVisible]);
+  }, [cancelVisible, isRunning, deciding, pinVisible]);
+
+  // A compression can finish while its confirmation is open. Drop the stale
+  // prompt immediately so a completed result can never be "cancelled" afterward.
+  useEffect(() => {
+    if (hasTerminalResult && cancelVisible) setCancelVisible(false);
+  }, [cancelVisible, hasTerminalResult]);
 
   const handleKeep = async () => {
     if (!job || deciding) return;
@@ -121,18 +135,12 @@ export function CompressRunScreen() {
 
   // Cancel an in-progress compression — confirm first to avoid accidental taps,
   // then mark the job cancelled (its result is discarded, the original untouched).
-  const handleCancel = () => {
-    Alert.alert(t("compressRun.cancelTitle"), t("compressRun.cancelMessage"), [
-      { text: t("compressRun.keepCompressing"), style: "cancel" },
-      {
-        text: t("compressRun.cancelConfirm"),
-        style: "destructive",
-        onPress: () => {
-          if (job) void cancelJob(job.id);
-          goHome();
-        }
-      }
-    ]);
+  const handleCancel = () => setCancelVisible(true);
+
+  const confirmCancel = () => {
+    setCancelVisible(false);
+    if (job) void cancelJob(job.id);
+    goHome();
   };
 
   const proceedDelete = async () => {
@@ -351,6 +359,79 @@ export function CompressRunScreen() {
           </View>
         )}
       </View>
+
+      {cancelVisible && !hasTerminalResult ? (
+        <Modal transparent animationType="fade" visible onRequestClose={() => setCancelVisible(false)} statusBarTranslucent>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("compressRun.keepCompressing")}
+            onPress={() => setCancelVisible(false)}
+            style={{ flex: 1, backgroundColor: "rgba(5,7,13,0.62)", justifyContent: "center", padding: 24 }}
+          >
+            <Pressable
+              accessibilityRole="none"
+              onPress={() => undefined}
+              style={{ backgroundColor: theme.surface, borderRadius: 24, padding: 22, gap: 18, borderWidth: 1, borderColor: theme.border }}
+            >
+              <View
+                style={{
+                  alignSelf: "center",
+                  width: 62,
+                  height: 62,
+                  borderRadius: 31,
+                  backgroundColor: `${theme.red}18`,
+                  borderWidth: 1,
+                  borderColor: `${theme.red}55`,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <AlertTriangle size={29} color={theme.red} />
+              </View>
+              <View style={{ gap: 8 }}>
+                <Text selectable style={{ color: theme.text, fontSize: 22, lineHeight: 28, fontWeight: "900", textAlign: "center" }}>
+                  {t("compressRun.cancelTitle")}
+                </Text>
+                <Text selectable style={{ color: theme.muted, fontSize: 15, lineHeight: 21, textAlign: "center" }}>
+                  {t("compressRun.cancelMessage")}
+                </Text>
+              </View>
+              <View style={{ gap: 10 }}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setCancelVisible(false)}
+                  style={({ pressed }) => ({
+                    minHeight: 52,
+                    borderRadius: 14,
+                    backgroundColor: theme.accent,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: pressed ? 0.88 : 1
+                  })}
+                >
+                  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>{t("compressRun.keepCompressing")}</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={confirmCancel}
+                  style={({ pressed }) => ({
+                    minHeight: 52,
+                    borderRadius: 14,
+                    backgroundColor: `${theme.red}14`,
+                    borderWidth: 1,
+                    borderColor: theme.red,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: pressed ? 0.76 : 1
+                  })}
+                >
+                  <Text style={{ color: theme.red, fontSize: 16, fontWeight: "900" }}>{t("compressRun.cancelConfirm")}</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      ) : null}
 
       <Modal transparent animationType="fade" visible={pinVisible} onRequestClose={() => setPinVisible(false)} statusBarTranslucent>
         <View style={{ flex: 1, backgroundColor: "rgba(5,7,13,0.6)", justifyContent: "center", padding: 24 }}>

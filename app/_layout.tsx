@@ -83,7 +83,16 @@ export default function RootLayout() {
         <Stack.Screen name="settings" options={{ presentation: "card" }} />
         <Stack.Screen
           name="month-selector"
-          options={{ presentation: "formSheet", sheetAllowedDetents: [0.58, 0.92], sheetGrabberVisible: false, sheetCornerRadius: 28 }}
+          options={{
+            presentation: "formSheet",
+            sheetAllowedDetents: [0.58, 0.92],
+            sheetGrabberVisible: false,
+            sheetCornerRadius: 28,
+            // The native form-sheet container can become visible when a short
+            // month list is dragged to the taller detent. Match the content
+            // surface so the extra height reads as one continuous sheet.
+            contentStyle: { backgroundColor: theme.surface }
+          }}
         />
         <Stack.Screen name="review-delete-list" options={{ presentation: "card" }} />
         <Stack.Screen name="selected-photos" options={{ presentation: "card" }} />

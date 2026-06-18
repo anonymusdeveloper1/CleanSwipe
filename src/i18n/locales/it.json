@@ -116,6 +116,9 @@
     "deleteSelected": "Elimina {{count}}",
     "scanNow": "Analizza ora",
     "rescan": "Analizza di nuovo",
+    "checkingGallery": "Controllo della galleria…",
+    "indexingGallery": "Indicizzazione galleria · {{count}} elementi",
+    "indexingSelected": "Aggiornamento media selezionati · {{count}} elementi",
     "stop": "Interrompi",
     "scanning": "Analisi in corso…",
     "scanningProgress": "Analisi {{current}} di {{total}}…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "Gestisci o annulla l'abbonamento nello store",
     "leaveFeedback": "Lascia un feedback",
     "reportBug": "Segnala un bug",
+    "privacyPolicy": "Informativa sulla privacy",
+    "supportEmailUnavailableTitle": "App di posta non disponibile",
+    "supportEmailUnavailableMessage": "Configura un'app di posta su questo telefono e riprova.",
+    "privacyPolicyPendingTitle": "Informativa sulla privacy in arrivo",
+    "privacyPolicyPendingMessage": "Il link all'Informativa sulla privacy non è ancora stato aggiunto.",
     "madeBy": "SwipeClean dal team Cognitx"
   },
   "lock": {

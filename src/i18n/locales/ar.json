@@ -116,6 +116,9 @@
     "deleteSelected": "حذف {{count}}",
     "scanNow": "افحص الآن",
     "rescan": "افحص مرة أخرى",
+    "checkingGallery": "جارٍ التحقق من المعرض…",
+    "indexingGallery": "جارٍ فهرسة المعرض · {{count}} عنصرًا",
+    "indexingSelected": "جارٍ تحديث الوسائط المحددة · {{count}} عنصرًا",
     "stop": "إيقاف",
     "scanning": "جارٍ الفحص…",
     "scanningProgress": "جارٍ فحص {{current}} من {{total}}…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "إدارة اشتراكك أو إلغاؤه من المتجر",
     "leaveFeedback": "إرسال ملاحظات",
     "reportBug": "الإبلاغ عن خلل",
+    "privacyPolicy": "سياسة الخصوصية",
+    "supportEmailUnavailableTitle": "تطبيق البريد الإلكتروني غير متاح",
+    "supportEmailUnavailableMessage": "قم بإعداد تطبيق بريد إلكتروني على هذا الهاتف ثم حاول مرة أخرى.",
+    "privacyPolicyPendingTitle": "سياسة الخصوصية قريبًا",
+    "privacyPolicyPendingMessage": "لم تتم إضافة رابط سياسة الخصوصية بعد.",
     "madeBy": "SwipeClean من فريق Cognitx"
   },
   "lock": {

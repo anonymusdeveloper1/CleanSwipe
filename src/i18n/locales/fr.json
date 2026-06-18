@@ -116,6 +116,9 @@
     "deleteSelected": "Supprimer {{count}}",
     "scanNow": "Analyser maintenant",
     "rescan": "Analyser à nouveau",
+    "checkingGallery": "Vérification de la galerie…",
+    "indexingGallery": "Indexation de la galerie · {{count}} éléments",
+    "indexingSelected": "Mise à jour des médias sélectionnés · {{count}} éléments",
     "stop": "Arrêter",
     "scanning": "Analyse en cours…",
     "scanningProgress": "Analyse de {{current}} sur {{total}}…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "Gérez ou annulez votre abonnement dans le store",
     "leaveFeedback": "Donner votre avis",
     "reportBug": "Signaler un bug",
+    "privacyPolicy": "Politique de confidentialité",
+    "supportEmailUnavailableTitle": "Application de messagerie indisponible",
+    "supportEmailUnavailableMessage": "Configurez une application de messagerie sur ce téléphone et réessayez.",
+    "privacyPolicyPendingTitle": "Politique de confidentialité bientôt disponible",
+    "privacyPolicyPendingMessage": "Le lien vers la Politique de confidentialité n’a pas encore été ajouté.",
     "madeBy": "SwipeClean par l'équipe Cognitx"
   },
   "lock": {

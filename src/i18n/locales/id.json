@@ -116,6 +116,9 @@
     "deleteSelected": "Hapus {{count}}",
     "scanNow": "Pindai sekarang",
     "rescan": "Pindai lagi",
+    "checkingGallery": "Memeriksa galeri…",
+    "indexingGallery": "Mengindeks galeri · {{count}} item",
+    "indexingSelected": "Memperbarui media pilihan · {{count}} item",
     "stop": "Hentikan",
     "scanning": "Memindai…",
     "scanningProgress": "Memindai {{current}} dari {{total}}…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "Kelola atau batalkan langganan di store",
     "leaveFeedback": "Beri Masukan",
     "reportBug": "Laporkan Bug",
+    "privacyPolicy": "Kebijakan Privasi",
+    "supportEmailUnavailableTitle": "Aplikasi email tidak tersedia",
+    "supportEmailUnavailableMessage": "Siapkan aplikasi email di ponsel ini lalu coba lagi.",
+    "privacyPolicyPendingTitle": "Kebijakan Privasi segera hadir",
+    "privacyPolicyPendingMessage": "Tautan Kebijakan Privasi belum ditambahkan.",
     "madeBy": "SwipeClean oleh tim Cognitx"
   },
   "lock": {

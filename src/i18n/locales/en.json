@@ -116,6 +116,9 @@
     "deleteSelected": "Delete {{count}}",
     "scanNow": "Scan now",
     "rescan": "Scan again",
+    "checkingGallery": "Checking gallery…",
+    "indexingGallery": "Indexing gallery · {{count}} items",
+    "indexingSelected": "Updating selected media · {{count}} items",
     "stop": "Stop",
     "scanning": "Scanning…",
     "scanningProgress": "Scanning {{current}} of {{total}}…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "Manage or cancel your subscription in the store",
     "leaveFeedback": "Leave Feedback",
     "reportBug": "Report a Bug",
+    "privacyPolicy": "Privacy Policy",
+    "supportEmailUnavailableTitle": "Email app unavailable",
+    "supportEmailUnavailableMessage": "Set up an email app on this phone and try again.",
+    "privacyPolicyPendingTitle": "Privacy Policy coming soon",
+    "privacyPolicyPendingMessage": "The Privacy Policy link has not been added yet.",
     "madeBy": "SwipeClean by Cognitx team"
   },
   "lock": {

@@ -116,6 +116,9 @@
     "deleteSelected": "{{count}}件を削除",
     "scanNow": "今すぐスキャン",
     "rescan": "再スキャン",
+    "checkingGallery": "ギャラリーを確認中…",
+    "indexingGallery": "ギャラリーを索引中 · {{count}}件",
+    "indexingSelected": "選択したメディアを更新中 · {{count}}件",
     "stop": "停止",
     "scanning": "スキャン中…",
     "scanningProgress": "{{total}}件中{{current}}件をスキャン中…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "ストアでサブスクリプションを管理・解約",
     "leaveFeedback": "フィードバックを送る",
     "reportBug": "バグを報告",
+    "privacyPolicy": "プライバシーポリシー",
+    "supportEmailUnavailableTitle": "メールアプリを利用できません",
+    "supportEmailUnavailableMessage": "この端末でメールアプリを設定してから、もう一度お試しください。",
+    "privacyPolicyPendingTitle": "プライバシーポリシーは近日公開予定です",
+    "privacyPolicyPendingMessage": "プライバシーポリシーのリンクはまだ追加されていません。",
     "madeBy": "SwipeClean - Cognitxチーム制作"
   },
   "lock": {

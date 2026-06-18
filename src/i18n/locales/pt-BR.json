@@ -116,6 +116,9 @@
     "deleteSelected": "Excluir {{count}}",
     "scanNow": "Escanear agora",
     "rescan": "Escanear novamente",
+    "checkingGallery": "Verificando galeria…",
+    "indexingGallery": "Indexando galeria · {{count}} itens",
+    "indexingSelected": "Atualizando mídias selecionadas · {{count}} itens",
     "stop": "Parar",
     "scanning": "Escaneando…",
     "scanningProgress": "Escaneando {{current}} de {{total}}…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "Gerencie ou cancele sua assinatura na loja",
     "leaveFeedback": "Enviar feedback",
     "reportBug": "Relatar um erro",
+    "privacyPolicy": "Política de Privacidade",
+    "supportEmailUnavailableTitle": "Aplicativo de e-mail indisponível",
+    "supportEmailUnavailableMessage": "Configure um aplicativo de e-mail neste telefone e tente novamente.",
+    "privacyPolicyPendingTitle": "Política de Privacidade em breve",
+    "privacyPolicyPendingMessage": "O link da Política de Privacidade ainda não foi adicionado.",
     "madeBy": "SwipeClean pela equipe Cognitx"
   },
   "lock": {

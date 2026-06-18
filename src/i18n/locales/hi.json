@@ -116,6 +116,9 @@
     "deleteSelected": "{{count}} हटाएँ",
     "scanNow": "अभी स्कैन करें",
     "rescan": "फिर से स्कैन करें",
+    "checkingGallery": "गैलरी जाँची जा रही है…",
+    "indexingGallery": "गैलरी इंडेक्स हो रही है · {{count}} आइटम",
+    "indexingSelected": "चुना हुआ मीडिया अपडेट हो रहा है · {{count}} आइटम",
     "stop": "रोकें",
     "scanning": "स्कैन हो रहा है…",
     "scanningProgress": "{{total}} में से {{current}} स्कैन हो रहा है…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "स्टोर में अपनी सदस्यता प्रबंधित करें या रद्द करें",
     "leaveFeedback": "फ़ीडबैक दें",
     "reportBug": "बग रिपोर्ट करें",
+    "privacyPolicy": "गोपनीयता नीति",
+    "supportEmailUnavailableTitle": "ईमेल ऐप उपलब्ध नहीं है",
+    "supportEmailUnavailableMessage": "इस फ़ोन पर ईमेल ऐप सेट अप करें और फिर से कोशिश करें।",
+    "privacyPolicyPendingTitle": "गोपनीयता नीति जल्द आ रही है",
+    "privacyPolicyPendingMessage": "गोपनीयता नीति का लिंक अभी जोड़ा नहीं गया है।",
     "madeBy": "Cognitx टीम द्वारा SwipeClean"
   },
   "lock": {

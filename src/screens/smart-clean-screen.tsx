@@ -39,6 +39,9 @@ export function SmartCleanScreen() {
   const { canUseFeature } = useFeatureAccess();
   const openPaywall = usePaywallStore((state) => state.open);
   const permissionStatus = useAppStore((state) => state.permission.status);
+  const mediaIndexStatus = useMediaIndexStore((state) => state.status);
+  const mediaIndexAccessLevel = useMediaIndexStore((state) => state.accessLevel);
+  const indexedMediaCount = useMediaIndexStore((state) => state.summary.scannedCount);
 
   const phase = useSmartCleanStore((state) => state.phase);
   const progress = useSmartCleanStore((state) => state.progress);
@@ -55,8 +58,12 @@ export function SmartCleanScreen() {
 
   const viewedRef = useRef<Set<string>>(new Set());
 
+  const canReadMedia = permissionStatus === "granted" || permissionStatus === "limited";
   const limitedAccess = permissionStatus === "limited";
   const scanning = phase === "scanning";
+  const indexing = mediaIndexStatus === "scanning" || mediaIndexStatus === "refreshing";
+  const expectedIndexAccess = limitedAccess ? "limited" : "full";
+  const mediaScopeReconciling = !canReadMedia || indexing || mediaIndexAccessLevel !== expectedIndexAccess;
   const total = SMART_CLEAN_DETECTORS.length;
   // Counter tracks the discrete detector currently running — same value the
   // notification shows (no off-by-one). The bar uses the continuous `progress`.
@@ -67,6 +74,12 @@ export function SmartCleanScreen() {
     stage === "analyzing" && analyzeTotal > 0
       ? t("smartClean.analyzingPhotos", { current: analyzed, total: analyzeTotal })
       : t("smartClean.scanningProgress", { current, total });
+  const indexLabel =
+    mediaIndexStatus === "refreshing"
+      ? t("smartClean.checkingGallery")
+      : limitedAccess
+        ? t("smartClean.indexingSelected", { count: indexedMediaCount })
+        : t("smartClean.indexingGallery", { count: indexedMediaCount });
 
   // NOTE: we intentionally do NOT cancel the scan on unmount — like compression,
   // the scan keeps running when you leave the screen, surfaced by its own ongoing
@@ -103,6 +116,7 @@ export function SmartCleanScreen() {
   };
 
   const handlePrimary = (key: SmartCleanDetectorKey) => {
+    if (mediaScopeReconciling) return;
     const detector = SMART_CLEAN_DETECTORS.find((item) => item.key === key);
     const result = resultsByKey[key];
     if (detector && !canUseFeature(detector.featureKey)) {
@@ -121,6 +135,7 @@ export function SmartCleanScreen() {
   // One-Tap Recommendations: aggregate all ready, entitled detectors. Derived
   // via useMemo over the stable resultsByKey ref (no store-side aggregate).
   const recommendation = useMemo(() => {
+    if (mediaScopeReconciling) return { count: 0, bytes: 0, groups: [] };
     // An asset can match several keeper-less detectors at once (e.g. a screenshot
     // that is also a large photo), so dedupe candidates by mediaId — summing
     // per-detector itemCount/bytes would over-report. An asset kept in ANY group
@@ -143,7 +158,7 @@ export function SmartCleanScreen() {
     let bytes = 0;
     for (const value of candidateBytes.values()) bytes += value;
     return { count: candidateBytes.size, bytes, groups };
-  }, [resultsByKey, canUseFeature]);
+  }, [resultsByKey, canUseFeature, mediaScopeReconciling]);
 
   const handleConfirmDelete = async (detectorKey: string, ids: string[], bytes: number) => {
     if (ids.length === 0) return;
@@ -156,6 +171,23 @@ export function SmartCleanScreen() {
     if (status !== "granted" && status !== "limited") {
       reviewStore.close();
       void PermissionService.openSettings();
+      return;
+    }
+    const mediaIndex = useMediaIndexStore.getState();
+    const expectedAccess = status === "limited" ? "limited" : "full";
+    const allowedIds = new Set(mediaIndex.orderedIds);
+    // Destructive last-line guard: a confirmation opened before a permission
+    // downgrade must never delete from its stale snapshot. Require a settled,
+    // permission-matching index and ensure every requested item still exists in
+    // the currently authorized set; otherwise dismiss the review untouched.
+    if (
+      mediaIndex.status === "scanning" ||
+      mediaIndex.status === "refreshing" ||
+      mediaIndex.status === "error" ||
+      mediaIndex.accessLevel !== expectedAccess ||
+      ids.some((id) => !allowedIds.has(id))
+    ) {
+      reviewStore.close();
       return;
     }
     reviewStore.setBusy(true);
@@ -236,12 +268,22 @@ export function SmartCleanScreen() {
         ) : (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={lastRunAt ? t("smartClean.rescan") : t("smartClean.scanNow")}
+            accessibilityLabel={indexing ? indexLabel : lastRunAt ? t("smartClean.rescan") : t("smartClean.scanNow")}
+            accessibilityState={{ busy: indexing, disabled: indexing }}
+            disabled={indexing}
             onPress={handleScan}
-            style={{ minHeight: 50, borderRadius: 12, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}
+            style={{ minHeight: 50, paddingHorizontal: 16, borderRadius: 12, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, opacity: indexing ? 0.86 : 1 }}
           >
-            {lastRunAt ? <RefreshCw size={18} color="#fff" /> : <Search size={18} color="#fff" />}
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>{lastRunAt ? t("smartClean.rescan") : t("smartClean.scanNow")}</Text>
+            {indexing ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : lastRunAt ? (
+              <RefreshCw size={18} color="#fff" />
+            ) : (
+              <Search size={18} color="#fff" />
+            )}
+            <Text style={{ flexShrink: 1, color: "#fff", fontSize: 16, fontWeight: "900", textAlign: "center" }}>
+              {indexing ? indexLabel : lastRunAt ? t("smartClean.rescan") : t("smartClean.scanNow")}
+            </Text>
           </Pressable>
         )}
 
@@ -271,7 +313,9 @@ export function SmartCleanScreen() {
         </View>
 
         {SMART_CLEAN_DETECTORS.map((detector) => {
-          const result = resultsByKey[detector.key] ?? placeholderResult(detector.key);
+          const result = mediaScopeReconciling
+            ? placeholderResult(detector.key)
+            : resultsByKey[detector.key] ?? placeholderResult(detector.key);
           return (
             <SmartCleanCard
               key={detector.key}

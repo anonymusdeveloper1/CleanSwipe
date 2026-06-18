@@ -1,7 +1,7 @@
 import { router } from "expo-router";
-import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Gauge, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, Star, ToggleLeft, XCircle } from "lucide-react-native";
+import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Gauge, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, ShieldCheck, Star, ToggleLeft, XCircle } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, AppState, Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, AppState, Linking, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AdBanner } from "@/components/ad-banner";
@@ -11,6 +11,7 @@ import { SettingsSection } from "@/components/settings-section";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { accentColors } from "@/theme/colors";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { refreshPhotoLibraryAccess } from "@/hooks/use-photo-library-sync";
 import { languageOptions } from "@/i18n/languages";
 import { CompressionQuality, LanguagePreference } from "@/models/photo";
 import { compressionProfiles } from "@/services/compression-service";
@@ -23,6 +24,11 @@ import { useSubscriptionStore } from "@/store/subscription-store";
 type PasscodePurpose = "enable" | "disable" | "change";
 type PasscodeFlow = { mode: "setup" | "verify"; purpose: PasscodePurpose };
 type BioCapability = { moduleAvailable: boolean; available: boolean; kind: BiometricKind };
+
+const SUPPORT_EMAIL = "info.cognitix@gmail.com";
+// The published policy URL will be supplied in a follow-up. Keeping it here
+// makes enabling the row a one-line update.
+const PRIVACY_POLICY_URL = "";
 
 export function SettingsScreen() {
   const theme = useAppTheme();
@@ -82,7 +88,9 @@ export function SettingsScreen() {
   // otherwise (askable) → surface the in-app OS permission dialog.
   const handleMediaAccessPress = () => {
     if (permission.status === "limited") {
-      void PermissionService.presentLimitedPicker().then(() => useAppStore.getState().refreshPhotos());
+      void PermissionService.presentLimitedPicker().then(() =>
+        refreshPhotoLibraryAccess({ forceSmartCleanRescan: true })
+      );
       return;
     }
     const permanentlyDenied = permission.status === "denied" && permission.canAskAgain === false;
@@ -184,6 +192,32 @@ export function SettingsScreen() {
     setLanguagePickerVisible(false);
   };
 
+  const openSupportEmail = async (kind: "feedback" | "bug") => {
+    const subject = kind === "feedback" ? "SwipeClean Feedback" : "SwipeClean Bug Report";
+    const body =
+      kind === "feedback"
+        ? "Hi Cognitix,\n\nI would like to share the following feedback:\n\n"
+        : `Hi Cognitix,\n\nI found a bug in SwipeClean:\n\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected result:\n\nActual result:\n\nDevice: ${Platform.OS} ${String(Platform.Version)}`;
+    const mailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    try {
+      await Linking.openURL(mailto);
+    } catch {
+      Alert.alert(t("settings.supportEmailUnavailableTitle"), t("settings.supportEmailUnavailableMessage"));
+    }
+  };
+
+  const openPrivacyPolicy = async () => {
+    if (!PRIVACY_POLICY_URL) {
+      Alert.alert(t("settings.privacyPolicyPendingTitle"), t("settings.privacyPolicyPendingMessage"));
+      return;
+    }
+    try {
+      await Linking.openURL(PRIVACY_POLICY_URL);
+    } catch {
+      Alert.alert(t("settings.privacyPolicyPendingTitle"), t("settings.privacyPolicyPendingMessage"));
+    }
+  };
+
   const notifMaster = settings.notificationsEnabled;
   const chevron = <ChevronRight size={20} color={theme.muted} />;
 
@@ -281,8 +315,9 @@ export function SettingsScreen() {
             trailing={chevron}
           />
         ) : null}
-        <SettingsRow icon={ToggleLeft} title={t("settings.leaveFeedback")} onPress={() => undefined} trailing={chevron} />
-        <SettingsRow icon={Bug} title={t("settings.reportBug")} onPress={() => undefined} trailing={chevron} />
+        <SettingsRow icon={ToggleLeft} title={t("settings.leaveFeedback")} onPress={() => void openSupportEmail("feedback")} trailing={chevron} />
+        <SettingsRow icon={Bug} title={t("settings.reportBug")} onPress={() => void openSupportEmail("bug")} trailing={chevron} />
+        <SettingsRow icon={ShieldCheck} title={t("settings.privacyPolicy")} onPress={() => void openPrivacyPolicy()} trailing={chevron} />
       </SettingsSection>
 
       <AdBanner />

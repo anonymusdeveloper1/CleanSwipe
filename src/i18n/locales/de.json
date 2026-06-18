@@ -116,6 +116,9 @@
     "deleteSelected": "{{count}} löschen",
     "scanNow": "Jetzt scannen",
     "rescan": "Erneut scannen",
+    "checkingGallery": "Galerie wird geprüft…",
+    "indexingGallery": "Galerie wird indexiert · {{count}} Elemente",
+    "indexingSelected": "Ausgewählte Medien werden aktualisiert · {{count}} Elemente",
     "stop": "Stopp",
     "scanning": "Wird gescannt…",
     "scanningProgress": "Scanne {{current}} von {{total}}…",
@@ -228,6 +231,11 @@
     "cancelSubscriptionSubtitle": "Verwalte oder kündige dein Abo im Store",
     "leaveFeedback": "Feedback geben",
     "reportBug": "Fehler melden",
+    "privacyPolicy": "Datenschutzerklärung",
+    "supportEmailUnavailableTitle": "E-Mail-App nicht verfügbar",
+    "supportEmailUnavailableMessage": "Richte auf diesem Telefon eine E-Mail-App ein und versuche es erneut.",
+    "privacyPolicyPendingTitle": "Datenschutzerklärung folgt in Kürze",
+    "privacyPolicyPendingMessage": "Der Link zur Datenschutzerklärung wurde noch nicht hinzugefügt.",
     "madeBy": "SwipeClean vom Cognitx-Team"
   },
   "lock": {
