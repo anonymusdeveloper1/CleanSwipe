@@ -2,6 +2,11 @@ import { requireOptionalNativeModule } from "expo-modules-core";
 import { PhotoAsset } from "@/models/photo";
 import { getMonthKey } from "@/utils/date";
 
+type ImagePickerModule = typeof import("expo-image-picker");
+
+let pickerAvailability: boolean | undefined;
+let pickerModulePromise: Promise<ImagePickerModule | undefined> | undefined;
+
 /**
  * Opens the system image/video picker and maps the choice into a PhotoAsset that
  * the existing compression flow can consume.
@@ -12,11 +17,24 @@ import { getMonthKey } from "@/utils/date";
  * the wrapper before the probe passes — see native-capabilities.ts for why).
  */
 export function isCustomPickerAvailable(): boolean {
+  if (pickerAvailability !== undefined) return pickerAvailability;
   try {
-    return requireOptionalNativeModule("ExponentImagePicker") != null;
+    pickerAvailability = requireOptionalNativeModule("ExponentImagePicker") != null;
   } catch {
-    return false;
+    pickerAvailability = false;
   }
+  return pickerAvailability;
+}
+
+/**
+ * Loads the JS wrapper before the user taps the button. The native capability
+ * probe remains in place for older dev clients, while subsequent picker opens
+ * can call the already-resolved module immediately.
+ */
+export function prepareCustomMediaPicker(): Promise<ImagePickerModule | undefined> {
+  if (!isCustomPickerAvailable()) return Promise.resolve(undefined);
+  pickerModulePromise ??= import("expo-image-picker").catch(() => undefined);
+  return pickerModulePromise;
 }
 
 /**
@@ -24,9 +42,9 @@ export function isCustomPickerAvailable(): boolean {
  * undefined if the picker is unavailable, the user cancelled, or anything failed.
  */
 export async function pickMediaForCompression(): Promise<PhotoAsset | undefined> {
-  if (!isCustomPickerAvailable()) return undefined;
   try {
-    const ImagePicker: typeof import("expo-image-picker") = await import("expo-image-picker");
+    const ImagePicker = await prepareCustomMediaPicker();
+    if (!ImagePicker) return undefined;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
       allowsMultipleSelection: false,

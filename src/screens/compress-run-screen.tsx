@@ -1,8 +1,8 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { AlertTriangle, ArrowRight, CheckCircle2, Lock, Trash2 } from "lucide-react-native";
+import { AlertTriangle, ArrowRight, CheckCircle2, Lock, Maximize2, Trash2 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, BackHandler, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, BackHandler, Modal, Platform, Pressable, ScrollView, Text, ToastAndroid, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -55,8 +55,7 @@ export function CompressRunScreen() {
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
   const [biometric, setBiometric] = useState<{ available: boolean; kind: BiometricKind }>({ available: false, kind: "generic" });
-  const [deleteError, setDeleteError] = useState<string | undefined>();
-  const [showOriginal, setShowOriginal] = useState(false);
+  const [hasConfiguredPasscode, setHasConfiguredPasscode] = useState<boolean | undefined>(appLockEnabled ? undefined : false);
 
   const status = job?.status;
   const isRunning = !status || status === "queued" || status === "preparing" || status === "compressing";
@@ -88,6 +87,24 @@ export function CompressRunScreen() {
   useEffect(() => {
     void AppLockService.getBiometricCapability().then((cap) => setBiometric({ available: cap.available, kind: cap.kind }));
   }, []);
+
+  // Warm the encrypted passcode lookup while compression is running so the
+  // Delete Original tap never waits on SecureStore. `undefined` is treated as
+  // configured only while App Lock is enabled, preserving the setup invariant
+  // and making even an immediate tap open the PIN modal synchronously.
+  useEffect(() => {
+    let mounted = true;
+    if (!appLockEnabled) {
+      setHasConfiguredPasscode(false);
+      return;
+    }
+    void AppLockService.hasPasscode().then((hasPasscode) => {
+      if (mounted) setHasConfiguredPasscode(hasPasscode);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [appLockEnabled]);
 
   // Block hardware back while compressing or applying a decision (no roaming).
   useEffect(() => {
@@ -123,31 +140,37 @@ export function CompressRunScreen() {
     setPinVisible(false);
     setPin("");
     setDeciding(true);
-    setDeleteError(undefined);
     await deleteOriginal(job.id);
     const updated = useCompressionStore.getState().jobs[job.id];
     if (updated?.originalAction === "auto_deleted") {
       goHome();
       return;
     }
-    // Denied / failed — stay so the user sees what happened.
+    // Denied / failed — stay on the decision screen and surface a brief,
+    // friendly notification instead of rendering the native error inline.
     setDeciding(false);
-    setDeleteError(updated?.originalDeleteError ?? t("compressRun.deleteFailed"));
+    const message = t("compressRun.deleteFailed");
+    if (Platform.OS === "android") {
+      ToastAndroid.show(message, ToastAndroid.LONG);
+    } else {
+      Alert.alert(message);
+    }
   };
 
-  const handleDeletePress = async () => {
+  const handleDeletePress = () => {
     if (!job || deciding) return;
     // Only require the passcode when App Lock is actually SET UP (enabled + a
     // passcode stored). A passcode can linger in the Keychain (which survives app
     // reinstalls) while App Lock is off, so gating on `hasPasscode()` alone would
-    // prompt for a PIN the user never configured. Gate on the setting too.
-    if (appLockEnabled && (await AppLockService.hasPasscode())) {
+    // prompt for a PIN the user never configured. Presence is preloaded above,
+    // so this critical tap path contains no async SecureStore work.
+    if (appLockEnabled && hasConfiguredPasscode !== false) {
       setPin("");
       setPinError(false);
       setPinVisible(true);
       return;
     }
-    await proceedDelete();
+    void proceedDelete();
   };
 
   const handlePinChange = (value: string) => {
@@ -172,6 +195,13 @@ export function CompressRunScreen() {
   const isVideo = (asset?.mediaType ?? job?.mediaType) === "video";
   const resultUri = compressed?.outputUri;
 
+  const openComparison = () => {
+    router.push({
+      pathname: "/compression-media-viewer",
+      params: { id, compare: "1", custom: isCustom ? "1" : "0" }
+    });
+  };
+
   // Live "real → compressed" size: the displayed compressed figure ticks down from
   // the real size toward the estimate as progress advances — so the user sees the
   // file shrinking in real time.
@@ -181,9 +211,9 @@ export function CompressRunScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-      <View style={{ flex: 1, paddingHorizontal: 20, justifyContent: "center", gap: 22 }}>
+      <View style={{ flex: 1 }}>
         {isFailed ? (
-          <View style={{ alignItems: "center", gap: 16 }}>
+          <View style={{ flex: 1, paddingHorizontal: 20, alignItems: "center", justifyContent: "center", gap: 16 }}>
             <AlertTriangle size={44} color={theme.accent} />
             <Text selectable style={{ color: theme.text, fontSize: 22, fontWeight: "900", textAlign: "center" }}>
               {t("compression.finishedTitle")}
@@ -198,7 +228,6 @@ export function CompressRunScreen() {
               <Pressable
                 onPress={() => {
                   startedRef.current = false;
-                  setDeleteError(undefined);
                   if (asset) {
                     const input = createCompressionJobInput(asset, (quality as CompressionQuality) ?? "medium");
                     if (input) {
@@ -214,12 +243,36 @@ export function CompressRunScreen() {
             </View>
           </View>
         ) : isDone ? (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentInsetAdjustmentBehavior="never"
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 20, paddingTop: 24, paddingBottom: 32 }}
+          >
           <View style={{ gap: 18 }}>
-            <View style={{ height: 280, borderRadius: 18, overflow: "hidden", backgroundColor: theme.surfaceStrong, borderWidth: 1, borderColor: theme.border }}>
-              <BeforeAfterMedia originalUri={asset?.uri} compressedUri={resultUri} isVideo={isVideo} showOriginal={showOriginal} />
-            </View>
-            {/* Before/after: switch between the compressed result and the original. */}
-            <BeforeAfterToggle showOriginal={showOriginal} onChange={setShowOriginal} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${t("compressRun.compressed")} / ${t("compressRun.original")}`}
+              onPress={openComparison}
+              style={{ height: 260, borderRadius: 18, overflow: "hidden", backgroundColor: theme.surfaceStrong, borderWidth: 1, borderColor: theme.border }}
+            >
+              {resultUri && isVideo ? (
+                <View pointerEvents="none" style={{ flex: 1 }}>
+                  <VideoMediaPlayer uri={resultUri} contentFit="cover" style={{ flex: 1 }} />
+                </View>
+              ) : resultUri ? (
+                <CachedImage uri={resultUri} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
+              ) : (
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                  <ActivityIndicator color={theme.accent} />
+                </View>
+              )}
+              <View
+                pointerEvents="none"
+                style={{ position: "absolute", right: 12, bottom: 12, width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(5,7,13,0.68)", alignItems: "center", justifyContent: "center" }}
+              >
+                <Maximize2 size={20} color="#fff" />
+              </View>
+            </Pressable>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "center" }}>
               <CheckCircle2 size={22} color={theme.green} />
               <Text selectable style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>
@@ -234,11 +287,6 @@ export function CompressRunScreen() {
             {!isCustom ? (
               <Text selectable style={{ color: theme.text, fontSize: 15, lineHeight: 21, fontWeight: "700", textAlign: "center" }}>
                 {t("compression.singleDecisionPrompt")}
-              </Text>
-            ) : null}
-            {deleteError ? (
-              <Text selectable style={{ color: theme.red, fontSize: 13, fontWeight: "800", textAlign: "center" }}>
-                {deleteError}
               </Text>
             ) : null}
             <View style={{ gap: 11 }}>
@@ -266,8 +314,9 @@ export function CompressRunScreen() {
             </Text>
             {deciding ? <ActivityIndicator color={theme.accent} /> : null}
           </View>
+          </ScrollView>
         ) : (
-          <View style={{ flex: 1, gap: 16, paddingVertical: 6 }}>
+          <View style={{ flex: 1, gap: 16, paddingHorizontal: 20, paddingVertical: 6 }}>
             {/* Preview of the media being compressed (the original). Fills the
                 frame (cover); both images and videos render. */}
             <View style={{ flex: 1, borderRadius: 18, overflow: "hidden", backgroundColor: theme.surfaceStrong, borderWidth: 1, borderColor: theme.border }}>
@@ -324,75 +373,6 @@ export function CompressRunScreen() {
           </View>
         </View>
       </Modal>
-    </View>
-  );
-}
-
-// Before/after media: shows the compressed result, with the ORIGINAL crossfading
-// in on top when toggled. Images stay mounted (cached) so switching is instant —
-// only opacity animates (UI thread), so it never lags. Video swaps its source.
-function BeforeAfterMedia({ originalUri, compressedUri, isVideo, showOriginal }: { originalUri?: string; compressedUri?: string; isVideo: boolean; showOriginal: boolean }) {
-  const theme = useAppTheme();
-  const fade = useSharedValue(showOriginal ? 1 : 0);
-  useEffect(() => {
-    fade.value = withTiming(showOriginal ? 1 : 0, { duration: 200, easing: Easing.out(Easing.cubic) });
-  }, [showOriginal, fade]);
-  const originalStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
-
-  if (isVideo) {
-    const uri = showOriginal ? originalUri : compressedUri;
-    return uri ? (
-      <VideoMediaPlayer uri={uri} contentFit="contain" style={{ flex: 1 }} />
-    ) : (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={theme.accent} />
-      </View>
-    );
-  }
-
-  if (!compressedUri && !originalUri) {
-    return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={theme.accent} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={{ flex: 1 }}>
-      {compressedUri ? <CachedImage uri={compressedUri} contentFit="contain" backgroundColor={theme.surfaceStrong} style={StyleSheet.absoluteFill} /> : null}
-      {originalUri ? (
-        <Animated.View style={[StyleSheet.absoluteFill, originalStyle]}>
-          <CachedImage uri={originalUri} contentFit="contain" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />
-        </Animated.View>
-      ) : null}
-    </View>
-  );
-}
-
-// Segmented Compressed/Original toggle with a sliding accent indicator.
-function BeforeAfterToggle({ showOriginal, onChange }: { showOriginal: boolean; onChange: (value: boolean) => void }) {
-  const theme = useAppTheme();
-  const { t } = useTranslation();
-  const [width, setWidth] = useState(0);
-  const pos = useSharedValue(showOriginal ? 1 : 0);
-  useEffect(() => {
-    pos.value = withTiming(showOriginal ? 1 : 0, { duration: 200, easing: Easing.out(Easing.cubic) });
-  }, [showOriginal, pos]);
-  const half = Math.max((width - 8) / 2, 0);
-  const indicatorStyle = useAnimatedStyle(() => ({ transform: [{ translateX: pos.value * half }] }));
-
-  return (
-    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ flexDirection: "row", backgroundColor: theme.surfaceStrong, borderRadius: 13, padding: 4 }}>
-      {half > 0 ? (
-        <Animated.View style={[indicatorStyle, { position: "absolute", top: 4, left: 4, bottom: 4, width: half, borderRadius: 10, backgroundColor: theme.accent }]} />
-      ) : null}
-      <Pressable accessibilityRole="button" onPress={() => onChange(false)} style={{ flex: 1, paddingVertical: 11, alignItems: "center" }}>
-        <Text style={{ color: showOriginal ? theme.muted : "#fff", fontSize: 14, fontWeight: "900" }}>{t("compressRun.compressed")}</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={() => onChange(true)} style={{ flex: 1, paddingVertical: 11, alignItems: "center" }}>
-        <Text style={{ color: showOriginal ? "#fff" : theme.muted, fontSize: 14, fontWeight: "900" }}>{t("compressRun.original")}</Text>
-      </Pressable>
     </View>
   );
 }

@@ -1,8 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { ArrowUp, BrushCleaning, FileUp, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
+import { ArrowUp, BrushCleaning, ChevronRight, FileUp, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, NativeScrollEvent, NativeSyntheticEvent, Platform, Pressable, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useTranslation } from "react-i18next";
 import { AdBanner } from "@/components/ad-banner";
@@ -19,7 +19,7 @@ import { FREE_DAILY_CUSTOM_LIMIT, useFreeCustomCompressQuotaStore } from "@/feat
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { MediaTypeFilter, PhotoAsset } from "@/models/photo";
-import { isCustomPickerAvailable, pickMediaForCompression } from "@/services/custom-media-picker";
+import { isCustomPickerAvailable, pickMediaForCompression, prepareCustomMediaPicker } from "@/services/custom-media-picker";
 import { PermissionService } from "@/services/permission-service";
 import { useAppStore } from "@/store/app-store";
 import { IndexedMediaAsset, MediaIndexStatus, useIndexedMediaAssets, useMediaIndexStore } from "@/store/media-index-store";
@@ -42,6 +42,8 @@ export function HistoryScreen() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlashListRef<IndexedMediaAsset>>(null);
+  const lastShownAppError = useRef<string | undefined>();
+  const lastShownCompressionError = useRef<string | undefined>();
   const loadInitialData = useAppStore((state) => state.loadInitialData);
   const requestPhotoPermission = useAppStore((state) => state.requestPhotoPermission);
   const permission = useAppStore((state) => state.permission);
@@ -67,6 +69,24 @@ export function HistoryScreen() {
       void loadInitialData();
     }
   }, [hasHydrated, loadInitialData]);
+
+  // Load the native picker's JS bridge while the screen settles so tapping the
+  // custom-file action can present the system picker without import latency.
+  useEffect(() => {
+    void prepareCustomMediaPicker();
+  }, []);
+
+  useEffect(() => {
+    if (!error || lastShownAppError.current === error) return;
+    lastShownAppError.current = error;
+    showErrorNotification(error);
+  }, [error]);
+
+  useEffect(() => {
+    if (!latestCompressionError || lastShownCompressionError.current === latestCompressionError) return;
+    lastShownCompressionError.current = latestCompressionError;
+    showErrorNotification(latestCompressionError);
+  }, [latestCompressionError]);
 
   const needsMediaPermission = permission.status !== "granted" && permission.status !== "limited";
   const doneSourceIds = useMemo(() => {
@@ -231,7 +251,7 @@ export function HistoryScreen() {
         <EmptyState
           icon={BrushCleaning}
           title={t("permissions.mediaTitle")}
-          message={error ?? t("permissions.cleanupMessage")}
+          message={t("permissions.cleanupMessage")}
           actionLabel={
             permanentlyDenied ? t("common.openSettings") : requestingPermission ? t("common.requesting") : t("common.allowAccess")
           }
@@ -311,26 +331,28 @@ export function HistoryScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={t("customCompress.button")}
                 onPress={handleCustomCompress}
-                style={{
-                  minHeight: 46,
-                  borderRadius: 10,
-                  paddingHorizontal: 14,
-                  backgroundColor: theme.surfaceSoft,
-                  borderWidth: 1,
-                  borderColor: theme.border,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8
-                }}
+                style={({ pressed }) => ({
+                  minHeight: 54,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  transform: [{ scale: pressed ? 0.985 : 1 }],
+                  opacity: pressed ? 0.9 : 1,
+                  boxShadow: `0 8px 22px ${theme.accent}4D`
+                })}
               >
-                <FileUp size={18} color={theme.accent} />
-                <Text style={{ color: theme.text, fontSize: 15, fontWeight: "900" }}>{t("customCompress.button")}</Text>
+                <LinearGradient
+                  colors={[theme.accent, "#2d7df0"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ flex: 1, minHeight: 54, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 11 }}
+                >
+                  <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" }}>
+                    <FileUp size={19} color="#fff" />
+                  </View>
+                  <Text style={{ flex: 1, color: "#fff", fontSize: 16, fontWeight: "900" }}>{t("customCompress.button")}</Text>
+                  <ChevronRight size={20} color="rgba(255,255,255,0.9)" />
+                </LinearGradient>
               </Pressable>
-              {latestCompressionError ? (
-                <Text selectable style={{ color: theme.red, fontSize: 15, fontWeight: "700" }}>
-                  {latestCompressionError}
-                </Text>
-              ) : null}
             </View>
           </View>
         }
@@ -379,6 +401,14 @@ export function HistoryScreen() {
       />
     </View>
   );
+}
+
+function showErrorNotification(message: string) {
+  if (Platform.OS === "android") {
+    ToastAndroid.show(message, ToastAndroid.LONG);
+    return;
+  }
+  Alert.alert(message);
 }
 
 function MediaLoadingIndicator({ compact = false }: { compact?: boolean }) {

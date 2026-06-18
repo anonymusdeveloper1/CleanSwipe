@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BarChart3, Check, Crown, RotateCcw, ShieldOff, Sparkles, Video, Wand2 } from "lucide-react-native";
+import { BarChart3, Check, Crown, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import Animated, { Easing, FadeInDown, FadeInRight, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { AdBanner } from "@/components/ad-banner";
@@ -82,7 +82,6 @@ function UpgradeView() {
   const proFeatures = [
     { icon: Wand2, label: t("subscription.pro.smartClean") },
     { icon: Video, label: t("subscription.pro.videoCompression") },
-    { icon: Sparkles, label: t("subscription.pro.advancedCompression") },
     { icon: BarChart3, label: t("subscription.pro.advancedStats") },
     { icon: ShieldOff, label: t("subscription.pro.noAds") }
   ];

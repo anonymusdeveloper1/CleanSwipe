@@ -40,6 +40,7 @@ export type BiometricResult = {
 
 let secureStoreAvailable: boolean | undefined;
 let biometricModuleAvailable: boolean | undefined;
+let passcodePresenceCache: boolean | undefined;
 
 function probe(names: string[]): boolean {
   try {
@@ -129,11 +130,16 @@ export const AppLockService = {
   },
 
   async hasPasscode(): Promise<boolean> {
+    if (passcodePresenceCache !== undefined) return passcodePresenceCache;
     const SecureStore = await getSecureStore();
-    if (!SecureStore) return false;
+    if (!SecureStore) {
+      passcodePresenceCache = false;
+      return false;
+    }
     try {
       const stored = await SecureStore.getItemAsync(PASSCODE_KEY);
-      return typeof stored === "string" && stored.length > 0;
+      passcodePresenceCache = typeof stored === "string" && stored.length > 0;
+      return passcodePresenceCache;
     } catch {
       return false;
     }
@@ -145,6 +151,7 @@ export const AppLockService = {
     if (!SecureStore) return false;
     try {
       await SecureStore.setItemAsync(PASSCODE_KEY, passcode);
+      passcodePresenceCache = true;
       return true;
     } catch {
       return false;
@@ -156,7 +163,9 @@ export const AppLockService = {
     if (!SecureStore) return false;
     try {
       const stored = await SecureStore.getItemAsync(PASSCODE_KEY);
-      return typeof stored === "string" && stored.length > 0 && stored === passcode;
+      const hasStoredPasscode = typeof stored === "string" && stored.length > 0;
+      passcodePresenceCache = hasStoredPasscode;
+      return hasStoredPasscode && stored === passcode;
     } catch {
       return false;
     }
@@ -167,6 +176,7 @@ export const AppLockService = {
     if (!SecureStore) return;
     try {
       await SecureStore.deleteItemAsync(PASSCODE_KEY);
+      passcodePresenceCache = false;
     } catch {
       // Best-effort: a failed clear leaves the old passcode, which still verifies.
     }

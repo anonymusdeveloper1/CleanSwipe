@@ -18,13 +18,7 @@ export function MediaCompressionOverlay({ mediaId }: Props) {
   }
 
   if (job.status === "failed") {
-    return (
-      <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 10, paddingVertical: 9, backgroundColor: "rgba(127, 29, 29, 0.86)" }}>
-        <Text numberOfLines={1} style={{ color: "#fff", fontSize: 12, fontWeight: "900" }}>
-          {t("compression.failedTapToRetry")}
-        </Text>
-      </View>
-    );
+    return null;
   }
 
   if (job.status !== "queued" && job.status !== "preparing" && job.status !== "compressing") return null;
