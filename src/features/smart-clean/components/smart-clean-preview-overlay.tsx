@@ -10,11 +10,11 @@ import { CachedImage } from "@/components/cached-image";
 import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-review-store";
 
 /**
- * Full-screen image/video viewer for the Smart Clean review sheet. Mounted in the
- * root layout ABOVE <SmartCleanReviewSheet/> so it covers the sheet without
- * unmounting it (review state preserved). Drag DOWN to dismiss (the media follows
- * the finger, shrinks/rounds, the backdrop fades to reveal the sheet); videos use
- * a custom player UI (play/pause + scrubber + time + mute), not native controls.
+ * Full-screen image/video viewer for the Smart Clean review. Root-mounted (after
+ * the Stack) so it covers the pushed `SmartCleanReviewScreen` without unmounting
+ * it (review state preserved). Drag DOWN to dismiss (the media follows the
+ * finger, shrinks/rounds, the backdrop fades to reveal the review); videos use a
+ * custom player UI (play/pause + scrubber + time + mute), not native controls.
  */
 export function SmartCleanPreviewOverlay() {
   const { t } = useTranslation();

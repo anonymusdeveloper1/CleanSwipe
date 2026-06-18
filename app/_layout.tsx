@@ -13,7 +13,6 @@ import { AdsConsentService } from "@/features/ads/consent.service";
 import { InterstitialAdService } from "@/features/ads/interstitial.service";
 import { RewardedAdService } from "@/features/ads/rewarded.service";
 import { SmartCleanPreviewOverlay } from "@/features/smart-clean/components/smart-clean-preview-overlay";
-import { SmartCleanReviewSheet } from "@/features/smart-clean/components/smart-clean-review-sheet";
 import { SmartCleanScanNotifications } from "@/features/smart-clean/smart-clean-notifications";
 import { useSmartCleanStore } from "@/features/smart-clean/smart-clean-store";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -92,13 +91,11 @@ export default function RootLayout() {
         <Stack.Screen name="compression-media-viewer" options={{ presentation: "transparentModal", animation: "fade", contentStyle: { backgroundColor: "transparent" } }} />
         <Stack.Screen name="compression-detail" options={{ presentation: "card" }} />
         <Stack.Screen name="compress-run" options={{ presentation: "card", gestureEnabled: false }} />
+        <Stack.Screen name="smart-clean-review" options={{ presentation: "card" }} />
       </Stack>
       <ProUpgradeSheet />
-      {/* Mounted above the tab navigator so the review sheet overlays the bottom
-          tab bar (an overlay inside a tab screen paints under it). */}
-      <SmartCleanReviewSheet />
-      {/* Above the review sheet: a full-screen image/video viewer (long-press a
-          review cell) that covers the sheet without unmounting it. */}
+      {/* Full-screen image/video viewer (long-press a review cell). Root-mounted
+          so it covers the pushed Smart Clean review screen without unmounting it. */}
       <SmartCleanPreviewOverlay />
       <ReminderSync />
       {/* Mounted LAST so the lock screen covers the entire app (tabs + sheets). */}

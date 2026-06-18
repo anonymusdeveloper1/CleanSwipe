@@ -2,15 +2,14 @@ import { create } from "zustand";
 import { SmartCleanGroup } from "@/features/smart-clean/smart-clean.types";
 
 /**
- * Tiny, non-persisted store that drives the Smart Clean review sheet. A single
- * <SmartCleanReviewSheet /> is mounted in the ROOT layout (above the tab
- * navigator) and renders from this state — the same global-overlay pattern as
- * ProUpgradeSheet / CompressionCompleteSheet.
- *
- * Mounting at the root is what lets the sheet render ON TOP OF the bottom tab
- * bar (an overlay rendered inside a tab screen is painted under the tab bar).
- * It is an in-tree absolute overlay, NOT an RN <Modal>, so safe-area insets are
- * read correctly and the expo-image sizing fixes keep working.
+ * Tiny, non-persisted store that drives the Smart Clean review flow. Smart
+ * Clean's "Review" actions set the target here, then push the full-screen
+ * `SmartCleanReviewScreen` (route `/smart-clean-review`), which renders from this
+ * state. (It used to be a root-mounted bottom sheet, but FlashList won't
+ * recycle/measure inside an animated content-sized overlay — it collapsed to 0
+ * height — so the review is now a real screen.) `close()` resets this store and
+ * the screen pops itself in response. `preview` still drives the root-mounted
+ * full-screen viewer overlay shown above the screen on long-press.
  */
 type ReviewPayload = {
   title: string;

@@ -33,18 +33,18 @@ export function SmartCleanCard({ icon: Icon, title, explanation, status, locked 
   // Only `ready` (real results), `needs_permission`, and `locked` expose an
   // enabled action — and never while this card is being scanned.
   const actionable = (locked || status === "ready" || status === "needs_permission") && !scanning;
-  // Before a scan ("idle") there is no per-card action — the top "Scan now"
-  // button drives it — so hide the button (unless this card is mid-scan).
-  const showButton = scanning || status !== "idle";
+  // No per-card action before a scan: `idle` (not scanned yet) and `not_available`
+  // (detector can't run on this device) are both driven by the top "Scan now"
+  // button, so hide the per-card button for them (unless this card is mid-scan).
+  const notScanned = status === "idle" || status === "not_available";
+  const showButton = scanning || !notScanned;
   const statusPill = scanning
     ? null
-    : status === "idle"
+    : notScanned
       ? t("smartClean.notScanned")
       : status === "empty"
         ? t("smartClean.nothingFound")
-        : status === "not_available"
-          ? t("smartClean.comingSoon")
-          : null;
+        : null;
   const actionLabel = scanning
     ? t("smartClean.scanning")
     : locked
@@ -53,9 +53,7 @@ export function SmartCleanCard({ icon: Icon, title, explanation, status, locked 
         ? t("smartClean.grantAccess")
         : status === "ready"
           ? t("smartClean.reviewItems", { count: itemCount ?? 0 })
-          : status === "empty"
-            ? t("smartClean.nothingFound")
-            : t("smartClean.comingSoon");
+          : t("smartClean.nothingFound");
 
   return (
     <View style={{ backgroundColor: theme.surfaceSoft, borderRadius: 14, borderWidth: 1, borderColor: theme.border, padding: 16, gap: 12 }}>

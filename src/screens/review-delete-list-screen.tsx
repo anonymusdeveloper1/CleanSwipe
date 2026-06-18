@@ -2,7 +2,8 @@ import { router } from "expo-router";
 import { ArrowLeft, Images, Trash2 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, FlatList, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Alert, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { EmptyState } from "@/components/empty-state";
@@ -199,10 +200,12 @@ export function ReviewDeleteListScreen() {
         </Text>
         <View style={{ width: 40 }} />
       </View>
-      <FlatList
+      <FlashList
         data={rows}
         keyExtractor={(row) => row.key}
         renderItem={renderRow}
+        // Distinct recycle pools for the two row shapes (month header vs tile row).
+        getItemType={(row) => row.type}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
           <EmptyState
@@ -214,14 +217,12 @@ export function ReviewDeleteListScreen() {
         // paddingBottom clears the fixed bottom bar (≈48 button + 20 padding +
         // 1 border + safe-area inset) plus a gap, so the last row never hides
         // behind the Delete button.
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 88, flexGrow: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: insets.bottom + 88 }}
         onEndReached={hasMore ? loadMore : undefined}
         onEndReachedThreshold={1.2}
-        initialNumToRender={10}
-        maxToRenderPerBatch={8}
-        windowSize={9}
-        removeClippedSubviews
         showsVerticalScrollIndicator
+        // FlashList needs a bounded height to render; fill the flex:1 parent.
+        style={{ flex: 1 }}
       />
       {bottomBar}
       <DeleteConfirmationDialog visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={confirmDelete} />

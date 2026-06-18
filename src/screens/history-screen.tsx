@@ -2,11 +2,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { ArrowUp, BrushCleaning, FileUp, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import { useTranslation } from "react-i18next";
 import { AdBanner } from "@/components/ad-banner";
 import { AppHeader } from "@/components/app-header";
-import { CachedImage } from "@/components/cached-image";
+import { MediaThumbnail } from "@/components/media-thumbnail";
 import { CompressionFilterDialog } from "@/components/compression-filter-dialog";
 import { CustomCompressAdDialog } from "@/components/custom-compress-ad-dialog";
 import { EmptyState } from "@/components/empty-state";
@@ -18,7 +19,6 @@ import { FREE_DAILY_CUSTOM_LIMIT, useFreeCustomCompressQuotaStore } from "@/feat
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { MediaTypeFilter, PhotoAsset } from "@/models/photo";
-import { CompressionService } from "@/services/compression-service";
 import { isCustomPickerAvailable, pickMediaForCompression } from "@/services/custom-media-picker";
 import { PermissionService } from "@/services/permission-service";
 import { useAppStore } from "@/store/app-store";
@@ -41,7 +41,7 @@ export function HistoryScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const listRef = useRef<FlatList<IndexedMediaAsset>>(null);
+  const listRef = useRef<FlashListRef<IndexedMediaAsset>>(null);
   const loadInitialData = useAppStore((state) => state.loadInitialData);
   const requestPhotoPermission = useAppStore((state) => state.requestPhotoPermission);
   const permission = useAppStore((state) => state.permission);
@@ -109,7 +109,19 @@ export function HistoryScreen() {
   const cardWidth = Math.floor((width - horizontalPadding * 2 - cardGap * 2) / 3);
 
   const keyExtractor = useCallback((item: IndexedMediaAsset) => item.id, []);
-  const renderItem = useCallback(({ item }: { item: IndexedMediaAsset }) => <MediaCard asset={item} width={cardWidth} />, [cardWidth]);
+  // FlashList gives every column equal width, so the per-cell wrapper uses a
+  // UNIFORM half-gap pad on all sides → every cell is identical. The list's
+  // contentContainer supplies the screen edge margin (horizontalPadding - gap/2)
+  // and the scrolling header cancels it with a negative margin so it stays
+  // full-bleed (see ListHeaderComponent).
+  const renderItem = useCallback(
+    ({ item }: { item: IndexedMediaAsset }) => (
+      <View style={{ flex: 1, padding: cardGap / 2 }}>
+        <MediaCard asset={item} cellDp={cardWidth} />
+      </View>
+    ),
+    [cardWidth]
+  );
 
   // Pagination: only hand the FlatList the first `visibleCount` items; grow a page
   // at a time as the user scrolls near the end. Compress All / totals keep using
@@ -238,27 +250,23 @@ export function HistoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <FlatList
+      <FlashList
         ref={listRef}
         data={pagedMedia}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         numColumns={3}
-        columnWrapperStyle={{ gap: cardGap, paddingHorizontal: horizontalPadding, marginBottom: cardGap }}
-        windowSize={5}
-        maxToRenderPerBatch={6}
-        initialNumToRender={9}
-        updateCellsBatchingPeriod={40}
-        removeClippedSubviews
         onScroll={handleScroll}
         scrollEventThrottle={16}
         onEndReached={loadMore}
         onEndReachedThreshold={0.6}
         ListFooterComponent={hasMore ? <ActivityIndicator color={theme.accent} style={{ paddingVertical: 16 }} /> : null}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: horizontalPadding - cardGap / 2, paddingBottom: 24 }}
         ListHeaderComponent={
-          <View>
+          // Cancel the contentContainer's horizontal padding so the header stays
+          // full-bleed (AppHeader) and its inner block keeps its own padding.
+          <View style={{ marginHorizontal: -(horizontalPadding - cardGap / 2) }}>
             <AppHeader />
             <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 14, gap: 10 }}>
               <View style={{ gap: 5 }}>
@@ -456,7 +464,7 @@ function getBackgroundSavings(status: MediaIndexStatus, estimatedSavedBytes: num
 }
 
 
-const MediaCard = memo(function MediaCard({ asset, width }: { asset: IndexedMediaAsset; width: number }) {
+const MediaCard = memo(function MediaCard({ asset, cellDp }: { asset: IndexedMediaAsset; cellDp: number }) {
   const theme = useAppTheme();
   const { t } = useTranslation();
   const result = useAppStore((state) => state.compressedMedia.find((item) => item.sourceId === asset.id));
@@ -468,7 +476,7 @@ const MediaCard = memo(function MediaCard({ asset, width }: { asset: IndexedMedi
       accessibilityLabel={t("cleanup.openCompressionDetail", { name: asset.filename ?? t("common.media") })}
       onPress={() => router.push(`/compression-detail?id=${encodeURIComponent(asset.id)}&origin=${encodeURIComponent("/(tabs)/history")}` as never)}
       style={{
-        width,
+        width: "100%",
         aspectRatio: 0.92,
         borderRadius: 12,
         overflow: "hidden",
@@ -477,7 +485,7 @@ const MediaCard = memo(function MediaCard({ asset, width }: { asset: IndexedMedi
         borderColor: theme.border
       }}
     >
-      <MediaImage asset={asset} />
+      <MediaImage asset={asset} cellDp={cellDp} />
       <LinearGradient
         colors={["rgba(5,7,13,0)", "rgba(5,7,13,0.68)", "rgba(5,7,13,0.92)"]}
         style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 66 }}
@@ -500,28 +508,21 @@ const MediaCard = memo(function MediaCard({ asset, width }: { asset: IndexedMedi
   );
 });
 
-function MediaImage({ asset }: { asset: PhotoAsset }) {
+function MediaImage({ asset, cellDp }: { asset: PhotoAsset; cellDp: number }) {
   const theme = useAppTheme();
-  const [uri, setUri] = useState(asset.uri);
-
-  useEffect(() => {
-    let mounted = true;
-    setUri(asset.uri);
-    if (asset.mediaType === "video") {
-      CompressionService.createThumbnail(asset)
-        .then((thumbnailUri) => {
-          if (mounted) setUri(thumbnailUri);
-        })
-        .catch(() => undefined);
-    }
-    return () => {
-      mounted = false;
-    };
-    // Key on the fields that matter, not the asset object — index refreshes can
-    // produce a fresh object for an unchanged asset. modificationTime makes an
-    // edited video re-extract its thumbnail.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [asset.id, asset.uri, asset.mediaType, asset.modificationTime]);
-
-  return <CachedImage uri={uri} contentFit="cover" backgroundColor={theme.surfaceStrong} style={{ flex: 1 }} />;
+  // Route through MediaThumbnail (same path as every other grid): a small,
+  // disk-cached, downscaled copy decoded at the cell size — never the full-res
+  // photo/4K+ video frame the old CachedImage path handed the decoder. Video
+  // frame extraction + OOM guards are handled inside MediaThumbnail/ThumbnailService.
+  return (
+    <MediaThumbnail
+      uri={asset.uri}
+      id={asset.id}
+      mediaType={asset.mediaType}
+      cellDp={cellDp}
+      contentFit="cover"
+      backgroundColor={theme.surfaceStrong}
+      style={{ flex: 1 }}
+    />
+  );
 }

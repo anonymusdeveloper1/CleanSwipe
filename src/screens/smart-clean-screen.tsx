@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { RefreshCw, Search, Sparkles, Wand2, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
@@ -182,7 +183,10 @@ export function SmartCleanScreen() {
 
   // Open the root-mounted review sheet for a detector/recommendation target.
   const startReview = (detectorKey: string, title: string, groups: SmartCleanGroup[]) => {
+    // Populate the review store, then push the full-screen review (it reads from
+    // the store). The screen pops itself when the store's close() fires.
     openReview({ title, groups, onConfirm: (ids, bytes) => void handleConfirmDelete(detectorKey, ids, bytes) });
+    router.push("/smart-clean-review");
   };
 
   return (

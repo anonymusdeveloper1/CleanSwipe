@@ -24,6 +24,10 @@ type Props = {
   width?: number;
   height?: number;
   contentFit?: ImageContentFit;
+  // On-screen cell size in DP. Forwarded to <Thumbnail/> so the cached thumbnail
+  // is decoded at the cell's resolution instead of the 512 px default — smaller
+  // cells decode smaller bitmaps. Omit for flex-sized cells.
+  cellDp?: number;
   style?: StyleProp<ViewStyle>;
   backgroundColor?: string;
 };
@@ -35,14 +39,14 @@ type Props = {
  * play badge overlaid; oversized or unknown-resolution videos fall back to a
  * non-decoding placeholder tile (also play-badged) so they can never OOM.
  */
-export function MediaThumbnail({ uri, id, mediaType, width, height, contentFit = "cover", style, backgroundColor }: Props) {
+export function MediaThumbnail({ uri, id, mediaType, width, height, contentFit = "cover", cellDp, style, backgroundColor }: Props) {
   const isVideo = mediaType === "video" || isVideoUri(uri);
   const indexed = useMediaIndexStore((state) =>
     isVideo && id && (width == null || height == null) ? selectIndexedMediaAsset(state, id) : undefined
   );
 
   if (!isVideo) {
-    return <Thumbnail sourceUri={uri} cacheKey={id ?? uri} contentFit={contentFit} style={style} backgroundColor={backgroundColor} />;
+    return <Thumbnail sourceUri={uri} cacheKey={id ?? uri} cellDp={cellDp} contentFit={contentFit} style={style} backgroundColor={backgroundColor} />;
   }
 
   const w = width ?? indexed?.width;
@@ -58,6 +62,7 @@ export function MediaThumbnail({ uri, id, mediaType, width, height, contentFit =
       <Thumbnail
         sourceUri={uri}
         cacheKey={id ?? uri}
+        cellDp={cellDp}
         isVideo
         contentFit={contentFit}
         backgroundColor={backgroundColor}

@@ -2,7 +2,8 @@ import { router } from "expo-router";
 import { ArrowLeft, BrushCleaning, Trash2 } from "lucide-react-native";
 import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { FlatList, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MediaThumbnail } from "@/components/media-thumbnail";
 import { EmptyState } from "@/components/empty-state";
@@ -47,18 +48,23 @@ export function SelectedPhotosScreen() {
   const markLabel = t("selected.markPhotoForDeletion");
   const markedLabel = t("selected.alreadyMarkedForDeletion");
 
+  // FlashList has no columnWrapperStyle — the per-cell wrapper owns the gap
+  // (tileGap/2 each side → tileGap between cells), and the list's contentContainer
+  // padding (22 - tileGap/2) completes the 22 edge margin.
   const renderItem = useCallback(
     ({ item }: { item: PhotoAsset }) => (
-      <MediaTile
-        item={item}
-        isMarked={markedIds.has(item.id)}
-        size={tileSize}
-        colors={tileColors}
-        markLabel={markLabel}
-        markedLabel={markedLabel}
-        onMark={mark}
-        onOpen={handleOpen}
-      />
+      <View style={{ flex: 1, padding: tileGap / 2 }}>
+        <MediaTile
+          item={item}
+          isMarked={markedIds.has(item.id)}
+          size={tileSize}
+          colors={tileColors}
+          markLabel={markLabel}
+          markedLabel={markedLabel}
+          onMark={mark}
+          onOpen={handleOpen}
+        />
+      </View>
     ),
     [markedIds, tileSize, tileColors, markLabel, markedLabel, mark, handleOpen]
   );
@@ -91,18 +97,15 @@ export function SelectedPhotosScreen() {
       {selectedPhotos.length === 0 ? (
         <EmptyState icon={BrushCleaning} title={t("swipe.noMediaTitle", { noun: getMediaTypeNoun(selectedMediaType) })} message={t("swipe.noMediaMessage", { noun: getMediaTypeNoun(selectedMediaType) })} />
       ) : (
-        <FlatList
+        <FlashList
           data={selectedPhotos}
           keyExtractor={(item) => item.id}
           numColumns={3}
           contentInsetAdjustmentBehavior="never"
-          columnWrapperStyle={{ gap: tileGap }}
-          contentContainerStyle={{ padding: 22, gap: tileGap, paddingBottom: 40 }}
+          contentContainerStyle={{ padding: 22 - tileGap / 2, paddingBottom: 40 }}
           renderItem={renderItem}
-          initialNumToRender={15}
-          maxToRenderPerBatch={9}
-          windowSize={5}
-          removeClippedSubviews
+          // FlashList needs a bounded height to render; fill the flex:1 parent.
+          style={{ flex: 1 }}
         />
       )}
     </View>
@@ -138,8 +141,8 @@ const MediaTile = memo(function MediaTile({
     <Pressable
       onPress={() => onOpen(item.id)}
       style={{
-        width: size,
-        height: size,
+        width: "100%",
+        aspectRatio: 1,
         borderRadius: 14,
         overflow: "hidden",
         backgroundColor: colors.surfaceStrong,
@@ -147,7 +150,7 @@ const MediaTile = memo(function MediaTile({
         borderColor: isMarked ? colors.red : colors.border
       }}
     >
-      <MediaThumbnail uri={item.uri} id={item.id} mediaType={item.mediaType} contentFit="cover" backgroundColor={colors.surfaceStrong} style={{ flex: 1 }} />
+      <MediaThumbnail uri={item.uri} id={item.id} mediaType={item.mediaType} cellDp={size} contentFit="cover" backgroundColor={colors.surfaceStrong} style={{ flex: 1 }} />
       {isMarked ? <View style={{ position: "absolute", inset: 0, backgroundColor: "rgba(220,38,38,0.16)" }} /> : null}
       <Pressable
         accessibilityRole="button"
