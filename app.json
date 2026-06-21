@@ -10,7 +10,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.swipeclean.free",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "SwipeClean needs access to your photos so you can review and clean your gallery.",
+        "NSPhotoLibraryUsageDescription": "SwipeClean needs media access so you can review and clean your photos and videos.",
         "NSPhotoLibraryAddUsageDescription": "SwipeClean saves only when you choose to restore or share photos."
       }
     },
@@ -39,7 +39,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "SwipeClean needs access to your photos so you can review and clean your gallery.",
+          "photosPermission": "SwipeClean needs media access so you can review and clean your photos and videos.",
           "savePhotosPermission": "SwipeClean saves only when you choose to restore or share photos.",
           "isAccessMediaLocationEnabled": false
         }
@@ -63,7 +63,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "SwipeClean needs access to your photos so you can pick a file to compress."
+          "photosPermission": "SwipeClean needs media access so you can pick a photo or video to compress."
         }
       ]
     ],

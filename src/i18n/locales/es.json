@@ -47,7 +47,7 @@
     "smartClean": "Smart Clean"
   },
   "permissions": {
-    "photosTitle": "Permitir acceso a fotos",
+    "photosTitle": "Permitir acceso multimedia",
     "mediaTitle": "Permitir acceso multimedia",
     "photosMessage": "SwipeClean necesita acceso a tus fotos y videos para que puedas revisar y limpiar tu galería.",
     "cleanupMessage": "SwipeClean necesita acceso a tus fotos y videos para encontrar elementos pesados en este dispositivo.",
@@ -106,7 +106,7 @@
     "recommendationsTitle": "Recomendaciones con un toque",
     "recommendationsEmpty": "Las sugerencias de limpieza personalizadas aparecerán aquí cuando la detección esté disponible.",
     "permissionNeeded": "Smart Clean funciona mejor con acceso a todas tus fotos y videos.",
-    "grantAccess": "Permitir acceso a todas las fotos",
+    "grantAccess": "Permitir acceso multimedia completo",
     "comingSoon": "Próximamente",
     "nothingFound": "No se encontró nada",
     "unlock": "Desbloquear con Pro",

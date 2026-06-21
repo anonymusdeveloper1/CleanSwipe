@@ -47,7 +47,7 @@
     "smartClean": "Smart Clean"
   },
   "permissions": {
-    "photosTitle": "写真へのアクセスを許可",
+    "photosTitle": "メディアへのアクセスを許可",
     "mediaTitle": "メディアへのアクセスを許可",
     "photosMessage": "ギャラリーを確認して整理できるように、SwipeCleanは写真と動画へのアクセスを必要とします。",
     "cleanupMessage": "このデバイス上の大きなメディアを見つけられるように、SwipeCleanは写真と動画へのアクセスを必要とします。",
@@ -106,7 +106,7 @@
     "recommendationsTitle": "ワンタップのおすすめ",
     "recommendationsEmpty": "検出が利用可能になると、あなたに合わせたクリーンアップの提案がここに表示されます。",
     "permissionNeeded": "Smart Cleanは、すべての写真と動画へのアクセスがあると最も効果を発揮します。",
-    "grantAccess": "すべての写真へのアクセスを許可",
+    "grantAccess": "メディアへのフルアクセスを許可",
     "comingSoon": "近日公開",
     "nothingFound": "何も見つかりませんでした",
     "unlock": "Proで解放",

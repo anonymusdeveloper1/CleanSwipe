@@ -47,7 +47,7 @@
     "smartClean": "Smart Clean"
   },
   "permissions": {
-    "photosTitle": "Izinkan akses foto",
+    "photosTitle": "Izinkan akses media",
     "mediaTitle": "Izinkan akses media",
     "photosMessage": "SwipeClean memerlukan akses Foto dan Video agar Anda dapat meninjau dan membersihkan galeri Anda.",
     "cleanupMessage": "SwipeClean memerlukan akses ke foto dan video Anda agar dapat menemukan media berat di perangkat ini.",
@@ -106,7 +106,7 @@
     "recommendationsTitle": "Rekomendasi Satu Ketukan",
     "recommendationsEmpty": "Saran pembersihan yang dipersonalisasi akan muncul di sini setelah deteksi tersedia.",
     "permissionNeeded": "Smart Clean bekerja paling baik dengan akses ke semua foto dan video Anda.",
-    "grantAccess": "Izinkan akses ke semua foto",
+    "grantAccess": "Izinkan akses media penuh",
     "comingSoon": "Segera hadir",
     "nothingFound": "Tidak ada yang ditemukan",
     "unlock": "Buka dengan Pro",

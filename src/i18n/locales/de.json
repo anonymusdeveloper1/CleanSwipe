@@ -47,7 +47,7 @@
     "smartClean": "Smart Clean"
   },
   "permissions": {
-    "photosTitle": "Fotozugriff erlauben",
+    "photosTitle": "Medienzugriff erlauben",
     "mediaTitle": "Medienzugriff erlauben",
     "photosMessage": "SwipeClean benötigt Zugriff auf Fotos und Videos, damit du deine Galerie prüfen und aufräumen kannst.",
     "cleanupMessage": "SwipeClean benötigt Zugriff auf deine Fotos und Videos, um große Medien auf diesem Gerät zu finden.",
@@ -106,7 +106,7 @@
     "recommendationsTitle": "Empfehlungen mit einem Tippen",
     "recommendationsEmpty": "Personalisierte Aufräum-Vorschläge erscheinen hier, sobald die Erkennung verfügbar ist.",
     "permissionNeeded": "Smart Clean funktioniert am besten mit Zugriff auf alle deine Fotos und Videos.",
-    "grantAccess": "Zugriff auf alle Fotos erlauben",
+    "grantAccess": "Vollständigen Medienzugriff erlauben",
     "comingSoon": "Demnächst verfügbar",
     "nothingFound": "Nichts gefunden",
     "unlock": "Mit Pro freischalten",

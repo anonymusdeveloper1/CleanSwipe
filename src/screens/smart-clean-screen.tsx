@@ -1,10 +1,11 @@
 import { router } from "expo-router";
-import { RefreshCw, Search, Sparkles, Wand2, X } from "lucide-react-native";
+import { BrushCleaning, RefreshCw, Search, Sparkles, Wand2, X } from "lucide-react-native";
 import { useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { AdBanner } from "@/components/ad-banner";
 import { AppHeader } from "@/components/app-header";
+import { EmptyState } from "@/components/empty-state";
 import { SmartCleanCard } from "@/features/smart-clean/components/smart-clean-card";
 import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-review-store";
 import { CATEGORY_ICON, SMART_CLEAN_DETECTORS } from "@/features/smart-clean/smart-clean.service";
@@ -38,7 +39,11 @@ export function SmartCleanScreen() {
   const { t } = useTranslation();
   const { canUseFeature } = useFeatureAccess();
   const openPaywall = usePaywallStore((state) => state.open);
-  const permissionStatus = useAppStore((state) => state.permission.status);
+  const permission = useAppStore((state) => state.permission);
+  const requestPhotoPermission = useAppStore((state) => state.requestPhotoPermission);
+  const requestingPermission = useAppStore((state) => state.requestingPermission);
+  const permissionError = useAppStore((state) => state.error);
+  const permissionStatus = permission.status;
   const mediaIndexStatus = useMediaIndexStore((state) => state.status);
   const mediaIndexAccessLevel = useMediaIndexStore((state) => state.accessLevel);
   const indexedMediaCount = useMediaIndexStore((state) => state.summary.scannedCount);
@@ -220,6 +225,35 @@ export function SmartCleanScreen() {
     openReview({ title, groups, onConfirm: (ids, bytes) => void handleConfirmDelete(detectorKey, ids, bytes) });
     router.push("/smart-clean-review");
   };
+
+  if (!canReadMedia) {
+    const permanentlyDenied = permission.status === "denied" && permission.canAskAgain === false;
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.background }}>
+        <AppHeader />
+        <EmptyState
+          icon={BrushCleaning}
+          title={t("permissions.mediaTitle")}
+          message={permissionError ?? t("permissions.photosMessage")}
+          actionLabel={
+            permanentlyDenied
+              ? t("common.openSettings")
+              : requestingPermission
+                ? t("common.requesting")
+                : t("common.allowAccess")
+          }
+          onAction={permanentlyDenied ? PermissionService.openSettings : requestPhotoPermission}
+        />
+        {permanentlyDenied ? null : (
+          <View style={{ paddingHorizontal: 28 }}>
+            <Pressable onPress={PermissionService.openSettings} style={{ alignItems: "center", padding: 16 }}>
+              <Text style={{ color: theme.accent, fontWeight: "800", fontSize: 16 }}>{t("common.openSettings")}</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>

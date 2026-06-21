@@ -47,7 +47,7 @@
     "smartClean": "Smart Clean"
   },
   "permissions": {
-    "photosTitle": "Allow photo access",
+    "photosTitle": "Allow media access",
     "mediaTitle": "Allow media access",
     "photosMessage": "SwipeClean needs Photos and Videos access so you can review and clean your gallery.",
     "cleanupMessage": "SwipeClean needs access to your photos and videos so it can find heavy media on this device.",
@@ -106,7 +106,7 @@
     "recommendationsTitle": "One-Tap Recommendations",
     "recommendationsEmpty": "Personalized cleanup suggestions will appear here once detection is available.",
     "permissionNeeded": "Smart Clean works best with access to all your photos and videos.",
-    "grantAccess": "Allow access to all photos",
+    "grantAccess": "Allow full media access",
     "comingSoon": "Coming soon",
     "nothingFound": "Nothing found",
     "unlock": "Unlock with Pro",

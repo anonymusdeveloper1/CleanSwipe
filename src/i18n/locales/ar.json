@@ -47,7 +47,7 @@
     "smartClean": "Smart Clean"
   },
   "permissions": {
-    "photosTitle": "السماح بالوصول إلى الصور",
+    "photosTitle": "السماح بالوصول إلى الوسائط",
     "mediaTitle": "السماح بالوصول إلى الوسائط",
     "photosMessage": "يحتاج SwipeClean إلى الوصول إلى الصور والفيديوهات حتى تتمكن من مراجعة معرض الصور وتنظيفه.",
     "cleanupMessage": "يحتاج SwipeClean إلى الوصول إلى صورك وفيديوهاتك ليتمكن من العثور على الوسائط الكبيرة على هذا الجهاز.",
@@ -106,7 +106,7 @@
     "recommendationsTitle": "توصيات بنقرة واحدة",
     "recommendationsEmpty": "ستظهر اقتراحات التنظيف المخصصة هنا بمجرد توفّر الكشف.",
     "permissionNeeded": "يعمل Smart Clean بأفضل صورة مع الوصول إلى جميع صورك وفيديوهاتك.",
-    "grantAccess": "السماح بالوصول إلى جميع الصور",
+    "grantAccess": "السماح بالوصول الكامل إلى الوسائط",
     "comingSoon": "قريباً",
     "nothingFound": "لم يُعثر على شيء",
     "unlock": "افتحه مع Pro",

@@ -42,8 +42,8 @@ export function HistoryScreen() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlashListRef<IndexedMediaAsset>>(null);
-  const lastShownAppError = useRef<string | undefined>();
-  const lastShownCompressionError = useRef<string | undefined>();
+  const lastShownAppError = useRef<string | undefined>(undefined);
+  const lastShownCompressionError = useRef<string | undefined>(undefined);
   const loadInitialData = useAppStore((state) => state.loadInitialData);
   const requestPhotoPermission = useAppStore((state) => state.requestPhotoPermission);
   const permission = useAppStore((state) => state.permission);
