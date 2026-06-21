@@ -67,12 +67,15 @@ export function SettingsScreen() {
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        void refreshPermissionStatus();
+        // Use the shared queued reconcile rather than updating only the visible
+        // permission label. This ensures returning from system Settings also
+        // rebuilds the authorized media scope and refreshes Smart Clean.
+        void refreshPhotoLibraryAccess();
         refreshNotifStatus();
       }
     });
     return () => subscription.remove();
-  }, [refreshPermissionStatus, refreshNotifStatus]);
+  }, [refreshNotifStatus]);
 
   const mediaAccessGranted = permission.status === "granted" || permission.status === "limited";
   const mediaAccessLabel =

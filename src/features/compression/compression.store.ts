@@ -631,7 +631,7 @@ function getFriendlyCompressionError(error: unknown) {
   }
   // Scoped-storage / "selected photos only" access: the file can't be read.
   if (/eacces|denied|permission to access|securityexception|filenotfound|open failed/i.test(technicalMessage)) {
-    return "SwipeClean can only read your selected photos. Allow access to all photos and videos in Settings, then compress again.";
+    return "SwipeClean can only read your selected media. Allow full media access in Settings, then compress again.";
   }
   if (/permission/i.test(technicalMessage)) return "Permission was denied. Please allow media access and try again.";
   if (/space|storage|disk/i.test(technicalMessage)) return "There is not enough storage space to save the compressed file.";

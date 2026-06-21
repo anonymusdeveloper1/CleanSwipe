@@ -7,6 +7,7 @@ import { SmartCleanDetectorKey, SmartCleanGroup, SmartCleanResult, SmartCleanSta
 import { SMART_CLEAN_SCAN_ORDER } from "@/features/smart-clean/smart-clean.service";
 import { prewarmPhotoFeatures } from "@/features/smart-clean/detectors/pre-pass";
 import { featureCacheApi } from "@/features/smart-clean/feature-cache-store";
+import { mediaScopeFingerprint } from "@/features/smart-clean/permission-reconcile";
 import { SmartCleanScanNotifications } from "@/features/smart-clean/smart-clean-notifications";
 import { BackgroundSmartCleanScanWorker } from "@/services/background-smart-clean-scan-worker";
 import { SCAN_YIELD_MS, finalizeResult, notAvailable, sleep, toItem } from "@/features/smart-clean/detectors/shared";
@@ -113,7 +114,7 @@ function imperativeCanUse(featureKey: FeatureKey): boolean {
 /** Library snapshot fingerprint. Changes whenever the index reconciles. */
 function computeSignature(): string {
   const state = useMediaIndexStore.getState();
-  return `${state.lastFullScanCompletedAt ?? 0}|${state.accessLevel ?? "full"}|${state.orderedIds.length}`;
+  return `${state.lastFullScanCompletedAt ?? 0}|${mediaScopeFingerprint(state.accessLevel, state.orderedIds)}`;
 }
 
 function compactResults(resultsByKey: Record<string, SmartCleanResult>): CompactResultMap {

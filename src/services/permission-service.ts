@@ -1,12 +1,14 @@
 import * as Linking from "expo-linking";
 import * as MediaLibrary from "expo-media-library";
+import { PermissionsAndroid, Platform } from "react-native";
 import { PermissionResult } from "@/models/photo";
+import { resolveAndroidVisualMediaPermission } from "@/services/permission-utils";
 
 export const PermissionService = {
   async getMediaPermission(): Promise<PermissionResult> {
     try {
       const permission = await MediaLibrary.getPermissionsAsync(false, ["photo", "video"]);
-      return mapMediaPermission(permission);
+      return refineAndroidVisualMediaPermission(mapMediaPermission(permission));
     } catch (error) {
       return { status: "error", message: getErrorMessage(error) };
     }
@@ -15,7 +17,7 @@ export const PermissionService = {
   async requestMediaPermission(): Promise<PermissionResult> {
     try {
       const currentPermission = await MediaLibrary.getPermissionsAsync(false, ["photo", "video"]);
-      const current = mapMediaPermission(currentPermission);
+      const current = await refineAndroidVisualMediaPermission(mapMediaPermission(currentPermission));
       if (current.status === "granted" || current.status === "limited") {
         return current;
       }
@@ -27,11 +29,11 @@ export const PermissionService = {
       // must never have the hidden side effect of leaving the app. The UI
       // decides when to offer Settings, based on `canAskAgain`.
       const permission = await MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
-      const result = mapMediaPermission(permission);
+      const result = await refineAndroidVisualMediaPermission(mapMediaPermission(permission));
       if (result.status === "denied" && result.canAskAgain === false) {
         return {
           ...result,
-          message: "Photo access was denied. Enable Photos and Videos from Settings."
+          message: "Media access was denied. Enable Photos and Videos from Settings."
         };
       }
       return result;
@@ -58,6 +60,20 @@ export const PermissionService = {
     }
   }
 };
+
+async function refineAndroidVisualMediaPermission(reported: PermissionResult): Promise<PermissionResult> {
+  if (Platform.OS !== "android" || Number(Platform.Version) < 34) return reported;
+  try {
+    const [images, videos, selected] = await Promise.all([
+      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES),
+      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO),
+      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_MEDIA_VISUAL_USER_SELECTED)
+    ]);
+    return resolveAndroidVisualMediaPermission(reported, { images, videos, selected });
+  } catch {
+    return reported;
+  }
+}
 
 function mapMediaPermission(permission: MediaLibrary.PermissionResponse): PermissionResult {
   if (permission.granted) {

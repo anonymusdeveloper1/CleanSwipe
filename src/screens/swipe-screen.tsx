@@ -122,7 +122,7 @@ export function SwipeScreen() {
         <AppHeader />
         <EmptyState
           icon={BrushCleaning}
-          title={t("permissions.photosTitle")}
+          title={t("permissions.mediaTitle")}
           message={error ?? t("permissions.photosMessage")}
           actionLabel={
             permanentlyDenied ? t("common.openSettings") : requestingPermission ? t("common.requesting") : t("common.allowAccess")

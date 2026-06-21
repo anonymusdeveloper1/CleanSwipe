@@ -1,7 +1,7 @@
 import * as MediaLibrary from "expo-media-library";
 import { useCallback, useEffect } from "react";
 import { AppState } from "react-native";
-import { useSmartCleanFeatureCache } from "@/features/smart-clean/feature-cache-store";
+import { createSmartCleanRescanIntent, orderedMediaIdsChanged } from "@/features/smart-clean/permission-reconcile";
 import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-review-store";
 import { useSmartCleanStore } from "@/features/smart-clean/smart-clean-store";
 import { PermissionStatus } from "@/models/photo";
@@ -19,6 +19,7 @@ let refreshRunning = false;
 let refreshQueued = false;
 let forceSmartCleanRescanQueued = false;
 let lastReconciledPermission: PermissionStatus | undefined;
+const smartCleanRescanIntent = createSmartCleanRescanIntent();
 
 function hasSmartCleanHistory() {
   const state = useSmartCleanStore.getState();
@@ -51,6 +52,7 @@ async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean) {
     liveCanRead && previousAccessLevel !== undefined && previousAccessLevel !== liveAccessLevel;
   let invalidated = false;
   if (permissionChangedBeforeRefresh || accessMismatchBeforeRefresh || forceSmartCleanRescan) {
+    smartCleanRescanIntent.request(hadSmartCleanHistory);
     invalidateSmartCleanMediaSnapshot();
     invalidated = true;
   }
@@ -65,21 +67,35 @@ async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean) {
   const accessLevelChanged =
     canRead && previousAccessLevel !== (nextPermission === "limited" ? "limited" : "full");
   // Limited access can keep the same permission status while the user swaps
-  // selected assets. Identity changes only when the reconciled set changes.
-  const limitedSelectionChanged = nextPermission === "limited" && previousOrderedIds !== nextIndex.orderedIds;
+  // selected assets, including a same-count replacement. Compare the exact
+  // reconciled IDs rather than relying on store reference identity.
+  const limitedSelectionChanged =
+    nextPermission === "limited" && orderedMediaIdsChanged(previousOrderedIds, nextIndex.orderedIds);
   const mediaScopeChanged = forceSmartCleanRescan || permissionChanged || accessLevelChanged || limitedSelectionChanged;
 
   if (!canRead) {
-    if (!invalidated && (mediaScopeChanged || hadSmartCleanHistory)) invalidateSmartCleanMediaSnapshot();
+    if (!invalidated && (mediaScopeChanged || hadSmartCleanHistory)) {
+      smartCleanRescanIntent.request(hadSmartCleanHistory);
+      invalidateSmartCleanMediaSnapshot();
+    }
     return;
   }
 
-  if (!mediaScopeChanged) return;
-
   // A scope change invalidates every old group even if no automatic rescan can
   // run (for example, a subscription expired). Never retain inaccessible items.
-  if (!invalidated) invalidateSmartCleanMediaSnapshot();
-  if (!hadSmartCleanHistory || useSubscriptionStore.getState().subscriptionStatus !== "active") return;
+  if (mediaScopeChanged && !invalidated) {
+    smartCleanRescanIntent.request(hadSmartCleanHistory);
+    invalidateSmartCleanMediaSnapshot();
+  }
+
+  // A prior queued pass may have cleared the stale results before its media
+  // index was ready. Finish that pass's pending rescan instead of requiring this
+  // invocation to rediscover the already-applied permission transition.
+  if (!smartCleanRescanIntent.isPending()) return;
+  if (useSubscriptionStore.getState().subscriptionStatus !== "active") {
+    smartCleanRescanIntent.clear();
+    return;
+  }
 
   if (nextPermission === "granted") {
     // Full access needs the complete index, not only refreshPhotos' newest page.
@@ -94,8 +110,10 @@ async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean) {
   const expectedAccess = nextPermission === "limited" ? "limited" : "full";
   if (reconciledIndex.status !== "complete" || reconciledIndex.accessLevel !== expectedAccess) return;
 
-  const allowedIds = new Set(reconciledIndex.orderedIds);
-  useSmartCleanFeatureCache.getState().pruneMissing(allowedIds);
+  // Permission-scoped disappearance is not deletion. Keep hashes for hidden
+  // assets so restoring full access reuses unchanged features. The cache is
+  // already FIFO-bounded; confirmed deletion paths still prune real removals.
+  smartCleanRescanIntent.clear();
   void useSmartCleanStore.getState().runScan({ resume: false });
 }
 
@@ -125,7 +143,17 @@ export async function refreshPhotoLibraryAccess(options: { forceSmartCleanRescan
 
 export function usePhotoLibrarySync() {
   const status = useAppStore((state) => state.permission.status);
+  const appHydrated = useAppStore((state) => state.hasHydrated);
+  const smartCleanHydrated = useSmartCleanStore((state) => state.hasHydrated);
+  const subscriptionHydrated = useSubscriptionStore((state) => state.hasHydrated);
   const refresh = useCallback(() => refreshPhotoLibraryAccess(), []);
+
+  // Reconcile once on every JS/app launch after persisted state is ready.
+  // AppState does not emit an active transition after Fast Refresh/reload, so
+  // without this a stale full-access index can remain visible until the poll.
+  useEffect(() => {
+    if (appHydrated && smartCleanHydrated && subscriptionHydrated) void refresh();
+  }, [appHydrated, refresh, smartCleanHydrated, subscriptionHydrated]);
 
   // Always-on foreground reload — attached even while access is denied. This is
   // what makes "grant in system Settings → return to the app → instant load"
