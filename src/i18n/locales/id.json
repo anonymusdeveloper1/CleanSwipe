@@ -44,7 +44,8 @@
     "cleanup": "Kompres",
     "stats": "Statistik",
     "premium": "Premium",
-    "smartClean": "Smart Clean"
+    "smartClean": "Smart Clean",
+    "studio": "Studio"
   },
   "permissions": {
     "photosTitle": "Izinkan akses media",
@@ -76,7 +77,8 @@
       "videoCompression": "Kompresi video",
       "advancedCompression": "Kompresi lanjutan",
       "advancedStats": "Statistik lanjutan",
-      "noAds": "Tanpa iklan"
+      "noAds": "Tanpa iklan",
+      "fileConversion": "Konversi file"
     },
     "choosePlan": "Pilih paket Anda",
     "monthlyTitle": "Bulanan",
@@ -356,7 +358,11 @@
   },
   "selected": {
     "alreadyMarkedForDeletion": "Sudah ditandai untuk dihapus",
-    "markPhotoForDeletion": "Tandai foto untuk dihapus"
+    "markPhotoForDeletion": "Tandai foto untuk dihapus",
+    "selectedCountOne": "{{count}} dipilih",
+    "selectedCountOther": "{{count}} dipilih",
+    "exitSelection": "Keluar dari pemilihan",
+    "deleteSelected": "Hapus pilihan"
   },
   "preview": {
     "goBack": "Kembali",
@@ -535,5 +541,76 @@
     "videoOther": "video",
     "itemOne": "item",
     "itemOther": "media"
+  },
+  "studio": {
+    "clean": "Bersihkan",
+    "convert": "Konversi"
+  },
+  "convert": {
+    "title": "Konversi",
+    "subtitle": "Ubah foto atau video ke format lain.",
+    "emptyTitle": "Konversi file",
+    "emptyMessage": "Pilih foto atau video, lalu pilih format tujuannya.",
+    "chooseFile": "Pilih file",
+    "changeFile": "Pilih file lain",
+    "opening": "Membuka…",
+    "pickerUnavailable": "Pemilihan file memerlukan versi aplikasi terbaru. Perbarui dan coba lagi.",
+    "videoNeedsBuild": "Konversi video dan audio memerlukan versi aplikasi terbaru. Konversi gambar sudah berfungsi.",
+    "group": {
+      "image": "Gambar",
+      "video": "Video",
+      "audio": "Audio"
+    },
+    "convertCta": "Konversi",
+    "video": "Video",
+    "photo": "Foto",
+    "working": "Mengonversi",
+    "completeTitle": "Terkonversi!",
+    "finishedTitle": "Selesai",
+    "formatLabel": "Format",
+    "originalSizeLabel": "Ukuran asli",
+    "outputSizeLabel": "Ukuran hasil",
+    "savedToFiles": "Disimpan di file aplikasi — bagikan untuk menyimpannya.",
+    "savedToGallery": "Disimpan ke galeri Anda.",
+    "share": "Bagikan",
+    "shareTitle": "Bagikan file hasil konversi",
+    "close": "Tutup",
+    "retry": "Coba lagi",
+    "cancelTitle": "Batalkan konversi?",
+    "cancelMessage": "Konversi akan berhenti dan tidak ada file yang disimpan.",
+    "keepConverting": "Lanjutkan konversi",
+    "cancelConfirm": "Batalkan",
+    "errors": {
+      "unavailable": "Konversi ini memerlukan versi aplikasi terbaru. Perbarui dan coba lagi.",
+      "saveFailed": "File hasil konversi tidak dapat disimpan. File asli Anda tidak diubah.",
+      "output": "File hasil konversi tidak dapat dibuat. Coba lagi.",
+      "cancelled": "Konversi dibatalkan.",
+      "permission": "SwipeClean memerlukan akses media untuk mengonversi file ini. Izinkan akses di Pengaturan dan coba lagi.",
+      "space": "Ruang penyimpanan tidak cukup untuk menyimpan file hasil konversi.",
+      "format": "Format ini tidak didukung untuk konversi.",
+      "generic": "Kami tidak dapat mengonversi file ini. Coba lagi."
+    },
+    "dropzoneTitle": "Tambahkan file untuk dikonversi",
+    "dropzoneHint": "Maksimal 5 foto atau video per batch",
+    "browse": "Telusuri",
+    "selectedCount": "Dipilih — {{count}}/5",
+    "addMore": "Tambah lagi",
+    "convertCountCta": "Konversi {{count}} file",
+    "recentTitle": "Konversi terbaru",
+    "recentCount": "{{count}} item",
+    "recentEmpty": "File hasil konversi akan muncul di sini.",
+    "removeStaged": "Hapus",
+    "removeRecent": "Hapus dari daftar",
+    "batchTitle": "Mengonversi",
+    "batchProgress": "{{done}} dari {{total}}",
+    "batchEmpty": "Batch ini tidak lagi tersedia.",
+    "batchDoneTitle": "Batch selesai",
+    "batchDoneSummary": "{{done}} dikonversi · {{failed}} gagal",
+    "statusQueued": "Antre",
+    "statusFailed": "Gagal",
+    "statusCancelled": "Dibatalkan",
+    "cancelAll": "Batalkan semua",
+    "cancelBatchTitle": "Batalkan konversi?",
+    "cancelBatchMessage": "File yang tersisa tidak akan dikonversi."
   }
 }

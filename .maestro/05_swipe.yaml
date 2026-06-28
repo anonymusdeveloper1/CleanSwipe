@@ -1,0 +1,26 @@
+# Swipe screen: scope label + the month-selector sheet (tabs + month list).
+# Media-tolerant: the month-selector pill only renders once media access is
+# granted, so it's opened conditionally and the flow passes either way.
+appId: com.swipeclean.free
+name: Swipe scope and month selector
+tags:
+  - swipe
+---
+- launchApp
+- assertVisible: "SwipeClean"
+# Open the month/scope selector only if the pill is present (needs media access).
+- runFlow:
+    when:
+      visible: "Select month"
+    commands:
+      - tapOn: "Select month"
+      - assertVisible: "Select Month"
+      # Media-type segmented control inside the sheet.
+      - assertVisible: "Photos"
+      - assertVisible: "Videos"
+      # Exercise the segmented control, then return to "All".
+      - tapOn: "Photos"
+      - tapOn: "All"
+      # Close the sheet (Android back → onRequestClose).
+      - back
+- assertVisible: "SwipeClean"

@@ -44,7 +44,8 @@
     "cleanup": "Compress",
     "stats": "Stats",
     "premium": "Premium",
-    "smartClean": "Smart Clean"
+    "smartClean": "Smart Clean",
+    "studio": "Studio"
   },
   "permissions": {
     "photosTitle": "Allow media access",
@@ -76,7 +77,8 @@
       "videoCompression": "Video compression",
       "advancedCompression": "Advanced compression",
       "advancedStats": "Advanced stats",
-      "noAds": "No ads"
+      "noAds": "No ads",
+      "fileConversion": "File conversion"
     },
     "choosePlan": "Choose your plan",
     "monthlyTitle": "Monthly",
@@ -367,7 +369,11 @@
   },
   "selected": {
     "alreadyMarkedForDeletion": "Already marked for deletion",
-    "markPhotoForDeletion": "Mark photo for deletion"
+    "markPhotoForDeletion": "Mark photo for deletion",
+    "selectedCountOne": "{{count}} selected",
+    "selectedCountOther": "{{count}} selected",
+    "exitSelection": "Exit selection",
+    "deleteSelected": "Delete selected"
   },
   "preview": {
     "goBack": "Go back",
@@ -535,5 +541,76 @@
     "missed": "Missed",
     "emptyTitle": "No swipes yet",
     "emptyMessage": "Start swiping photos to see your keep, delete and favorite breakdown."
+  },
+  "studio": {
+    "clean": "Clean",
+    "convert": "Convert"
+  },
+  "convert": {
+    "title": "Convert",
+    "subtitle": "Change a photo or video into another format.",
+    "emptyTitle": "Convert a file",
+    "emptyMessage": "Pick a photo or video, then choose the format to convert it to.",
+    "chooseFile": "Choose a file",
+    "changeFile": "Choose a different file",
+    "opening": "Opening…",
+    "pickerUnavailable": "File picking needs an updated app build. Please update and try again.",
+    "videoNeedsBuild": "Video and audio conversion needs an updated app build. Image conversion works now.",
+    "group": {
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio"
+    },
+    "convertCta": "Convert",
+    "video": "Video",
+    "photo": "Photo",
+    "working": "Converting",
+    "completeTitle": "Converted!",
+    "finishedTitle": "Finished",
+    "formatLabel": "Format",
+    "originalSizeLabel": "Original size",
+    "outputSizeLabel": "Output size",
+    "savedToFiles": "Saved to the app's files — share it to keep it.",
+    "savedToGallery": "Saved to your gallery.",
+    "share": "Share",
+    "shareTitle": "Share converted file",
+    "close": "Close",
+    "retry": "Retry",
+    "cancelTitle": "Cancel conversion?",
+    "cancelMessage": "The conversion will stop and no file will be saved.",
+    "keepConverting": "Keep converting",
+    "cancelConfirm": "Cancel",
+    "errors": {
+      "unavailable": "This conversion needs an updated app build. Please update and try again.",
+      "saveFailed": "The converted file could not be saved. Your original file was not changed.",
+      "output": "The converted file could not be created. Please try again.",
+      "cancelled": "Conversion was cancelled.",
+      "permission": "SwipeClean needs media access to convert this file. Allow access in Settings and try again.",
+      "space": "There is not enough storage space to save the converted file.",
+      "format": "This format is not supported for conversion.",
+      "generic": "We could not convert this file. Please try again."
+    },
+    "dropzoneTitle": "Add files to convert",
+    "dropzoneHint": "Up to 5 photos or videos per batch",
+    "browse": "Browse",
+    "selectedCount": "Selected — {{count}}/5",
+    "addMore": "Add more",
+    "convertCountCta": "Convert {{count}} files",
+    "recentTitle": "Recent converted",
+    "recentCount": "{{count}} items",
+    "recentEmpty": "Converted files will appear here.",
+    "removeStaged": "Remove",
+    "removeRecent": "Remove from list",
+    "batchTitle": "Converting",
+    "batchProgress": "{{done}} of {{total}}",
+    "batchEmpty": "This batch is no longer available.",
+    "batchDoneTitle": "Batch complete",
+    "batchDoneSummary": "{{done}} converted · {{failed}} failed",
+    "statusQueued": "Queued",
+    "statusFailed": "Failed",
+    "statusCancelled": "Cancelled",
+    "cancelAll": "Cancel all",
+    "cancelBatchTitle": "Cancel conversions?",
+    "cancelBatchMessage": "Remaining files won't be converted."
   }
 }

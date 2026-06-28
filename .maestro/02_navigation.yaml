@@ -10,11 +10,13 @@ tags:
     text: "^Compress$"
 - assertVisible: "Ready to Compress"
 - assertVisible: "Filter"
-# Stats tab
+# Stats tab — the "Largest Photos" preview section was removed 2026-06-15,
+# so assert the always-rendered stat cards instead.
 - tapOn:
     text: "^Stats$"
 - assertVisible: "Storage Stats"
-- assertVisible: "Largest Photos"
+- assertVisible: "Total Used"
+- assertVisible: "Space Cleared"
 # Premium tab (Free user → upsell)
 - tapOn:
     text: "^Premium$"

@@ -1,0 +1,28 @@
+# Compress screen: the Filter bottom-sheet (Both / Photos / Videos segmented
+# control + month list) and the persisted Estimated-savings control. Does NOT
+# start a compression (that writes to the gallery / shows ads).
+appId: com.swipeclean.free
+name: Compress filter and estimate
+tags:
+  - compress
+---
+- launchApp
+- tapOn:
+    text: "^Compress$"
+- assertVisible: "Ready to Compress"
+# Estimated-savings control is always rendered on the Compress header.
+- assertVisible:
+    text: "Estimated savings"
+    optional: true
+# Open the Filter sheet.
+- assertVisible: "Filter"
+- tapOn: "Filter"
+- assertVisible: "Both"
+- assertVisible: "Photos"
+- assertVisible: "Videos"
+# Selecting a media type keeps the sheet open (only month rows close it).
+- tapOn: "Photos"
+- tapOn: "Both"
+# Close the sheet and confirm we're back on the Compress screen.
+- back
+- assertVisible: "Ready to Compress"

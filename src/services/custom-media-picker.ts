@@ -58,6 +58,34 @@ export async function pickMediaForCompression(): Promise<PhotoAsset | undefined>
   }
 }
 
+/**
+ * Multi-select variant for batch conversion: opens the system picker in
+ * multi-select mode and returns up to `limit` picks (mixed images + videos) as
+ * synthetic PhotoAssets. Returns [] on unavailable/cancel/error. Reuses
+ * `toPhotoAsset` (per-asset ms->s duration + drops assets with no uri). The
+ * `slice` enforces the cap on Android versions that don't honor selectionLimit.
+ */
+export async function pickMediaForConversion(limit = 5): Promise<PhotoAsset[]> {
+  try {
+    const ImagePicker = await prepareCustomMediaPicker();
+    if (!ImagePicker) return [];
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
+      allowsMultipleSelection: true,
+      selectionLimit: limit,
+      quality: 1,
+      exif: false
+    });
+    if (result.canceled || !result.assets?.length) return [];
+    return result.assets
+      .slice(0, limit)
+      .map(toPhotoAsset)
+      .filter((asset): asset is PhotoAsset => asset != null);
+  } catch {
+    return [];
+  }
+}
+
 function toPhotoAsset(asset: import("expo-image-picker").ImagePickerAsset): PhotoAsset | undefined {
   if (!asset?.uri) return undefined;
   const isVideo = asset.type === "video";

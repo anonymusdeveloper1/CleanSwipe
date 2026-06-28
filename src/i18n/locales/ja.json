@@ -44,7 +44,8 @@
     "cleanup": "圧縮",
     "stats": "統計",
     "premium": "プレミアム",
-    "smartClean": "Smart Clean"
+    "smartClean": "Smart Clean",
+    "studio": "スタジオ"
   },
   "permissions": {
     "photosTitle": "メディアへのアクセスを許可",
@@ -76,7 +77,8 @@
       "videoCompression": "動画の圧縮",
       "advancedCompression": "高度な圧縮",
       "advancedStats": "高度な統計",
-      "noAds": "広告なし"
+      "noAds": "広告なし",
+      "fileConversion": "ファイル変換"
     },
     "choosePlan": "プランを選択",
     "monthlyTitle": "月額",
@@ -356,7 +358,11 @@
   },
   "selected": {
     "alreadyMarkedForDeletion": "すでに削除予定です",
-    "markPhotoForDeletion": "写真を削除予定にする"
+    "markPhotoForDeletion": "写真を削除予定にする",
+    "selectedCountOne": "{{count}}件選択中",
+    "selectedCountOther": "{{count}}件選択中",
+    "exitSelection": "選択を終了",
+    "deleteSelected": "選択を削除"
   },
   "preview": {
     "goBack": "戻る",
@@ -535,5 +541,76 @@
     "videoOther": "動画",
     "itemOne": "項目",
     "itemOther": "メディア"
+  },
+  "studio": {
+    "clean": "クリーン",
+    "convert": "変換"
+  },
+  "convert": {
+    "title": "変換",
+    "subtitle": "写真や動画を別の形式に変換します。",
+    "emptyTitle": "ファイルを変換",
+    "emptyMessage": "写真または動画を選び、変換先の形式を選択してください。",
+    "chooseFile": "ファイルを選択",
+    "changeFile": "別のファイルを選択",
+    "opening": "開いています…",
+    "pickerUnavailable": "ファイルの選択には更新されたアプリのビルドが必要です。更新してからもう一度お試しください。",
+    "videoNeedsBuild": "動画と音声の変換には更新されたアプリのビルドが必要です。画像の変換は現在利用できます。",
+    "group": {
+      "image": "画像",
+      "video": "動画",
+      "audio": "音声"
+    },
+    "convertCta": "変換",
+    "video": "動画",
+    "photo": "写真",
+    "working": "変換中",
+    "completeTitle": "変換しました！",
+    "finishedTitle": "完了",
+    "formatLabel": "形式",
+    "originalSizeLabel": "元のサイズ",
+    "outputSizeLabel": "変換後のサイズ",
+    "savedToFiles": "アプリのファイルに保存しました。共有して保存してください。",
+    "savedToGallery": "ギャラリーに保存しました。",
+    "share": "共有",
+    "shareTitle": "変換したファイルを共有",
+    "close": "閉じる",
+    "retry": "再試行",
+    "cancelTitle": "変換をキャンセルしますか？",
+    "cancelMessage": "変換が停止し、ファイルは保存されません。",
+    "keepConverting": "変換を続ける",
+    "cancelConfirm": "キャンセル",
+    "errors": {
+      "unavailable": "この変換には更新されたアプリのビルドが必要です。更新してからもう一度お試しください。",
+      "saveFailed": "変換したファイルを保存できませんでした。元のファイルは変更されていません。",
+      "output": "変換したファイルを作成できませんでした。もう一度お試しください。",
+      "cancelled": "変換をキャンセルしました。",
+      "permission": "このファイルを変換するには SwipeClean にメディアへのアクセスが必要です。設定でアクセスを許可してから、もう一度お試しください。",
+      "space": "変換したファイルを保存するための空き容量が不足しています。",
+      "format": "この形式は変換に対応していません。",
+      "generic": "このファイルを変換できませんでした。もう一度お試しください。"
+    },
+    "dropzoneTitle": "変換するファイルを追加",
+    "dropzoneHint": "1回につき最大5枚の写真または動画",
+    "browse": "参照",
+    "selectedCount": "選択中 — {{count}}/5",
+    "addMore": "さらに追加",
+    "convertCountCta": "{{count}} 件を変換",
+    "recentTitle": "最近の変換",
+    "recentCount": "{{count}} 件",
+    "recentEmpty": "変換したファイルがここに表示されます。",
+    "removeStaged": "削除",
+    "removeRecent": "リストから削除",
+    "batchTitle": "変換中",
+    "batchProgress": "{{total}} 件中 {{done}} 件",
+    "batchEmpty": "このバッチは利用できなくなりました。",
+    "batchDoneTitle": "バッチ完了",
+    "batchDoneSummary": "{{done}} 件変換 · {{failed}} 件失敗",
+    "statusQueued": "待機中",
+    "statusFailed": "失敗",
+    "statusCancelled": "キャンセル",
+    "cancelAll": "すべてキャンセル",
+    "cancelBatchTitle": "変換をキャンセルしますか？",
+    "cancelBatchMessage": "残りのファイルは変換されません。"
   }
 }

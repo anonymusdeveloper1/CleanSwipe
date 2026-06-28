@@ -44,7 +44,8 @@
     "cleanup": "Komprimieren",
     "stats": "Statistik",
     "premium": "Premium",
-    "smartClean": "Smart Clean"
+    "smartClean": "Smart Clean",
+    "studio": "Studio"
   },
   "permissions": {
     "photosTitle": "Medienzugriff erlauben",
@@ -76,7 +77,8 @@
       "videoCompression": "Videokomprimierung",
       "advancedCompression": "Erweiterte Komprimierung",
       "advancedStats": "Erweiterte Statistik",
-      "noAds": "Keine Werbung"
+      "noAds": "Keine Werbung",
+      "fileConversion": "Dateikonvertierung"
     },
     "choosePlan": "Wähle deinen Tarif",
     "monthlyTitle": "Monatlich",
@@ -356,7 +358,11 @@
   },
   "selected": {
     "alreadyMarkedForDeletion": "Bereits zum Löschen markiert",
-    "markPhotoForDeletion": "Foto zum Löschen markieren"
+    "markPhotoForDeletion": "Foto zum Löschen markieren",
+    "selectedCountOne": "{{count}} ausgewählt",
+    "selectedCountOther": "{{count}} ausgewählt",
+    "exitSelection": "Auswahl beenden",
+    "deleteSelected": "Auswahl löschen"
   },
   "preview": {
     "goBack": "Zurück",
@@ -535,5 +541,76 @@
     "videoOther": "Videos",
     "itemOne": "Element",
     "itemOther": "Medien"
+  },
+  "studio": {
+    "clean": "Aufräumen",
+    "convert": "Umwandeln"
+  },
+  "convert": {
+    "title": "Umwandeln",
+    "subtitle": "Wandle ein Foto oder Video in ein anderes Format um.",
+    "emptyTitle": "Datei umwandeln",
+    "emptyMessage": "Wähle ein Foto oder Video und dann das Zielformat.",
+    "chooseFile": "Datei auswählen",
+    "changeFile": "Andere Datei auswählen",
+    "opening": "Wird geöffnet…",
+    "pickerUnavailable": "Die Dateiauswahl erfordert eine aktualisierte App-Version. Bitte aktualisieren und erneut versuchen.",
+    "videoNeedsBuild": "Die Video- und Audioumwandlung erfordert eine aktualisierte App-Version. Die Bildumwandlung funktioniert bereits.",
+    "group": {
+      "image": "Bild",
+      "video": "Video",
+      "audio": "Audio"
+    },
+    "convertCta": "Umwandeln",
+    "video": "Video",
+    "photo": "Foto",
+    "working": "Wird umgewandelt",
+    "completeTitle": "Umgewandelt!",
+    "finishedTitle": "Fertig",
+    "formatLabel": "Format",
+    "originalSizeLabel": "Originalgröße",
+    "outputSizeLabel": "Endgröße",
+    "savedToFiles": "In den App-Dateien gespeichert – teile sie, um sie zu behalten.",
+    "savedToGallery": "In deiner Galerie gespeichert.",
+    "share": "Teilen",
+    "shareTitle": "Umgewandelte Datei teilen",
+    "close": "Schließen",
+    "retry": "Wiederholen",
+    "cancelTitle": "Umwandlung abbrechen?",
+    "cancelMessage": "Die Umwandlung wird gestoppt und keine Datei gespeichert.",
+    "keepConverting": "Weiter umwandeln",
+    "cancelConfirm": "Abbrechen",
+    "errors": {
+      "unavailable": "Diese Umwandlung erfordert eine aktualisierte App-Version. Bitte aktualisieren und erneut versuchen.",
+      "saveFailed": "Die umgewandelte Datei konnte nicht gespeichert werden. Deine Originaldatei wurde nicht geändert.",
+      "output": "Die umgewandelte Datei konnte nicht erstellt werden. Bitte erneut versuchen.",
+      "cancelled": "Die Umwandlung wurde abgebrochen.",
+      "permission": "SwipeClean benötigt Medienzugriff, um diese Datei umzuwandeln. Erlaube den Zugriff in den Einstellungen und versuche es erneut.",
+      "space": "Nicht genügend Speicherplatz, um die umgewandelte Datei zu speichern.",
+      "format": "Dieses Format wird für die Umwandlung nicht unterstützt.",
+      "generic": "Wir konnten diese Datei nicht umwandeln. Bitte erneut versuchen."
+    },
+    "dropzoneTitle": "Dateien zum Umwandeln hinzufügen",
+    "dropzoneHint": "Bis zu 5 Fotos oder Videos pro Stapel",
+    "browse": "Durchsuchen",
+    "selectedCount": "Ausgewählt — {{count}}/5",
+    "addMore": "Mehr hinzufügen",
+    "convertCountCta": "{{count}} Dateien umwandeln",
+    "recentTitle": "Zuletzt umgewandelt",
+    "recentCount": "{{count}} Elemente",
+    "recentEmpty": "Umgewandelte Dateien erscheinen hier.",
+    "removeStaged": "Entfernen",
+    "removeRecent": "Aus der Liste entfernen",
+    "batchTitle": "Wird umgewandelt",
+    "batchProgress": "{{done}} von {{total}}",
+    "batchEmpty": "Dieser Stapel ist nicht mehr verfügbar.",
+    "batchDoneTitle": "Stapel abgeschlossen",
+    "batchDoneSummary": "{{done}} umgewandelt · {{failed}} fehlgeschlagen",
+    "statusQueued": "In Warteschlange",
+    "statusFailed": "Fehlgeschlagen",
+    "statusCancelled": "Abgebrochen",
+    "cancelAll": "Alle abbrechen",
+    "cancelBatchTitle": "Umwandlungen abbrechen?",
+    "cancelBatchMessage": "Die übrigen Dateien werden nicht umgewandelt."
   }
 }

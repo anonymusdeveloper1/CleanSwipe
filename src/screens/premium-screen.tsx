@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BarChart3, Check, Crown, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
+import { BarChart3, Check, Crown, Repeat, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import Animated, { Easing, FadeInDown, FadeInRight, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { AdBanner } from "@/components/ad-banner";
 import { AppHeader } from "@/components/app-header";
-import { SmartCleanScreen } from "@/screens/smart-clean-screen";
+import { StudioScreen } from "@/screens/studio-screen";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useSubscriptionStore } from "@/store/subscription-store";
@@ -34,10 +34,10 @@ export function PremiumScreen() {
   const theme = useAppTheme();
   const { width } = useWindowDimensions();
   const { isPro } = useFeatureAccess();
-  // Pro users get Smart Clean in this tab (it renders its own AppHeader, so we
-  // return it directly to avoid a doubled header). Free users see the upsell.
+  // Pro users get the Studio tab (Smart Clean + Convert) here; it renders its own
+  // AppHeader, so we return it directly. Free users see the upsell below.
   if (isPro) {
-    return <SmartCleanScreen />;
+    return <StudioScreen />;
   }
   const horizontalPadding = width < 380 ? 18 : 22;
   const contentWidth = Math.min(width - horizontalPadding * 2, 680);
@@ -82,6 +82,7 @@ function UpgradeView() {
   const proFeatures = [
     { icon: Wand2, label: t("subscription.pro.smartClean") },
     { icon: Video, label: t("subscription.pro.videoCompression") },
+    { icon: Repeat, label: t("subscription.pro.fileConversion") },
     { icon: BarChart3, label: t("subscription.pro.advancedStats") },
     { icon: ShieldOff, label: t("subscription.pro.noAds") }
   ];

@@ -34,7 +34,7 @@ function placeholderResult(key: SmartCleanDetectorKey): SmartCleanResult {
  * `permanentlyDeleteMarked` path. Subscribes to the runner with primitive /
  * stable-ref selectors only (never a fresh-object selector).
  */
-export function SmartCleanScreen() {
+export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean } = {}) {
   const theme = useAppTheme();
   const { t } = useTranslation();
   const { canUseFeature } = useFeatureAccess();
@@ -230,7 +230,7 @@ export function SmartCleanScreen() {
     const permanentlyDenied = permission.status === "denied" && permission.canAskAgain === false;
     return (
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <AppHeader />
+        {showHeader ? <AppHeader /> : null}
         <EmptyState
           icon={BrushCleaning}
           title={t("permissions.mediaTitle")}
@@ -258,7 +258,7 @@ export function SmartCleanScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 28 }}>
-        <AppHeader />
+        {showHeader ? <AppHeader /> : null}
         <View style={{ paddingHorizontal: 20, gap: 14 }}>
           <View style={{ gap: 4, paddingTop: 2 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>

@@ -44,7 +44,12 @@
           "isAccessMediaLocationEnabled": false
         }
       ],
-      "expo-video",
+      [
+        "expo-video",
+        {
+          "supportsPictureInPicture": true
+        }
+      ],
       "expo-localization",
       "expo-secure-store",
       [

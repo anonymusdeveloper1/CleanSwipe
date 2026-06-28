@@ -183,7 +183,7 @@ function PreviewVideo({ uri }: { uri: string }) {
         nativeControls={false}
         contentFit="contain"
         surfaceType="textureView"
-        allowsFullscreen={false}
+        fullscreenOptions={{ enable: false }}
         allowsPictureInPicture={false}
         style={{ flex: 1 }}
       />

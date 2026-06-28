@@ -44,7 +44,8 @@
     "cleanup": "Comprimir",
     "stats": "Estatísticas",
     "premium": "Premium",
-    "smartClean": "Smart Clean"
+    "smartClean": "Smart Clean",
+    "studio": "Estúdio"
   },
   "permissions": {
     "photosTitle": "Permitir acesso à mídia",
@@ -76,7 +77,8 @@
       "videoCompression": "Compressão de vídeo",
       "advancedCompression": "Compressão avançada",
       "advancedStats": "Estatísticas avançadas",
-      "noAds": "Sem anúncios"
+      "noAds": "Sem anúncios",
+      "fileConversion": "Conversão de arquivos"
     },
     "choosePlan": "Escolha seu plano",
     "monthlyTitle": "Mensal",
@@ -356,7 +358,11 @@
   },
   "selected": {
     "alreadyMarkedForDeletion": "Já marcada para exclusão",
-    "markPhotoForDeletion": "Marcar foto para exclusão"
+    "markPhotoForDeletion": "Marcar foto para exclusão",
+    "selectedCountOne": "{{count}} selecionado",
+    "selectedCountOther": "{{count}} selecionados",
+    "exitSelection": "Sair da seleção",
+    "deleteSelected": "Excluir seleção"
   },
   "preview": {
     "goBack": "Voltar",
@@ -535,5 +541,76 @@
     "videoOther": "vídeos",
     "itemOne": "item",
     "itemOther": "itens"
+  },
+  "studio": {
+    "clean": "Limpar",
+    "convert": "Converter"
+  },
+  "convert": {
+    "title": "Converter",
+    "subtitle": "Mude uma foto ou vídeo para outro formato.",
+    "emptyTitle": "Converter um arquivo",
+    "emptyMessage": "Escolha uma foto ou vídeo e depois o formato para o qual convertê-lo.",
+    "chooseFile": "Escolher um arquivo",
+    "changeFile": "Escolher outro arquivo",
+    "opening": "Abrindo…",
+    "pickerUnavailable": "A seleção de arquivos requer uma versão atualizada do app. Atualize e tente novamente.",
+    "videoNeedsBuild": "A conversão de vídeo e áudio requer uma versão atualizada do app. A conversão de imagens já funciona.",
+    "group": {
+      "image": "Imagem",
+      "video": "Vídeo",
+      "audio": "Áudio"
+    },
+    "convertCta": "Converter",
+    "video": "Vídeo",
+    "photo": "Foto",
+    "working": "Convertendo",
+    "completeTitle": "Convertido!",
+    "finishedTitle": "Concluído",
+    "formatLabel": "Formato",
+    "originalSizeLabel": "Tamanho original",
+    "outputSizeLabel": "Tamanho final",
+    "savedToFiles": "Salvo nos arquivos do app — compartilhe para guardá-lo.",
+    "savedToGallery": "Salvo na sua galeria.",
+    "share": "Compartilhar",
+    "shareTitle": "Compartilhar arquivo convertido",
+    "close": "Fechar",
+    "retry": "Tentar novamente",
+    "cancelTitle": "Cancelar a conversão?",
+    "cancelMessage": "A conversão será interrompida e nenhum arquivo será salvo.",
+    "keepConverting": "Continuar convertendo",
+    "cancelConfirm": "Cancelar",
+    "errors": {
+      "unavailable": "Esta conversão requer uma versão atualizada do app. Atualize e tente novamente.",
+      "saveFailed": "Não foi possível salvar o arquivo convertido. Seu arquivo original não foi alterado.",
+      "output": "Não foi possível criar o arquivo convertido. Tente novamente.",
+      "cancelled": "A conversão foi cancelada.",
+      "permission": "O SwipeClean precisa de acesso à mídia para converter este arquivo. Permita o acesso nas Configurações e tente novamente.",
+      "space": "Não há espaço de armazenamento suficiente para salvar o arquivo convertido.",
+      "format": "Este formato não é compatível com a conversão.",
+      "generic": "Não foi possível converter este arquivo. Tente novamente."
+    },
+    "dropzoneTitle": "Adicionar arquivos para converter",
+    "dropzoneHint": "Até 5 fotos ou vídeos por lote",
+    "browse": "Procurar",
+    "selectedCount": "Selecionados — {{count}}/5",
+    "addMore": "Adicionar mais",
+    "convertCountCta": "Converter {{count}} arquivos",
+    "recentTitle": "Convertidos recentes",
+    "recentCount": "{{count}} itens",
+    "recentEmpty": "Os arquivos convertidos aparecerão aqui.",
+    "removeStaged": "Remover",
+    "removeRecent": "Remover da lista",
+    "batchTitle": "Convertendo",
+    "batchProgress": "{{done}} de {{total}}",
+    "batchEmpty": "Este lote não está mais disponível.",
+    "batchDoneTitle": "Lote concluído",
+    "batchDoneSummary": "{{done}} convertidos · {{failed}} falharam",
+    "statusQueued": "Na fila",
+    "statusFailed": "Falhou",
+    "statusCancelled": "Cancelado",
+    "cancelAll": "Cancelar tudo",
+    "cancelBatchTitle": "Cancelar as conversões?",
+    "cancelBatchMessage": "Os arquivos restantes não serão convertidos."
   }
 }

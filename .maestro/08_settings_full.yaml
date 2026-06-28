@@ -1,0 +1,39 @@
+# Settings deep flow: opens the Language picker modal, asserts the Notifications
+# section, and the Compression "After compression" policy row. Complements
+# 03_settings.yaml (which covers Account & Security / Appearance / Permissions).
+appId: com.swipeclean.free
+name: Settings - language, notifications, compression
+tags:
+  - settings
+---
+- launchApp
+- tapOn:
+    text: "Open Settings"
+- assertVisible: "Settings"
+# Language picker modal.
+- scrollUntilVisible:
+    element:
+      text: "Language"
+    direction: DOWN
+- tapOn: "Language"
+- assertVisible: "Choose language"
+- assertVisible: "System default"
+- assertVisible: "English"
+# Close the language modal without changing the language.
+- back
+# Notifications section.
+- scrollUntilVisible:
+    element:
+      text: "Allow Notifications"
+    direction: DOWN
+- assertVisible: "Cleanup reminders"
+- assertVisible: "Compression reminders"
+# Compression policy row.
+- scrollUntilVisible:
+    element:
+      text: "After compression"
+    direction: DOWN
+- assertVisible: "After compression"
+# Back to the main shell.
+- back
+- assertVisible: "SwipeClean"

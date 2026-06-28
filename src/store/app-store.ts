@@ -61,6 +61,7 @@ type AppStore = {
   swipeCurrentPhoto: (action: SwipeAction) => void;
   keepPhoto: (photoId: string) => void;
   markPhotoForDeletion: (photo: PhotoAsset) => void;
+  markManyForDeletion: (photos: PhotoAsset[]) => void;
   undoLastSwipe: () => void;
   restoreMarkedPhoto: (photoId: string) => void;
   permanentlyDeleteMarked: (photoIds?: string[], options?: { emitDeletionEvent?: boolean }) => Promise<{ deletedCount: number; clearedBytes: number }>;
@@ -361,6 +362,32 @@ export const useAppStore = create<AppStore>()(
             reviewedPhotoIds,
             stats: StatsService.withSwipe(state.stats, "delete"),
             lastSwipe: { photo, action: "delete", index: state.currentIndex }
+          };
+        });
+      },
+
+      // Batch-mark a multi-selection in a SINGLE set() (looping the per-item action
+      // would re-render N times). Dedupes against already-marked items; no
+      // lastSwipe (undo of a bulk mark isn't meaningful — restore is per-item on
+      // the review screen). Routes into the same markedForDeletion queue.
+      markManyForDeletion(photos) {
+        set((state) => {
+          const markedForDeletion = dedupeMarkedItems(state.markedForDeletion);
+          const existing = new Set(markedForDeletion.map((item) => item.photoId));
+          const additions = photos.filter((photo) => !existing.has(photo.id));
+          if (additions.length === 0) {
+            return { markedForDeletion };
+          }
+          let reviewedPhotoIds = state.reviewedPhotoIds;
+          const nextMarked = [...markedForDeletion];
+          for (const photo of additions) {
+            nextMarked.push(DeletionQueueService.fromPhoto(photo));
+            reviewedPhotoIds = withReviewedPhoto(reviewedPhotoIds, photo.id);
+          }
+          return {
+            markedForDeletion: nextMarked,
+            reviewedPhotoIds,
+            stats: StatsService.withSwipeBatch(state.stats, "delete", additions.length)
           };
         });
       },

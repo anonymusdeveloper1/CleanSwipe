@@ -65,7 +65,7 @@ export function VideoMediaPlayer({
         player={player}
         nativeControls={nativeControls}
         contentFit={contentFit}
-        allowsFullscreen={allowsFullscreen}
+        fullscreenOptions={{ enable: allowsFullscreen }}
         allowsPictureInPicture={false}
         surfaceType="textureView"
         onFirstFrameRender={() => setFirstFrameRendered(true)}

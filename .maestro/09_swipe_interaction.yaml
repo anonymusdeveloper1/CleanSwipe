@@ -1,0 +1,24 @@
+# Swipe interaction: performs a left swipe (mark for deletion) and then undoes
+# it, leaving state unchanged. Fully media-tolerant — every step is guarded on a
+# swipe card being present, so it passes on an empty/permission-less library too.
+appId: com.swipeclean.free
+name: Swipe interaction (conditional)
+tags:
+  - swipe
+---
+- launchApp
+- assertVisible: "SwipeClean"
+- runFlow:
+    when:
+      visible: "Open media preview"
+    commands:
+      # Left swipe = mark for deletion.
+      - swipe:
+          direction: LEFT
+      # The Undo affordance appears after a swipe; undo to restore prior state.
+      - runFlow:
+          when:
+            visible: "Undo last swipe"
+          commands:
+            - tapOn: "Undo last swipe"
+- assertVisible: "SwipeClean"

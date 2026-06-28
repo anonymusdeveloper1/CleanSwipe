@@ -43,7 +43,8 @@ export const PRO_FEATURES = [
   "noAds",
   "fasterScanning",
   "cleanupHistory",
-  "compressionHistory"
+  "compressionHistory",
+  "mediaFormatConvert"
 ] as const;
 
 export type FreeFeatureKey = (typeof FREE_FEATURES)[number];

@@ -44,7 +44,8 @@
     "cleanup": "कंप्रेस",
     "stats": "आँकड़े",
     "premium": "प्रीमियम",
-    "smartClean": "Smart Clean"
+    "smartClean": "Smart Clean",
+    "studio": "स्टूडियो"
   },
   "permissions": {
     "photosTitle": "मीडिया एक्सेस की अनुमति दें",
@@ -76,7 +77,8 @@
       "videoCompression": "वीडियो कंप्रेशन",
       "advancedCompression": "उन्नत कंप्रेशन",
       "advancedStats": "उन्नत आँकड़े",
-      "noAds": "कोई विज्ञापन नहीं"
+      "noAds": "कोई विज्ञापन नहीं",
+      "fileConversion": "फ़ाइल रूपांतरण"
     },
     "choosePlan": "अपना प्लान चुनें",
     "monthlyTitle": "मासिक",
@@ -356,7 +358,11 @@
   },
   "selected": {
     "alreadyMarkedForDeletion": "पहले से हटाने के लिए चिह्नित",
-    "markPhotoForDeletion": "फ़ोटो को हटाने के लिए चिह्नित करें"
+    "markPhotoForDeletion": "फ़ोटो को हटाने के लिए चिह्नित करें",
+    "selectedCountOne": "{{count}} चयनित",
+    "selectedCountOther": "{{count}} चयनित",
+    "exitSelection": "चयन से बाहर निकलें",
+    "deleteSelected": "चयनित हटाएं"
   },
   "preview": {
     "goBack": "वापस जाएँ",
@@ -535,5 +541,76 @@
     "videoOther": "वीडियो",
     "itemOne": "आइटम",
     "itemOther": "मीडिया"
+  },
+  "studio": {
+    "clean": "साफ़ करें",
+    "convert": "बदलें"
+  },
+  "convert": {
+    "title": "रूपांतरण",
+    "subtitle": "किसी फ़ोटो या वीडियो को दूसरे फ़ॉर्मैट में बदलें।",
+    "emptyTitle": "फ़ाइल बदलें",
+    "emptyMessage": "कोई फ़ोटो या वीडियो चुनें, फिर वह फ़ॉर्मैट चुनें जिसमें बदलना है।",
+    "chooseFile": "फ़ाइल चुनें",
+    "changeFile": "दूसरी फ़ाइल चुनें",
+    "opening": "खोल रहे हैं…",
+    "pickerUnavailable": "फ़ाइल चुनने के लिए ऐप का अपडेटेड बिल्ड चाहिए। कृपया अपडेट करके फिर से कोशिश करें।",
+    "videoNeedsBuild": "वीडियो और ऑडियो रूपांतरण के लिए ऐप का अपडेटेड बिल्ड चाहिए। इमेज रूपांतरण अभी काम करता है।",
+    "group": {
+      "image": "इमेज",
+      "video": "वीडियो",
+      "audio": "ऑडियो"
+    },
+    "convertCta": "बदलें",
+    "video": "वीडियो",
+    "photo": "फ़ोटो",
+    "working": "बदला जा रहा है",
+    "completeTitle": "बदल गया!",
+    "finishedTitle": "पूरा हुआ",
+    "formatLabel": "फ़ॉर्मैट",
+    "originalSizeLabel": "मूल आकार",
+    "outputSizeLabel": "अंतिम आकार",
+    "savedToFiles": "ऐप की फ़ाइलों में सहेजा गया — रखने के लिए इसे शेयर करें।",
+    "savedToGallery": "आपकी गैलरी में सहेजा गया।",
+    "share": "शेयर करें",
+    "shareTitle": "बदली गई फ़ाइल शेयर करें",
+    "close": "बंद करें",
+    "retry": "फिर से कोशिश करें",
+    "cancelTitle": "रूपांतरण रद्द करें?",
+    "cancelMessage": "रूपांतरण रुक जाएगा और कोई फ़ाइल सहेजी नहीं जाएगी।",
+    "keepConverting": "बदलना जारी रखें",
+    "cancelConfirm": "रद्द करें",
+    "errors": {
+      "unavailable": "इस रूपांतरण के लिए ऐप का अपडेटेड बिल्ड चाहिए। कृपया अपडेट करके फिर से कोशिश करें।",
+      "saveFailed": "बदली गई फ़ाइल सहेजी नहीं जा सकी। आपकी मूल फ़ाइल नहीं बदली गई।",
+      "output": "बदली गई फ़ाइल नहीं बनाई जा सकी। कृपया फिर से कोशिश करें।",
+      "cancelled": "रूपांतरण रद्द कर दिया गया।",
+      "permission": "इस फ़ाइल को बदलने के लिए SwipeClean को मीडिया एक्सेस चाहिए। सेटिंग्स में एक्सेस दें और फिर से कोशिश करें।",
+      "space": "बदली गई फ़ाइल सहेजने के लिए पर्याप्त स्टोरेज स्पेस नहीं है।",
+      "format": "यह फ़ॉर्मैट रूपांतरण के लिए समर्थित नहीं है।",
+      "generic": "हम इस फ़ाइल को नहीं बदल सके। कृपया फिर से कोशिश करें।"
+    },
+    "dropzoneTitle": "बदलने के लिए फ़ाइलें जोड़ें",
+    "dropzoneHint": "प्रति बैच अधिकतम 5 फ़ोटो या वीडियो",
+    "browse": "ब्राउज़ करें",
+    "selectedCount": "चयनित — {{count}}/5",
+    "addMore": "और जोड़ें",
+    "convertCountCta": "{{count}} फ़ाइलें बदलें",
+    "recentTitle": "हाल में बदली गईं",
+    "recentCount": "{{count}} आइटम",
+    "recentEmpty": "बदली गई फ़ाइलें यहाँ दिखेंगी।",
+    "removeStaged": "हटाएँ",
+    "removeRecent": "सूची से हटाएँ",
+    "batchTitle": "बदला जा रहा है",
+    "batchProgress": "{{total}} में से {{done}}",
+    "batchEmpty": "यह बैच अब उपलब्ध नहीं है।",
+    "batchDoneTitle": "बैच पूरा हुआ",
+    "batchDoneSummary": "{{done}} बदलीं · {{failed}} विफल",
+    "statusQueued": "कतार में",
+    "statusFailed": "विफल",
+    "statusCancelled": "रद्द",
+    "cancelAll": "सभी रद्द करें",
+    "cancelBatchTitle": "रूपांतरण रद्द करें?",
+    "cancelBatchMessage": "बाकी फ़ाइलें नहीं बदली जाएँगी।"
   }
 }

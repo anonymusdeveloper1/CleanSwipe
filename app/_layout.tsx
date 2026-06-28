@@ -100,6 +100,8 @@ export default function RootLayout() {
         <Stack.Screen name="compression-media-viewer" options={{ presentation: "transparentModal", animation: "fade", contentStyle: { backgroundColor: "transparent" } }} />
         <Stack.Screen name="compression-detail" options={{ presentation: "card" }} />
         <Stack.Screen name="compress-run" options={{ presentation: "card", gestureEnabled: false }} />
+        <Stack.Screen name="convert-run" options={{ presentation: "card", gestureEnabled: false }} />
+        <Stack.Screen name="convert-batch" options={{ presentation: "card", gestureEnabled: false }} />
         <Stack.Screen name="smart-clean-review" options={{ presentation: "card" }} />
       </Stack>
       <ProUpgradeSheet />

@@ -16,7 +16,7 @@ import { selectIndexedMediaAsset, useMediaIndexStore } from "@/store/media-index
 
 export function CompressionMediaViewerScreen() {
   const { t } = useTranslation();
-  const { id, result, origin, compare, custom } = useLocalSearchParams<{ id: string; result?: string; origin?: string; compare?: string; custom?: string }>();
+  const { id, uri, media, result, origin, compare, custom } = useLocalSearchParams<{ id?: string; uri?: string; media?: "photo" | "video"; result?: string; origin?: string; compare?: string; custom?: string }>();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const asset = useMediaIndexStore((state) => selectIndexedMediaAsset(state, id));
@@ -24,9 +24,14 @@ export function CompressionMediaViewerScreen() {
   // Prefer the compressed copy's output when one exists for this source, so the
   // viewer shows the actual compressed result rather than the original.
   const compressed = useAppStore((state) => state.compressedMedia.find((item) => item.sourceId === id));
-  const mediaUri = compressed?.outputUri ?? asset?.uri;
-  const comparisonOriginal = asset?.uri ?? (custom === "1" && customTarget?.id === id ? customTarget.uri : undefined);
-  const isVideo = (compressed?.mediaType ?? asset?.mediaType ?? customTarget?.mediaType) === "video";
+  // Raw-uri pass-through: a "Recent converted" file (custom:<uri> output, not in
+  // the media index or compressedMedia) opens by passing its uri + media kind
+  // directly. With id/result/compare/custom all unset this lands in plain
+  // drag-to-dismiss view mode (isResultMode stays false — no compressed data).
+  const rawUri = typeof uri === "string" ? uri : undefined;
+  const mediaUri = compressed?.outputUri ?? asset?.uri ?? rawUri;
+  const comparisonOriginal = asset?.uri ?? (custom === "1" && customTarget != null && customTarget.id === id ? customTarget.uri : undefined);
+  const isVideo = (compressed?.mediaType ?? asset?.mediaType ?? customTarget?.mediaType ?? media) === "video";
   const isComparisonMode = compare === "1";
   // Android single-item result mode: the viewer also shows the post-compression
   // result sheet (data + original-file actions), the media drag-to-dismiss is
@@ -129,7 +134,7 @@ export function CompressionMediaViewerScreen() {
           )}
         </View>
       </Animated.View>
-      {isResultMode ? <CompressionResultSheet mediaId={id} /> : null}
+      {isResultMode && id ? <CompressionResultSheet mediaId={id} /> : null}
     </View>
   );
 }

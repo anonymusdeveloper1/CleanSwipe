@@ -25,6 +25,20 @@ export const StatsService = {
     };
   },
 
+  // Batch equivalent of withSwipe — applies `count` swipes of the same action in
+  // one shot (used when a multi-select marks many items for deletion at once).
+  withSwipeBatch(stats: AppStats, action: SwipeAction, count: number): AppStats {
+    if (count <= 0) return stats;
+    return {
+      ...stats,
+      totalSwipes: stats.totalSwipes + count,
+      totalKept: stats.totalKept + (action === "keep" ? count : 0),
+      totalMarkedForDeletion: stats.totalMarkedForDeletion + (action === "delete" ? count : 0),
+      totalSuperLikes: stats.totalSuperLikes + (action === "superLike" ? count : 0),
+      totalMissed: stats.totalMissed + (action === "missed" ? count : 0)
+    };
+  },
+
   undoSwipe(stats: AppStats, action: SwipeAction): AppStats {
     return {
       ...stats,

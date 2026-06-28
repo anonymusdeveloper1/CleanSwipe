@@ -44,7 +44,8 @@
     "cleanup": "ضغط",
     "stats": "إحصائيات",
     "premium": "بريميوم",
-    "smartClean": "Smart Clean"
+    "smartClean": "Smart Clean",
+    "studio": "الاستوديو"
   },
   "permissions": {
     "photosTitle": "السماح بالوصول إلى الوسائط",
@@ -76,7 +77,8 @@
       "videoCompression": "ضغط الفيديو",
       "advancedCompression": "ضغط متقدم",
       "advancedStats": "إحصائيات متقدمة",
-      "noAds": "بدون إعلانات"
+      "noAds": "بدون إعلانات",
+      "fileConversion": "تحويل الملفات"
     },
     "choosePlan": "اختر خطتك",
     "monthlyTitle": "شهري",
@@ -356,7 +358,11 @@
   },
   "selected": {
     "alreadyMarkedForDeletion": "محدد للحذف بالفعل",
-    "markPhotoForDeletion": "تحديد الصورة للحذف"
+    "markPhotoForDeletion": "تحديد الصورة للحذف",
+    "selectedCountOne": "{{count}} محدد",
+    "selectedCountOther": "{{count}} محددة",
+    "exitSelection": "إنهاء التحديد",
+    "deleteSelected": "حذف المحدد"
   },
   "preview": {
     "goBack": "رجوع",
@@ -535,5 +541,76 @@
     "videoOther": "مقاطع فيديو",
     "itemOne": "عنصر",
     "itemOther": "عناصر"
+  },
+  "studio": {
+    "clean": "تنظيف",
+    "convert": "تحويل"
+  },
+  "convert": {
+    "title": "تحويل",
+    "subtitle": "حوّل صورة أو فيديو إلى صيغة أخرى.",
+    "emptyTitle": "تحويل ملف",
+    "emptyMessage": "اختر صورة أو فيديو، ثم اختر الصيغة التي تريد التحويل إليها.",
+    "chooseFile": "اختيار ملف",
+    "changeFile": "اختيار ملف آخر",
+    "opening": "جارٍ الفتح…",
+    "pickerUnavailable": "يتطلب اختيار الملفات إصدارًا محدثًا من التطبيق. يرجى التحديث والمحاولة مرة أخرى.",
+    "videoNeedsBuild": "يتطلب تحويل الفيديو والصوت إصدارًا محدثًا من التطبيق. تحويل الصور متاح الآن.",
+    "group": {
+      "image": "صورة",
+      "video": "فيديو",
+      "audio": "صوت"
+    },
+    "convertCta": "تحويل",
+    "video": "فيديو",
+    "photo": "صورة",
+    "working": "جارٍ التحويل",
+    "completeTitle": "تم التحويل!",
+    "finishedTitle": "اكتمل",
+    "formatLabel": "الصيغة",
+    "originalSizeLabel": "الحجم الأصلي",
+    "outputSizeLabel": "الحجم الناتج",
+    "savedToFiles": "تم الحفظ في ملفات التطبيق — شاركه للاحتفاظ به.",
+    "savedToGallery": "تم الحفظ في معرض الصور.",
+    "share": "مشاركة",
+    "shareTitle": "مشاركة الملف المحوَّل",
+    "close": "إغلاق",
+    "retry": "إعادة المحاولة",
+    "cancelTitle": "إلغاء التحويل؟",
+    "cancelMessage": "سيتوقف التحويل ولن يتم حفظ أي ملف.",
+    "keepConverting": "متابعة التحويل",
+    "cancelConfirm": "إلغاء",
+    "errors": {
+      "unavailable": "يتطلب هذا التحويل إصدارًا محدثًا من التطبيق. يرجى التحديث والمحاولة مرة أخرى.",
+      "saveFailed": "تعذّر حفظ الملف المحوَّل. لم يتم تغيير ملفك الأصلي.",
+      "output": "تعذّر إنشاء الملف المحوَّل. يرجى المحاولة مرة أخرى.",
+      "cancelled": "تم إلغاء التحويل.",
+      "permission": "يحتاج SwipeClean إلى الوصول إلى الوسائط لتحويل هذا الملف. اسمح بالوصول من الإعدادات وحاول مرة أخرى.",
+      "space": "لا توجد مساحة تخزين كافية لحفظ الملف المحوَّل.",
+      "format": "هذه الصيغة غير مدعومة للتحويل.",
+      "generic": "تعذّر علينا تحويل هذا الملف. يرجى المحاولة مرة أخرى."
+    },
+    "dropzoneTitle": "أضف ملفات للتحويل",
+    "dropzoneHint": "حتى 5 صور أو مقاطع فيديو لكل دفعة",
+    "browse": "تصفّح",
+    "selectedCount": "المحدد — {{count}}/5",
+    "addMore": "إضافة المزيد",
+    "convertCountCta": "تحويل {{count}} ملفات",
+    "recentTitle": "التحويلات الأخيرة",
+    "recentCount": "{{count}} عناصر",
+    "recentEmpty": "ستظهر الملفات المحوَّلة هنا.",
+    "removeStaged": "إزالة",
+    "removeRecent": "إزالة من القائمة",
+    "batchTitle": "جارٍ التحويل",
+    "batchProgress": "{{done}} من {{total}}",
+    "batchEmpty": "لم تعد هذه الدفعة متاحة.",
+    "batchDoneTitle": "اكتملت الدفعة",
+    "batchDoneSummary": "{{done}} محوَّلة · {{failed}} فاشلة",
+    "statusQueued": "في الانتظار",
+    "statusFailed": "فشل",
+    "statusCancelled": "أُلغيت",
+    "cancelAll": "إلغاء الكل",
+    "cancelBatchTitle": "إلغاء التحويلات؟",
+    "cancelBatchMessage": "لن يتم تحويل الملفات المتبقية."
   }
 }

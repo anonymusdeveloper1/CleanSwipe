@@ -26,3 +26,9 @@ android/app/build/
 # and are intentionally tracked.
 .codex/
 .maestro/screenshots/
+
+# Metro bundle warmup artifact (machine-local)
+bundle-warm.out
+
+# Native module Gradle build outputs
+modules/*/android/build/

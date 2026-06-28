@@ -1,0 +1,30 @@
+# Stats screen: the four stat cards, the Swipe Distribution chart, and the
+# Free-user Advanced Stats locked card → paywall sheet → dismiss.
+# Assumes a Free user (the default state; Pro shows the report instead).
+appId: com.swipeclean.free
+name: Stats and Advanced Stats paywall
+tags:
+  - stats
+---
+- launchApp
+- tapOn:
+    text: "^Stats$"
+- assertVisible: "Storage Stats"
+- assertVisible: "Total Used"
+- assertVisible: "Space Cleared"
+- assertVisible: "Photos Scanned"
+- assertVisible: "Marked"
+- assertVisible: "Swipe Distribution"
+# Advanced Stats locked card (Free) lives below the chart.
+- scrollUntilVisible:
+    element:
+      text: "Unlock with Pro"
+    direction: DOWN
+- assertVisible: "Advanced stats"
+# Tapping the locked card opens the global paywall sheet.
+- tapOn: "Unlock with Pro"
+- assertVisible: "This is a Pro feature"
+- assertVisible: "Upgrade to Pro"
+# Dismiss without upgrading.
+- tapOn: "Maybe Later"
+- assertVisible: "Storage Stats"
