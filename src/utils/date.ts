@@ -28,6 +28,14 @@ export function formatDate(time?: number | string) {
   });
 }
 
+/** Weekday + day-of-month, e.g. "Mon 24" — used by the scrubber within a single month. */
+export function formatWeekdayDay(time?: number | string) {
+  if (!time) return "";
+  const date = new Date(time);
+  const weekday = date.toLocaleDateString(i18n.language, { weekday: "short" });
+  return `${weekday} ${date.getDate()}`;
+}
+
 export function formatTime(time?: number | string) {
   if (!time) return "--:--";
   return new Date(time).toLocaleTimeString(i18n.language, {

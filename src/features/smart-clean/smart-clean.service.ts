@@ -1,5 +1,6 @@
 import { Aperture, Copy, Film, Image as ImageIcon, Images, Smartphone, Smile, Video } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
+import i18n from "@/i18n";
 import { SmartCleanDetector, SmartCleanDetectorKey } from "@/features/smart-clean/smart-clean.types";
 import { largePhotosDetector, largeVideosDetector } from "@/features/smart-clean/detectors/tier0-large";
 import { screenshotsDetector } from "@/features/smart-clean/detectors/tier1-screenshots";
@@ -59,3 +60,26 @@ export const CATEGORY_ICON: Record<SmartCleanDetectorKey, LucideIcon> = {
   largeVideos: Video,
   largePhotos: ImageIcon
 };
+
+/**
+ * The human-readable "what the scan is doing right now" line — shown identically
+ * on the in-app progress label AND the ongoing Android notification, so the two
+ * never disagree. During the photo pre-pass it shows the live per-photo count;
+ * while a specific detector runs it names that category; otherwise a generic
+ * "Scanning…". Uses the module i18n instance so non-React callers (the notifier)
+ * can use it too.
+ */
+export function scanStatusText(args: {
+  stage?: "metadata" | "analyzing" | "grouping";
+  activeDetectorKey?: SmartCleanDetectorKey;
+  analyzed: number;
+  analyzeTotal: number;
+}): string {
+  if (args.stage === "analyzing" && args.analyzeTotal > 0) {
+    return i18n.t("smartClean.analyzingPhotos", { current: args.analyzed, total: args.analyzeTotal });
+  }
+  if (args.activeDetectorKey) {
+    return i18n.t("smartClean.scanningCategory", { category: i18n.t(`smartClean.cards.${args.activeDetectorKey}.title`) });
+  }
+  return i18n.t("smartClean.scanning");
+}

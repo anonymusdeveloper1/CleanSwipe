@@ -124,6 +124,7 @@
     "stop": "Interrompi",
     "scanning": "Analisi in corso…",
     "scanningProgress": "Analisi {{current}} di {{total}}…",
+    "scanningCategory": "Analisi {{category}}…",
     "analyzingPhotos": "Analisi foto {{current}} di {{total}}…",
     "scanKeepUsing": "Puoi continuare a usare l’app durante l’operazione.",
     "groupKeepBest": "Manteniamo il migliore — rivedi gli altri",

@@ -113,8 +113,9 @@ async function ensureSetup(Notifications: ExpoNotificationsModule) {
 }
 
 export const SmartCleanScanNotifications = {
-  /** Post/update the ongoing "Scanning X of Y" notification (Android). */
-  showProgress(current: number, total: number): Promise<void> {
+  /** Post/update the ongoing scan notification (Android). `body` is the live
+   * status line (e.g. "Analyzing photos 1,240 of 3,355" / "Scanning Similar photos"). */
+  showProgress(body: string): Promise<void> {
     if (Platform.OS !== "android") return Promise.resolve(); // "ongoing" notifications are an Android concept
     return enqueue(async () => {
       const Notifications = await getNotifications();
@@ -126,7 +127,7 @@ export const SmartCleanScanNotifications = {
           identifier: SCAN_NOTIFICATION_ID,
           content: {
             title: i18n.t("smartClean.title"),
-            body: i18n.t("smartClean.scanningProgress", { current: Math.max(1, current), total }),
+            body,
             data: { type: SCAN_DATA_TYPE },
             categoryIdentifier: SCAN_CATEGORY_ID,
             sticky: true,

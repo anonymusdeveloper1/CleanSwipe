@@ -99,7 +99,16 @@ export function MonthSelectorBottomSheet() {
           })}
         </View>
       </View>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 16, gap: 6 }}>
+      {/* nestedScrollEnabled is REQUIRED on Android: it's false by default, so the
+          form sheet's BottomSheetBehavior wouldn't recognize this list as its
+          scrolling child and every downward drag dismissed the sheet instead of
+          scrolling the list up. With it on, the list scrolls and the sheet
+          dismisses only once the list is at the top. */}
+      <ScrollView
+        nestedScrollEnabled
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 16, gap: 6 }}
+      >
         {months.map((month) => {
           const isSelected = month.key === selected;
           const monthPhotos = filterPhotosByMonth(scopedPhotos, month.key);

@@ -124,6 +124,7 @@
     "stop": "إيقاف",
     "scanning": "جارٍ الفحص…",
     "scanningProgress": "جارٍ فحص {{current}} من {{total}}…",
+    "scanningCategory": "جارٍ فحص {{category}}…",
     "analyzingPhotos": "تحليل الصور {{current}} من {{total}}…",
     "scanKeepUsing": "يمكنك متابعة استخدام التطبيق أثناء التشغيل.",
     "groupKeepBest": "نحتفظ بالأفضل — راجع الباقي",

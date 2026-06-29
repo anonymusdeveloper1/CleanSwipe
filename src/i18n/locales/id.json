@@ -124,6 +124,7 @@
     "stop": "Hentikan",
     "scanning": "Memindai…",
     "scanningProgress": "Memindai {{current}} dari {{total}}…",
+    "scanningCategory": "Memindai {{category}}…",
     "analyzingPhotos": "Menganalisis foto {{current}} dari {{total}}…",
     "scanKeepUsing": "Kamu tetap bisa memakai aplikasi selama proses ini.",
     "groupKeepBest": "Menyimpan yang terbaik — tinjau sisanya",

@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { FeatureAccessService } from "@/features/subscription/feature-access.service";
 import { FeatureKey } from "@/features/subscription/feature-flags";
 import { SmartCleanDetectorKey, SmartCleanGroup, SmartCleanResult, SmartCleanStatus } from "@/features/smart-clean/smart-clean.types";
-import { SMART_CLEAN_SCAN_ORDER } from "@/features/smart-clean/smart-clean.service";
+import { SMART_CLEAN_SCAN_ORDER, scanStatusText } from "@/features/smart-clean/smart-clean.service";
 import { prewarmPhotoFeatures } from "@/features/smart-clean/detectors/pre-pass";
 import { featureCacheApi } from "@/features/smart-clean/feature-cache-store";
 import { mediaScopeFingerprint } from "@/features/smart-clean/permission-reconcile";
@@ -170,28 +170,36 @@ function normalizePersistedPhase(phase: unknown): RunPhase {
   return phase === "interrupted" || phase === "complete" ? phase : "idle";
 }
 
-function updateScanNotification(current: number, total: number, progress: number) {
+/** Live "what the scan is doing" line, derived from the current store state so the
+ * notification text matches the in-app progress label exactly. */
+function currentScanStatus(): string {
+  const s = useSmartCleanStore.getState();
+  return scanStatusText({ stage: s.stage, activeDetectorKey: s.activeDetectorKey, analyzed: s.analyzed, analyzeTotal: s.analyzeTotal });
+}
+
+function updateScanNotification(progress: number) {
   if (Platform.OS !== "android") return;
   lastNotifyAt = Date.now();
+  const description = currentScanStatus();
   if (serviceHeld) {
     void BackgroundSmartCleanScanWorker.update({
       title: i18n.t("smartClean.title"),
-      description: i18n.t("smartClean.scanningProgress", { current, total }),
+      description,
       progress,
       linkingURI: "swipeclean://"
     });
   } else {
     // Degraded (compression holds the service, or non-service run): the
     // expo-notifications sticky notification WITH its Stop button.
-    void SmartCleanScanNotifications.showProgress(current, total);
+    void SmartCleanScanNotifications.showProgress(description);
   }
 }
 
 /** Throttled intra-detector update so a long detector's bar doesn't look frozen. */
-function throttledNotify(current: number, total: number, progress: number) {
-  if (Platform.OS !== "android" || !serviceHeld) return; // expo body has no fraction → per-detector only
+function throttledNotify(progress: number) {
+  if (Platform.OS !== "android" || !serviceHeld) return; // expo body updates per-detector only
   if (Date.now() - lastNotifyAt < NOTIFY_THROTTLE_MS) return;
-  updateScanNotification(current, total, progress);
+  updateScanNotification(progress);
 }
 
 function dismissAllScanNotifications() {
@@ -315,7 +323,7 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
             return;
           }
           set({ activeIndex: displayIndex, activeDetectorKey: detector.key });
-          updateScanNotification(displayIndex, total, bandStart);
+          updateScanNotification(bandStart);
           if (!canUse(detector.featureKey)) {
             acc[detector.key] = notAvailable(detector.key);
             set({ resultsByKey: { ...acc }, progress: bandEnd, lastCheckpointAt: Date.now() });
@@ -331,7 +339,7 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
                 if (token !== runToken) return;
                 const p = bandStart + (bandEnd - bandStart) * fraction;
                 set({ progress: p });
-                throttledNotify(displayIndex, total, p);
+                throttledNotify(p);
               }
             });
             if (token !== runToken) return;
@@ -359,12 +367,12 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
           // cache (the bulk of the work; resume skips already-cached photos).
           if (token !== runToken) return;
           set({ stage: "analyzing", activeDetectorKey: undefined, activeIndex: cheapDetectors.length });
-          updateScanNotification(cheapDetectors.length, total, CHEAP_END);
+          updateScanNotification(CHEAP_END);
           await prewarmPhotoFeatures(assets, signal, (fraction, analyzed, analyzeTotal) => {
             if (token !== runToken) return;
             const p = CHEAP_END + (PREPASS_END - CHEAP_END) * fraction;
             set({ progress: p, analyzed, analyzeTotal });
-            throttledNotify(cheapDetectors.length, total, p);
+            throttledNotify(p);
           });
 
           // Phase C — pixel detectors now read the warm cache and surface together.
