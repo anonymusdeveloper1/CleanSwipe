@@ -8,7 +8,7 @@ import { AppHeader } from "@/components/app-header";
 import { EmptyState } from "@/components/empty-state";
 import { SmartCleanCard } from "@/features/smart-clean/components/smart-clean-card";
 import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-review-store";
-import { CATEGORY_ICON, SMART_CLEAN_DETECTORS } from "@/features/smart-clean/smart-clean.service";
+import { CATEGORY_ICON, SMART_CLEAN_DETECTORS, scanStatusText } from "@/features/smart-clean/smart-clean.service";
 import { useSmartCleanStore } from "@/features/smart-clean/smart-clean-store";
 import { useSmartCleanFeatureCache } from "@/features/smart-clean/feature-cache-store";
 import { SmartCleanDetectorKey, SmartCleanGroup, SmartCleanResult } from "@/features/smart-clean/smart-clean.types";
@@ -53,7 +53,6 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
   const stage = useSmartCleanStore((state) => state.stage);
   const analyzed = useSmartCleanStore((state) => state.analyzed);
   const analyzeTotal = useSmartCleanStore((state) => state.analyzeTotal);
-  const activeIndex = useSmartCleanStore((state) => state.activeIndex);
   const activeKey = useSmartCleanStore((state) => state.activeDetectorKey);
   const resultsByKey = useSmartCleanStore((state) => state.resultsByKey);
   const runScan = useSmartCleanStore((state) => state.runScan);
@@ -69,16 +68,9 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
   const indexing = mediaIndexStatus === "scanning" || mediaIndexStatus === "refreshing";
   const expectedIndexAccess = limitedAccess ? "limited" : "full";
   const mediaScopeReconciling = !canReadMedia || indexing || mediaIndexAccessLevel !== expectedIndexAccess;
-  const total = SMART_CLEAN_DETECTORS.length;
-  // Counter tracks the discrete detector currently running — same value the
-  // notification shows (no off-by-one). The bar uses the continuous `progress`.
-  const current = Math.min(total, Math.max(1, activeIndex || 1));
-  // During the concurrent photo pre-pass ("analyzing") show the per-photo count;
-  // otherwise the detector "X of Y" counter.
-  const scanLabel =
-    stage === "analyzing" && analyzeTotal > 0
-      ? t("smartClean.analyzingPhotos", { current: analyzed, total: analyzeTotal })
-      : t("smartClean.scanningProgress", { current, total });
+  // Same "what it's doing" line the ongoing notification shows (single source in
+  // scanStatusText): per-photo count during the pre-pass, else the active category.
+  const scanLabel = scanStatusText({ stage, activeDetectorKey: activeKey, analyzed, analyzeTotal });
   const indexLabel =
     mediaIndexStatus === "refreshing"
       ? t("smartClean.checkingGallery")

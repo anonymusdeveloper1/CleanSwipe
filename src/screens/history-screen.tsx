@@ -8,26 +8,24 @@ import { useTranslation } from "react-i18next";
 import { AdBanner } from "@/components/ad-banner";
 import { AppHeader } from "@/components/app-header";
 import { MediaThumbnail } from "@/components/media-thumbnail";
-import { CompressionFilterDialog } from "@/components/compression-filter-dialog";
 import { CustomCompressAdDialog } from "@/components/custom-compress-ad-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { RewardedAdService } from "@/features/ads/rewarded.service";
 import { MediaCompressionOverlay } from "@/features/compression/components/media-compression-overlay";
+import { useCompressFilterStore } from "@/features/compression/compress-filter.store";
+import { useCompressiblePool } from "@/features/compression/use-compressible-pool";
 import { useCompressionStore } from "@/features/compression/compression.store";
 import { useCustomCompressStore } from "@/features/compression/custom-compress.store";
 import { FREE_DAILY_CUSTOM_LIMIT, useFreeCustomCompressQuotaStore } from "@/features/compression/free-custom-compress-quota.store";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { MediaTypeFilter, PhotoAsset } from "@/models/photo";
+import { PhotoAsset } from "@/models/photo";
 import { isCustomPickerAvailable, pickMediaForCompression, prepareCustomMediaPicker } from "@/services/custom-media-picker";
 import { PermissionService } from "@/services/permission-service";
 import { useAppStore } from "@/store/app-store";
-import { IndexedMediaAsset, MediaIndexStatus, useIndexedMediaAssets, useMediaIndexStore } from "@/store/media-index-store";
+import { IndexedMediaAsset, MediaIndexStatus, useMediaIndexStore } from "@/store/media-index-store";
 import { monthLabel } from "@/utils/date";
 import { formatBytes } from "@/utils/format";
-import { filterPhotosByMediaType, groupPhotosByMonth } from "@/utils/months";
-
-type Filter = { monthKey: string; mediaType: MediaTypeFilter };
 
 // Render the compress grid in pages so a large compressible library never hands
 // thousands of cards to the FlatList at once; the next page loads on scroll.
@@ -35,10 +33,10 @@ const PAGE_SIZE = 60;
 
 export function HistoryScreen() {
   const theme = useAppTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
-  const [filter, setFilter] = useState<Filter>({ monthKey: "all", mediaType: "all" });
-  const [filterVisible, setFilterVisible] = useState(false);
+  const filterMonthKey = useCompressFilterStore((state) => state.monthKey);
+  const filterMediaType = useCompressFilterStore((state) => state.mediaType);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlashListRef<IndexedMediaAsset>>(null);
@@ -51,13 +49,10 @@ export function HistoryScreen() {
   const requestingPermission = useAppStore((state) => state.requestingPermission);
   const hasHydrated = useAppStore((state) => state.hasHydrated);
   const error = useAppStore((state) => state.error);
-  const compressedMedia = useAppStore((state) => state.compressedMedia);
-  const photos = useIndexedMediaAssets();
   const mediaIndexSummary = useMediaIndexStore((state) => state.summary);
   const mediaIndexStatus = useMediaIndexStore((state) => state.status);
   const lastFullScanCompletedAt = useMediaIndexStore((state) => state.lastFullScanCompletedAt);
   const startFullScan = useMediaIndexStore((state) => state.startFullScan);
-  const completedCompressionMediaIds = useCompressionStore((state) => state.completedMediaIds);
   const latestCompressionError = useCompressionStore((state) => state.lastErrorMessage);
   const { canUseFeature } = useFeatureAccess();
   const defaultCompressionQuality = useAppStore((state) => state.settings.defaultCompressionQuality);
@@ -89,36 +84,21 @@ export function HistoryScreen() {
   }, [latestCompressionError]);
 
   const needsMediaPermission = permission.status !== "granted" && permission.status !== "limited";
-  const doneSourceIds = useMemo(() => {
-    const ids = new Set(compressedMedia.map((item) => item.sourceId));
-    Object.keys(completedCompressionMediaIds).forEach((id) => ids.add(id));
-    return ids;
-  }, [completedCompressionMediaIds, compressedMedia]);
 
-  // Everything compressible that isn't already done — the unfiltered pool that
-  // both the grid and the filter dialog draw from.
-  const compressiblePool = useMemo(
-    () => photos.filter((photo) => photo.compressible && !doneSourceIds.has(photo.id)),
-    [doneSourceIds, photos]
-  );
+  // Everything compressible that isn't already done — the pool the grid draws
+  // from (shared with the Compress filter sheet via useCompressiblePool, so the
+  // sheet's month list and the grid never diverge).
+  const { pool: compressiblePool, doneSourceIds } = useCompressiblePool();
 
-  // The grid shows the pool narrowed by the dialog's month + media-type filter.
+  // The grid shows the pool narrowed by the filter sheet's month + media type.
   const filteredMedia = useMemo(
     () =>
       compressiblePool.filter(
         (item) =>
-          (filter.mediaType === "all" || item.mediaType === filter.mediaType) &&
-          (filter.monthKey === "all" || item.monthKey === filter.monthKey)
+          (filterMediaType === "all" || item.mediaType === filterMediaType) &&
+          (filterMonthKey === "all" || item.monthKey === filterMonthKey)
       ),
-    [compressiblePool, filter]
-  );
-
-  // Month list for the dialog, scoped to the selected media type.
-  const months = useMemo(
-    () => groupPhotosByMonth(filterPhotosByMediaType(compressiblePool, filter.mediaType), t("cleanup.allMonths")),
-    // i18n.language keeps the localized month titles + "All months" fresh.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [compressiblePool, filter.mediaType, i18n.language]
+    [compressiblePool, filterMediaType, filterMonthKey]
   );
 
   // Indexed assets already carry their estimates — never re-run estimate here.
@@ -161,7 +141,7 @@ export function HistoryScreen() {
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [filter]);
+  }, [filterMonthKey, filterMediaType]);
 
   const summaryText =
     filteredMedia.length > 0 ? t("cleanup.heavySummary", { size: formatBytes(totalHeavyBytes) }) : t("cleanup.emptySummary");
@@ -172,8 +152,8 @@ export function HistoryScreen() {
   const isEstimating = mediaIndexStatus === "scanning";
 
   const mediaTypeLabel =
-    filter.mediaType === "photo" ? t("months.photos") : filter.mediaType === "video" ? t("months.videos") : t("cleanup.bothMedia");
-  const filterSummary = `${filter.monthKey === "all" ? t("cleanup.allMonths") : monthLabel(filter.monthKey)} · ${mediaTypeLabel}`;
+    filterMediaType === "photo" ? t("months.photos") : filterMediaType === "video" ? t("months.videos") : t("cleanup.bothMedia");
+  const filterSummary = `${filterMonthKey === "all" ? t("cleanup.allMonths") : monthLabel(filterMonthKey)} · ${mediaTypeLabel}`;
 
   const handleEstimateNow = () => {
     if (isEstimating) return;
@@ -307,7 +287,7 @@ export function HistoryScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`${t("cleanup.filter")}: ${filterSummary}`}
-                onPress={() => setFilterVisible(true)}
+                onPress={() => router.push("/compress-filter")}
                 style={{
                   minHeight: 46,
                   borderRadius: 10,
@@ -383,15 +363,6 @@ export function HistoryScreen() {
           <ArrowUp size={24} color="#fff" />
         </Pressable>
       ) : null}
-      <CompressionFilterDialog
-        visible={filterVisible}
-        mediaType={filter.mediaType}
-        monthKey={filter.monthKey}
-        months={months}
-        onSelectMediaType={(mediaType) => setFilter({ mediaType, monthKey: "all" })}
-        onSelectMonth={(monthKey) => setFilter((prev) => ({ ...prev, monthKey }))}
-        onClose={() => setFilterVisible(false)}
-      />
       <CustomCompressAdDialog
         visible={customAdVisible}
         remaining={customRemaining}

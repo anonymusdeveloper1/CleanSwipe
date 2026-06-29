@@ -94,6 +94,16 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: theme.surface }
           }}
         />
+        <Stack.Screen
+          name="compress-filter"
+          options={{
+            presentation: "formSheet",
+            sheetAllowedDetents: [0.58, 0.92],
+            sheetGrabberVisible: false,
+            sheetCornerRadius: 28,
+            contentStyle: { backgroundColor: theme.surface }
+          }}
+        />
         <Stack.Screen name="review-delete-list" options={{ presentation: "card" }} />
         <Stack.Screen name="selected-photos" options={{ presentation: "card" }} />
         <Stack.Screen name="photo-preview" options={{ presentation: "modal" }} />

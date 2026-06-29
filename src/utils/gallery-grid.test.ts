@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildMonthSpans, hitTestGridIndex, rangeIndices } from "@/utils/gallery-grid";
+import { buildGalleryLayout, buildMonthSpans, hitTestGridIndex, hitTestSectionedIndex, photoIndexAtOffset, rangeIndices } from "@/utils/gallery-grid";
 
 const m = (monthKey: string) => ({ monthKey });
+const mb = (monthKey: string, sizeBytes = 0) => ({ monthKey, sizeBytes });
 
 describe("buildMonthSpans", () => {
   it("returns no spans for an empty list", () => {
@@ -86,5 +87,104 @@ describe("rangeIndices", () => {
     expect(rangeIndices(2, 5)).toEqual([2, 3, 4, 5]);
     expect(rangeIndices(5, 2)).toEqual([2, 3, 4, 5]);
     expect(rangeIndices(4, 4)).toEqual([4]);
+  });
+});
+
+describe("buildGalleryLayout", () => {
+  it("returns an empty layout for no photos", () => {
+    expect(buildGalleryLayout([], { numColumns: 3, rowHeight: 100, headerHeight: 40 })).toEqual({
+      rows: [],
+      monthOffsets: [],
+      contentHeight: 0,
+      total: 0
+    });
+  });
+
+  it("emits a header + photo rows per month with absolute tops", () => {
+    // 2 in June (1 row of 2) then 4 in May (2 full rows) at 3 columns.
+    const photos = [mb("2026-06", 10), mb("2026-06", 20), mb("2026-05"), mb("2026-05"), mb("2026-05"), mb("2026-05")];
+    const layout = buildGalleryLayout(photos, { numColumns: 3, rowHeight: 100, headerHeight: 40 });
+
+    expect(layout.rows).toEqual([
+      { type: "header", key: "h:2026-06:0", monthKey: "2026-06", count: 2, bytes: 30, top: 0, height: 40 },
+      { type: "photos", key: "p:0", startIndex: 0, count: 2, top: 40, height: 100 },
+      { type: "header", key: "h:2026-05:2", monthKey: "2026-05", count: 4, bytes: 0, top: 140, height: 40 },
+      { type: "photos", key: "p:2", startIndex: 2, count: 3, top: 180, height: 100 },
+      { type: "photos", key: "p:5", startIndex: 5, count: 1, top: 280, height: 100 }
+    ]);
+    expect(layout.monthOffsets).toEqual([
+      { key: "2026-06", y: 0 },
+      { key: "2026-05", y: 140 }
+    ]);
+    expect(layout.contentHeight).toBe(380);
+    expect(layout.total).toBe(6);
+  });
+});
+
+describe("hitTestSectionedIndex", () => {
+  // 3 columns, 100px square tiles, 40px headers: 2 (June) then 4 (May).
+  const layout = buildGalleryLayout(
+    [mb("2026-06"), mb("2026-06"), mb("2026-05"), mb("2026-05"), mb("2026-05"), mb("2026-05")],
+    { numColumns: 3, rowHeight: 100, headerHeight: 40 }
+  );
+  const geo = { rows: layout.rows, numColumns: 3, rowHeight: 100 };
+
+  it("maps a tile in the first month's photo row", () => {
+    // contentY 40..140 is the June photo row; x 0..100 → col 0 → index 0.
+    expect(hitTestSectionedIndex(20, 60, geo)).toBe(0);
+    // col 1 → index 1.
+    expect(hitTestSectionedIndex(150, 60, geo)).toBe(1);
+  });
+
+  it("maps tiles across the second month accounting for the header offset", () => {
+    // May photo row 1 starts at top 180; x col 2 → index 2 + 2 = 4.
+    expect(hitTestSectionedIndex(250, 200, geo)).toBe(4);
+    // May photo row 2 (top 280), col 0 → index 5.
+    expect(hitTestSectionedIndex(10, 300, geo)).toBe(5);
+  });
+
+  it("returns null over a header row", () => {
+    expect(hitTestSectionedIndex(20, 10, geo)).toBeNull(); // June header (0..40)
+    expect(hitTestSectionedIndex(20, 150, geo)).toBeNull(); // May header (140..180)
+  });
+
+  it("returns null past a month's partial last row and past the columns", () => {
+    expect(hitTestSectionedIndex(150, 300, geo)).toBeNull(); // col 1 but row only has 1 tile
+    expect(hitTestSectionedIndex(320, 60, geo)).toBeNull(); // col 3 → out of range
+  });
+
+  it("returns null below all content and for degenerate geometry", () => {
+    expect(hitTestSectionedIndex(20, 9999, geo)).toBeNull();
+    expect(hitTestSectionedIndex(20, 60, { rows: layout.rows, numColumns: 3, rowHeight: 0 })).toBeNull();
+    expect(hitTestSectionedIndex(20, 60, { rows: [], numColumns: 3, rowHeight: 100 })).toBeNull();
+  });
+});
+
+describe("photoIndexAtOffset", () => {
+  // June (2 photos: rows header@0, photos@40), May (4: header@140, photos@180, @280).
+  const layout = buildGalleryLayout(
+    [mb("2026-06"), mb("2026-06"), mb("2026-05"), mb("2026-05"), mb("2026-05"), mb("2026-05")],
+    { numColumns: 3, rowHeight: 100, headerHeight: 40 }
+  );
+  const geo = { rows: layout.rows, total: layout.total };
+
+  it("returns 0 at or before the top", () => {
+    expect(photoIndexAtOffset(0, geo)).toBe(0);
+    expect(photoIndexAtOffset(-50, geo)).toBe(0);
+    expect(photoIndexAtOffset(60, geo)).toBe(0); // inside June's photo row
+  });
+
+  it("resolves a header offset to that month's first photo", () => {
+    expect(photoIndexAtOffset(150, geo)).toBe(2); // May header (140..180) → first May photo
+  });
+
+  it("maps deeper offsets to the right photo row", () => {
+    expect(photoIndexAtOffset(200, geo)).toBe(2); // May row 1 (180..280)
+    expect(photoIndexAtOffset(300, geo)).toBe(5); // May row 2 (280..380)
+  });
+
+  it("clamps past-the-end offsets and handles empty", () => {
+    expect(photoIndexAtOffset(99999, geo)).toBe(5);
+    expect(photoIndexAtOffset(10, { rows: [], total: 0 })).toBe(-1);
   });
 });

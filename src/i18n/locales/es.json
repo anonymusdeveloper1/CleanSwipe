@@ -124,6 +124,7 @@
     "stop": "Detener",
     "scanning": "Analizando…",
     "scanningProgress": "Analizando {{current}} de {{total}}…",
+    "scanningCategory": "Analizando {{category}}…",
     "analyzingPhotos": "Analizando fotos {{current}} de {{total}}…",
     "scanKeepUsing": "Puedes seguir usando la app mientras se ejecuta.",
     "groupKeepBest": "Conservando la mejor — revisa el resto",
