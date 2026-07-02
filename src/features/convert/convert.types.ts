@@ -15,8 +15,10 @@ export type ConvertInputKind = "image" | "video";
 export type ConvertOutputKind = "image" | "video" | "audio";
 
 export type ConvertImageTarget = "jpg" | "png" | "webp";
-export type ConvertVideoTarget = "mp4";
-export type ConvertAudioTarget = "m4a";
+// "gif" is an animated/image artifact saved to the gallery — it can come from a
+// video (video→gif) or be the static-frame target of a gif source.
+export type ConvertVideoTarget = "mp4" | "webm" | "gif";
+export type ConvertAudioTarget = "mp3" | "m4a" | "wav";
 export type ConvertTarget = ConvertImageTarget | ConvertVideoTarget | ConvertAudioTarget;
 
 export type ConvertJobStatus = "queued" | "preparing" | "converting" | "completed" | "failed" | "cancelled";
@@ -93,7 +95,19 @@ export type ConvertEngineOutput = {
   outputSizeBytes: number;
 };
 
-// Which optional conversion engines are present in this build (drives the chips).
+// Which optional conversion engines are present in this build (drives which
+// target chips are offered). Each flag is set by a runtime native-module probe
+// in conversion-engine.ts, so a target stays hidden until its engine ships on
+// the current platform — the cross-platform parity gate (Android may have webm
+// before iOS, etc.). image jpg/png/webp and video→mp4 are always available
+// (pure-JS / already-linked compressor), so they have no flag.
 export type ConvertCapabilities = {
-  audioExtract: boolean;
+  // Video → audio extraction/encode engines.
+  audioM4a: boolean;
+  audioMp3: boolean;
+  audioWav: boolean;
+  // Video → webm (VP8/VP9) container.
+  webm: boolean;
+  // Animated gif encode (video→gif, gif→mp4 reuses the video engine).
+  gif: boolean;
 };

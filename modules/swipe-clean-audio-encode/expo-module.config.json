@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["AudioEncodeModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.swipecleanaudioencode.AudioEncodeModule"]
+  }
+}

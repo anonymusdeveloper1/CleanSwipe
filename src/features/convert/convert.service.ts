@@ -38,7 +38,12 @@ export async function convertMediaJob(
 
     let result: ConversionResult;
     if (job.outputKind === "audio") {
-      result = { outputUri: output.outputUri, outputSizeBytes, savedToFile: true, target: job.target };
+      // Make the audio actually playable: best-effort add it to the device media
+      // store (Android → appears in Music players). iOS Photos can't hold audio,
+      // so this no-ops there and the file stays in the sandbox for Share. Either
+      // way `savedToFile` keeps the Share affordance available cross-platform.
+      const savedAudio = await saveAudioToLibrary(output.outputUri);
+      result = { outputUri: savedAudio?.uri ?? output.outputUri, outputSizeBytes, savedToFile: true, libraryAssetId: savedAudio?.id, target: job.target };
     } else {
       const saved = await saveToLibrary(output.outputUri);
       if (!saved) throw new Error("convert-save-failed");
@@ -53,6 +58,17 @@ export async function convertMediaJob(
     const normalized = error instanceof Error ? error : new Error("Conversion failed.");
     callbacks.onError(normalized);
     throw normalized;
+  }
+}
+
+async function saveAudioToLibrary(uri: string): Promise<{ id: string; uri: string } | undefined> {
+  try {
+    const asset = await MediaLibrary.createAssetAsync(uri);
+    return { id: asset.id, uri: asset.uri };
+  } catch {
+    // iOS Photos rejects audio, or the platform/permission blocked it — fall back
+    // to the sandbox file (still shareable). Not a hard failure for audio.
+    return undefined;
   }
 }
 

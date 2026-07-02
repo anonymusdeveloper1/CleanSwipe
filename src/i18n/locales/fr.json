@@ -612,6 +612,24 @@
     "statusCancelled": "Annulé",
     "cancelAll": "Tout annuler",
     "cancelBatchTitle": "Annuler les conversions ?",
-    "cancelBatchMessage": "Les fichiers restants ne seront pas convertis."
+    "cancelBatchMessage": "Les fichiers restants ne seront pas convertis.",
+    "formatSheetTitle": "Convertir {{format}} en",
+    "sameSourceHidden": "{{format}} masqué — identique à la source",
+    "noTargets": "Aucun format pour l'instant",
+    "changeFormat": "Changer de format",
+    "pick": "Choisir",
+    "clear": "Effacer",
+    "savedToMusic": "Enregistré dans votre Musique.",
+    "note": {
+      "jpg": "Compatible",
+      "png": "Sans perte",
+      "webp": "Plus léger",
+      "gif": "Animé",
+      "mp4": "Universel",
+      "webm": "Format ouvert",
+      "mp3": "Musique",
+      "m4a": "Audio AAC",
+      "wav": "Non compressé"
+    }
   }
 }

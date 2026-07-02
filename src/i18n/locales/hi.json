@@ -612,6 +612,24 @@
     "statusCancelled": "रद्द",
     "cancelAll": "सभी रद्द करें",
     "cancelBatchTitle": "रूपांतरण रद्द करें?",
-    "cancelBatchMessage": "बाकी फ़ाइलें नहीं बदली जाएँगी।"
+    "cancelBatchMessage": "बाकी फ़ाइलें नहीं बदली जाएँगी।",
+    "formatSheetTitle": "{{format}} को इसमें बदलें",
+    "sameSourceHidden": "{{format}} छिपा है — स्रोत जैसा ही",
+    "noTargets": "अभी कोई फ़ॉर्मेट नहीं",
+    "changeFormat": "फ़ॉर्मेट बदलें",
+    "pick": "चुनें",
+    "clear": "साफ़ करें",
+    "savedToMusic": "आपके संगीत में सहेजा गया।",
+    "note": {
+      "jpg": "संगत",
+      "png": "बिना हानि",
+      "webp": "छोटा",
+      "gif": "एनिमेटेड",
+      "mp4": "सार्वभौमिक",
+      "webm": "खुला फ़ॉर्मेट",
+      "mp3": "संगीत",
+      "m4a": "AAC ऑडियो",
+      "wav": "असंपीड़ित"
+    }
   }
 }

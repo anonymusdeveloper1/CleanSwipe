@@ -1,0 +1,31 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.swipecleanaudioencode'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.swipecleanaudioencode"
+  defaultConfig {
+    minSdkVersion 24
+    versionCode 1
+    versionName "0.1.0"
+    externalNativeBuild {
+      cmake {
+        // LAME is pure C — no C++ STL needed.
+        arguments "-DANDROID_STL=none"
+      }
+    }
+    ndk {
+      abiFilters "arm64-v8a", "armeabi-v7a", "x86_64", "x86"
+    }
+  }
+  externalNativeBuild {
+    cmake {
+      path "CMakeLists.txt"
+      version "3.22.1"
+    }
+  }
+}

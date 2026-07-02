@@ -612,6 +612,24 @@
     "statusCancelled": "أُلغيت",
     "cancelAll": "إلغاء الكل",
     "cancelBatchTitle": "إلغاء التحويلات؟",
-    "cancelBatchMessage": "لن يتم تحويل الملفات المتبقية."
+    "cancelBatchMessage": "لن يتم تحويل الملفات المتبقية.",
+    "formatSheetTitle": "تحويل {{format}} إلى",
+    "sameSourceHidden": "{{format}} مخفي — مثل المصدر",
+    "noTargets": "لا توجد صيغ بعد",
+    "changeFormat": "تغيير الصيغة",
+    "pick": "اختر",
+    "clear": "مسح",
+    "savedToMusic": "تم الحفظ في الموسيقى.",
+    "note": {
+      "jpg": "متوافق",
+      "png": "بدون فقدان",
+      "webp": "أصغر",
+      "gif": "متحرك",
+      "mp4": "عالمي",
+      "webm": "صيغة مفتوحة",
+      "mp3": "موسيقى",
+      "m4a": "صوت AAC",
+      "wav": "غير مضغوط"
+    }
   }
 }

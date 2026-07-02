@@ -164,7 +164,7 @@ export function ConvertRunScreen() {
                 <SummaryRow label={t("convert.outputSizeLabel")} value={formatBytes(job?.outputSizeBytes ?? 0)} valueColor={theme.green} />
               </View>
               <Text selectable style={{ color: theme.muted, fontSize: 13, lineHeight: 19, textAlign: "center" }}>
-                {isAudioOutput ? t("convert.savedToFiles") : t("convert.savedToGallery")}
+                {isAudioOutput ? (job?.libraryAssetId ? t("convert.savedToMusic") : t("convert.savedToFiles")) : t("convert.savedToGallery")}
               </Text>
               <View style={{ gap: 11 }}>
                 {isAudioOutput ? (

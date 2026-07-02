@@ -30,5 +30,16 @@ android/app/build/
 # Metro bundle warmup artifact (machine-local)
 bundle-warm.out
 
-# Native module Gradle build outputs
+# Native module Gradle/CMake build outputs
 modules/*/android/build/
+modules/*/android/.cxx/
+
+# macOS Finder junk
+.DS_Store
+
+# iOS native project — track sources, ignore generated/build artifacts
+ios/Pods/
+ios/build/
+ios/.xcode.env.local
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/

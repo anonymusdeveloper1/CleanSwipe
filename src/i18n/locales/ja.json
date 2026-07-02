@@ -612,6 +612,24 @@
     "statusCancelled": "キャンセル",
     "cancelAll": "すべてキャンセル",
     "cancelBatchTitle": "変換をキャンセルしますか？",
-    "cancelBatchMessage": "残りのファイルは変換されません。"
+    "cancelBatchMessage": "残りのファイルは変換されません。",
+    "formatSheetTitle": "{{format}} を次に変換",
+    "sameSourceHidden": "{{format}} は非表示 — 元と同じ",
+    "noTargets": "形式がまだありません",
+    "changeFormat": "形式を変更",
+    "pick": "選択",
+    "clear": "クリア",
+    "savedToMusic": "ミュージックに保存しました。",
+    "note": {
+      "jpg": "互換",
+      "png": "可逆",
+      "webp": "小さい",
+      "gif": "アニメーション",
+      "mp4": "汎用",
+      "webm": "オープン形式",
+      "mp3": "音楽",
+      "m4a": "AAC音声",
+      "wav": "非圧縮"
+    }
   }
 }

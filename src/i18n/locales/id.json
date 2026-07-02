@@ -612,6 +612,24 @@
     "statusCancelled": "Dibatalkan",
     "cancelAll": "Batalkan semua",
     "cancelBatchTitle": "Batalkan konversi?",
-    "cancelBatchMessage": "File yang tersisa tidak akan dikonversi."
+    "cancelBatchMessage": "File yang tersisa tidak akan dikonversi.",
+    "formatSheetTitle": "Konversi {{format}} ke",
+    "sameSourceHidden": "{{format}} disembunyikan — sama dengan sumber",
+    "noTargets": "Belum ada format",
+    "changeFormat": "Ubah format",
+    "pick": "Pilih",
+    "clear": "Hapus",
+    "savedToMusic": "Disimpan ke Musik Anda.",
+    "note": {
+      "jpg": "Kompatibel",
+      "png": "Tanpa kehilangan",
+      "webp": "Lebih kecil",
+      "gif": "Animasi",
+      "mp4": "Universal",
+      "webm": "Format terbuka",
+      "mp3": "Musik",
+      "m4a": "Audio AAC",
+      "wav": "Tanpa kompresi"
+    }
   }
 }
