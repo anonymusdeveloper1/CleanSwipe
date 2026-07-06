@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, type SharedValue } from "react-native-reanimated";
@@ -51,48 +51,82 @@ export function GalleryMonthScrubber({
   const dragY = useSharedValue(0);
   const [bubble, setBubble] = useState<string | null>(null);
   const lastLabelRef = useRef<string | null>(null);
+  const scrubbingRef = useRef(false);
   const travel = Math.max(1, trackHeight - THUMB_HEIGHT);
 
-  const handleScrub = (fraction: number) => {
+  const handleScrub = useCallback((fraction: number) => {
     const offset = fraction * maxScroll;
     const label = labelForOffset(offset);
-    if (label !== lastLabelRef.current) {
+    // Only update when we have a NON-empty label. labelForOffset returns "" when
+    // the item at the top of the viewport briefly has no resolvable date (missing
+    // creationTime, or an index/layout gap mid-scroll); blanking the bubble then
+    // made the date flicker/disappear while scrubbing. Keep the last real label.
+    if (label && label !== lastLabelRef.current) {
       lastLabelRef.current = label;
       setBubble(label);
     }
     onScrubTo(offset);
-  };
+  }, [labelForOffset, maxScroll, onScrubTo]);
 
-  const beginScrub = (fraction: number) => {
-    onScrubbingChange(true);
+  const beginScrub = useCallback((fraction: number) => {
+    if (!scrubbingRef.current) {
+      scrubbingRef.current = true;
+      onScrubbingChange(true);
+    }
     handleScrub(fraction);
-  };
+  }, [handleScrub, onScrubbingChange]);
 
-  const endScrub = () => {
+  const endScrub = useCallback(() => {
+    scrubbingRef.current = false;
     lastLabelRef.current = null;
     setBubble(null);
     onScrubbingChange(false);
-  };
+  }, [onScrubbingChange]);
 
-  const pan = Gesture.Pan()
-    .onBegin((event) => {
-      "worklet";
-      dragging.value = 1;
-      const ty = clampW(event.y - THUMB_HEIGHT / 2, 0, travel);
-      dragY.value = ty;
-      runOnJS(beginScrub)(ty / travel);
-    })
-    .onUpdate((event) => {
-      "worklet";
-      const ty = clampW(event.y - THUMB_HEIGHT / 2, 0, travel);
-      dragY.value = ty;
-      runOnJS(handleScrub)(ty / travel);
-    })
-    .onFinalize(() => {
-      "worklet";
-      dragging.value = 0;
-      runOnJS(endScrub)();
-    });
+  const beginScrubRef = useRef(beginScrub);
+  const handleScrubRef = useRef(handleScrub);
+  const endScrubRef = useRef(endScrub);
+
+  useEffect(() => {
+    beginScrubRef.current = beginScrub;
+    handleScrubRef.current = handleScrub;
+    endScrubRef.current = endScrub;
+  }, [beginScrub, endScrub, handleScrub]);
+
+  const beginFromGesture = useCallback((fraction: number) => {
+    beginScrubRef.current(fraction);
+  }, []);
+
+  const updateFromGesture = useCallback((fraction: number) => {
+    handleScrubRef.current(fraction);
+  }, []);
+
+  const endFromGesture = useCallback(() => {
+    endScrubRef.current();
+  }, []);
+
+  // eslint-disable-next-line react-hooks/refs -- The gesture object must survive bubble-state renders; worklet callbacks bridge through refs.
+  const [pan] = useState(() =>
+    Gesture.Pan()
+      .onBegin((event) => {
+        "worklet";
+        dragging.value = 1;
+        const ty = clampW(event.y - THUMB_HEIGHT / 2, 0, travel);
+        dragY.value = ty;
+        runOnJS(beginFromGesture)(ty / travel);
+      })
+      .onUpdate((event) => {
+        "worklet";
+        const ty = clampW(event.y - THUMB_HEIGHT / 2, 0, travel);
+        dragY.value = ty;
+        runOnJS(updateFromGesture)(ty / travel);
+      })
+      .onFinalize(() => {
+        "worklet";
+        dragging.value = 0;
+        runOnJS(endFromGesture)();
+      })
+  );
 
   const thumbStyle = useAnimatedStyle(() => {
     const follow = maxScroll > 0 ? clampW((scrollY.value / maxScroll) * travel, 0, travel) : 0;

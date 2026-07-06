@@ -41,23 +41,26 @@ export const Thumbnail = memo(function Thumbnail({
 }: Props) {
   const theme = useAppTheme();
   const surface = backgroundColor ?? theme.surfaceStrong;
-  const [uri, setUri] = useState<string | undefined>(undefined);
+  const requestKey = `${cacheKey}|${sourceUri}|${cellDp ?? "auto"}|${isVideo ? "video" : "image"}`;
+  const [resolved, setResolved] = useState<{ requestKey: string; uri: string } | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
-    setUri(undefined);
+    setResolved(undefined);
     const targetPx = cellDp != null ? PixelRatio.getPixelSizeForLayoutSize(cellDp) : DEFAULT_TARGET_PX;
     getThumbnailUri(sourceUri, { key: cacheKey, targetPx, isVideo })
       .then((resolved) => {
-        if (!cancelled) setUri(resolved);
+        if (!cancelled) setResolved({ requestKey, uri: resolved });
       })
       .catch(() => {
-        if (!cancelled) setUri(sourceUri);
+        if (!cancelled) setResolved({ requestKey, uri: sourceUri });
       });
     return () => {
       cancelled = true;
     };
-  }, [sourceUri, cacheKey, cellDp, isVideo]);
+  }, [sourceUri, cacheKey, cellDp, isVideo, requestKey]);
+
+  const uri = resolved?.requestKey === requestKey ? resolved.uri : undefined;
 
   return (
     <View style={[{ backgroundColor: surface, overflow: "hidden" }, style]}>

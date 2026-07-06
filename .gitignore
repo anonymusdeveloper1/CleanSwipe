@@ -30,6 +30,12 @@ android/app/build/
 # Metro bundle warmup artifact (machine-local)
 bundle-warm.out
 
+# Agent/scratch output tree (local research + creative artifacts, can be large)
+outputs/
+
+# Dev-server QR codes — they encode this machine's Metro LAN/tunnel URL
+qr-*.svg
+
 # Native module Gradle/CMake build outputs
 modules/*/android/build/
 modules/*/android/.cxx/

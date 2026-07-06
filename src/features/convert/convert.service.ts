@@ -9,8 +9,9 @@ import { convertMedia } from "@/features/convert/engine/conversion-engine";
  * Output handling diverges from compression:
  *  - image/video → saved to the device gallery (`MediaLibrary.createAssetAsync`).
  *    A failed save is a HARD failure (never silently dropped).
- *  - audio (mp3/m4a) → NOT a library asset type; left in the app sandbox and
- *    shared from the result screen (`savedToFile`).
+ *  - audio (m4a/wav) → NOT a library asset type; best-effort added to the device
+ *    media store (Android) or left in the app sandbox (iOS), then opened in an
+ *    external player from the result screen (`savedToFile`).
  *
  * Unlike compression there is no "did it shrink?" rejection — a format change can
  * legitimately produce a larger file; we only require a non-empty artifact.
@@ -40,10 +41,15 @@ export async function convertMediaJob(
     if (job.outputKind === "audio") {
       // Make the audio actually playable: best-effort add it to the device media
       // store (Android → appears in Music players). iOS Photos can't hold audio,
-      // so this no-ops there and the file stays in the sandbox for Share. Either
-      // way `savedToFile` keeps the Share affordance available cross-platform.
+      // so this no-ops there and the file stays in the sandbox. Either way
+      // `savedToFile` keeps the open/share affordance available cross-platform.
       const savedAudio = await saveAudioToLibrary(output.outputUri);
-      result = { outputUri: savedAudio?.uri ?? output.outputUri, outputSizeBytes, savedToFile: true, libraryAssetId: savedAudio?.id, target: job.target };
+      // Keep the SANDBOX (documentDirectory) uri as outputUri, not the media-store
+      // copy: the "Open with…" flow needs `expo-file-system.getContentUriAsync`,
+      // whose FileProvider only serves the app's own dirs — a public
+      // /storage/emulated/0/Music/... path would throw and force a share fallback.
+      // The media-store copy still exists (libraryAssetId) so it shows in players.
+      result = { outputUri: output.outputUri, outputSizeBytes, savedToFile: true, libraryAssetId: savedAudio?.id, target: job.target };
     } else {
       const saved = await saveToLibrary(output.outputUri);
       if (!saved) throw new Error("convert-save-failed");

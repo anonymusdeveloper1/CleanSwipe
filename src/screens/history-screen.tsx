@@ -287,7 +287,7 @@ export function HistoryScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`${t("cleanup.filter")}: ${filterSummary}`}
-                onPress={() => router.push("/compress-filter")}
+                onPress={() => router.push("/compress-filter" as never)}
                 style={{
                   minHeight: 46,
                   borderRadius: 10,

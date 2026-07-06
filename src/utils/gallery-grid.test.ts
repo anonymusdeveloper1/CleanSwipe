@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildGalleryLayout, buildMonthSpans, hitTestGridIndex, hitTestSectionedIndex, photoIndexAtOffset, rangeIndices } from "@/utils/gallery-grid";
 
 const m = (monthKey: string) => ({ monthKey });
-const mb = (monthKey: string, sizeBytes = 0) => ({ monthKey, sizeBytes });
+const mb = (monthKey: string, sizeBytes = 0, id = `${monthKey}:${sizeBytes}`) => ({ id, monthKey, sizeBytes });
 
 describe("buildMonthSpans", () => {
   it("returns no spans for an empty list", () => {
@@ -102,15 +102,22 @@ describe("buildGalleryLayout", () => {
 
   it("emits a header + photo rows per month with absolute tops", () => {
     // 2 in June (1 row of 2) then 4 in May (2 full rows) at 3 columns.
-    const photos = [mb("2026-06", 10), mb("2026-06", 20), mb("2026-05"), mb("2026-05"), mb("2026-05"), mb("2026-05")];
+    const photos = [
+      mb("2026-06", 10, "jun-1"),
+      mb("2026-06", 20, "jun-2"),
+      mb("2026-05", 0, "may-1"),
+      mb("2026-05", 0, "may-2"),
+      mb("2026-05", 0, "may-3"),
+      mb("2026-05", 0, "may-4")
+    ];
     const layout = buildGalleryLayout(photos, { numColumns: 3, rowHeight: 100, headerHeight: 40 });
 
     expect(layout.rows).toEqual([
       { type: "header", key: "h:2026-06:0", monthKey: "2026-06", count: 2, bytes: 30, top: 0, height: 40 },
-      { type: "photos", key: "p:0", startIndex: 0, count: 2, top: 40, height: 100 },
+      { type: "photos", key: "p:0", startIndex: 0, itemIds: ["jun-1", "jun-2"], count: 2, top: 40, height: 100 },
       { type: "header", key: "h:2026-05:2", monthKey: "2026-05", count: 4, bytes: 0, top: 140, height: 40 },
-      { type: "photos", key: "p:2", startIndex: 2, count: 3, top: 180, height: 100 },
-      { type: "photos", key: "p:5", startIndex: 5, count: 1, top: 280, height: 100 }
+      { type: "photos", key: "p:2", startIndex: 2, itemIds: ["may-1", "may-2", "may-3"], count: 3, top: 180, height: 100 },
+      { type: "photos", key: "p:5", startIndex: 5, itemIds: ["may-4"], count: 1, top: 280, height: 100 }
     ]);
     expect(layout.monthOffsets).toEqual([
       { key: "2026-06", y: 0 },
@@ -124,7 +131,14 @@ describe("buildGalleryLayout", () => {
 describe("hitTestSectionedIndex", () => {
   // 3 columns, 100px square tiles, 40px headers: 2 (June) then 4 (May).
   const layout = buildGalleryLayout(
-    [mb("2026-06"), mb("2026-06"), mb("2026-05"), mb("2026-05"), mb("2026-05"), mb("2026-05")],
+    [
+      mb("2026-06", 0, "jun-1"),
+      mb("2026-06", 0, "jun-2"),
+      mb("2026-05", 0, "may-1"),
+      mb("2026-05", 0, "may-2"),
+      mb("2026-05", 0, "may-3"),
+      mb("2026-05", 0, "may-4")
+    ],
     { numColumns: 3, rowHeight: 100, headerHeight: 40 }
   );
   const geo = { rows: layout.rows, numColumns: 3, rowHeight: 100 };
@@ -163,7 +177,14 @@ describe("hitTestSectionedIndex", () => {
 describe("photoIndexAtOffset", () => {
   // June (2 photos: rows header@0, photos@40), May (4: header@140, photos@180, @280).
   const layout = buildGalleryLayout(
-    [mb("2026-06"), mb("2026-06"), mb("2026-05"), mb("2026-05"), mb("2026-05"), mb("2026-05")],
+    [
+      mb("2026-06", 0, "jun-1"),
+      mb("2026-06", 0, "jun-2"),
+      mb("2026-05", 0, "may-1"),
+      mb("2026-05", 0, "may-2"),
+      mb("2026-05", 0, "may-3"),
+      mb("2026-05", 0, "may-4")
+    ],
     { numColumns: 3, rowHeight: 100, headerHeight: 40 }
   );
   const geo = { rows: layout.rows, total: layout.total };

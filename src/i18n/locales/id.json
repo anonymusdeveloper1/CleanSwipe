@@ -342,7 +342,18 @@
     "totalUsed": "Total Terpakai",
     "spaceCleared": "Ruang Dibersihkan",
     "photosScanned": "Foto Dipindai",
-    "marked": "Ditandai"
+    "marked": "Ditandai",
+    "reclaimed": "Ruang dipulihkan",
+    "itemsReviewed": "{{count}} item ditinjau",
+    "convert": {
+      "title": "Konversi",
+      "empty": "Konversi foto, video, atau audio di Studio untuk melihat statistik Anda di sini.",
+      "total": "Dikonversi",
+      "processed": "Diproses",
+      "images": "Gambar",
+      "videos": "Video",
+      "audio": "Audio"
+    }
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -573,6 +584,7 @@
     "outputSizeLabel": "Ukuran hasil",
     "savedToFiles": "Disimpan di file aplikasi — bagikan untuk menyimpannya.",
     "savedToGallery": "Disimpan ke galeri Anda.",
+    "open": "Buka",
     "share": "Bagikan",
     "shareTitle": "Bagikan file hasil konversi",
     "close": "Tutup",

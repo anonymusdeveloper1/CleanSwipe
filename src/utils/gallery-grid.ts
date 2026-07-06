@@ -122,6 +122,8 @@ export type GalleryPhotoRow = {
   key: string;
   /** Absolute index (into the filtered photo list) of this row's first tile. */
   startIndex: number;
+  /** Stable asset ids for this exact row; prevents recycled rows from reading stale external indices. */
+  itemIds: string[];
   /** Tiles in this row (1..numColumns; a month's last row may be partial). */
   count: number;
   top: number;
@@ -150,7 +152,7 @@ export type GalleryLayout = {
  * can hit-test and scrub without measuring the native list.
  */
 export function buildGalleryLayout(
-  photos: Pick<PhotoAsset, "monthKey" | "sizeBytes">[],
+  photos: Pick<PhotoAsset, "id" | "monthKey" | "sizeBytes">[],
   opts: { numColumns: number; rowHeight: number; headerHeight: number }
 ): GalleryLayout {
   const { numColumns, rowHeight, headerHeight } = opts;
@@ -176,7 +178,16 @@ export function buildGalleryLayout(
     top += headerHeight;
     for (let offset = 0; offset < count; offset += numColumns) {
       const rowCount = Math.min(numColumns, count - offset);
-      rows.push({ type: "photos", key: `p:${start + offset}`, startIndex: start + offset, count: rowCount, top, height: rowHeight });
+      const startIndex = start + offset;
+      rows.push({
+        type: "photos",
+        key: `p:${startIndex}`,
+        startIndex,
+        itemIds: photos.slice(startIndex, startIndex + rowCount).map((photo) => photo.id),
+        count: rowCount,
+        top,
+        height: rowHeight
+      });
       top += rowHeight;
     }
   }

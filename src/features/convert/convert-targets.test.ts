@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  convertedFileName,
   getAvailableTargets,
   getSelectableTargets,
   isTargetAvailable,
@@ -57,11 +58,11 @@ describe("getAvailableTargets — same-format exclusion", () => {
   it("gives a GIF source the still-image targets (gif→still via image engine)", () => {
     expect(getAvailableTargets(photo("loop.gif"))).toEqual(["jpg", "png", "webp"]);
   });
-  it("excludes mp4 for an mp4 video, keeping webm/gif + audio", () => {
-    expect(getAvailableTargets(video("v.mp4"))).toEqual(["webm", "gif", "mp3", "m4a", "wav"]);
+  it("excludes mp4 for an mp4 video, keeping webm/gif + audio (mp3 intentionally not offered)", () => {
+    expect(getAvailableTargets(video("v.mp4"))).toEqual(["webm", "gif", "m4a", "wav"]);
   });
-  it("keeps mp4 for a mov video and drops nothing else", () => {
-    expect(getAvailableTargets(video("v.mov"))).toEqual(["mp4", "webm", "gif", "mp3", "m4a", "wav"]);
+  it("keeps mp4 for a mov video and drops nothing else (mp3 intentionally not offered)", () => {
+    expect(getAvailableTargets(video("v.mov"))).toEqual(["mp4", "webm", "gif", "m4a", "wav"]);
   });
   it("returns nothing for unknown media", () => {
     expect(getAvailableTargets(unknown)).toEqual([]);
@@ -75,8 +76,8 @@ describe("getSelectableTargets — capability gating", () => {
   it("an mp4 video shows nothing extra until native engines ship", () => {
     expect(getSelectableTargets(video("v.mp4"), none)).toEqual([]);
   });
-  it("an mp4 video shows every webm/gif/audio target once engines are present", () => {
-    expect(getSelectableTargets(video("v.mp4"), all)).toEqual(["webm", "gif", "mp3", "m4a", "wav"]);
+  it("an mp4 video shows every webm/gif/audio target once engines are present (mp3 not offered)", () => {
+    expect(getSelectableTargets(video("v.mp4"), all)).toEqual(["webm", "gif", "m4a", "wav"]);
   });
   it("a mov video always shows mp4 even with no native engines", () => {
     expect(getSelectableTargets(video("v.mov"), none)).toEqual(["mp4"]);
@@ -133,5 +134,22 @@ describe("target metadata", () => {
     expect(targetLabel("webp")).toBe("WEBP");
     expect(targetLabel("webm")).toBe("WebM");
     expect(targetLabel("mp3")).toBe("MP3");
+  });
+});
+
+describe("convertedFileName", () => {
+  it("replaces the source extension with the target's", () => {
+    expect(convertedFileName("1000011248.mp4", "webm")).toBe("1000011248.webm");
+    expect(convertedFileName("clip.MOV", "mp4")).toBe("clip.mp4");
+    expect(convertedFileName("song.mp4", "m4a")).toBe("song.m4a");
+    expect(convertedFileName("photo.HEIC", "jpg")).toBe("photo.jpg");
+  });
+  it("appends when there is no source extension, and strips any path", () => {
+    expect(convertedFileName("noext", "wav")).toBe("noext.wav");
+    expect(convertedFileName("file:///a/b/clip.mp4", "webm")).toBe("clip.webm");
+  });
+  it("falls back to 'converted' when the basename is empty/undefined", () => {
+    expect(convertedFileName(undefined, "wav")).toBe("converted.wav");
+    expect(convertedFileName("", "m4a")).toBe("converted.m4a");
   });
 });

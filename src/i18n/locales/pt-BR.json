@@ -342,7 +342,18 @@
     "totalUsed": "Total usado",
     "spaceCleared": "Espaço liberado",
     "photosScanned": "Fotos analisadas",
-    "marked": "Marcadas"
+    "marked": "Marcadas",
+    "reclaimed": "Espaço recuperado",
+    "itemsReviewed": "{{count}} itens revisados",
+    "convert": {
+      "title": "Conversões",
+      "empty": "Converta fotos, vídeos ou áudio no Studio para ver suas estatísticas aqui.",
+      "total": "Convertidos",
+      "processed": "Processado",
+      "images": "Imagens",
+      "videos": "Vídeos",
+      "audio": "Áudio"
+    }
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -573,6 +584,7 @@
     "outputSizeLabel": "Tamanho final",
     "savedToFiles": "Salvo nos arquivos do app — compartilhe para guardá-lo.",
     "savedToGallery": "Salvo na sua galeria.",
+    "open": "Abrir",
     "share": "Compartilhar",
     "shareTitle": "Compartilhar arquivo convertido",
     "close": "Fechar",

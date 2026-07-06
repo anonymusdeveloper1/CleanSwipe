@@ -1,6 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import * as Sharing from "expo-sharing";
-import { AlertTriangle, ArrowRight, CheckCircle2, Share2 } from "lucide-react-native";
+import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, BackHandler, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -9,6 +8,7 @@ import { CachedImage } from "@/components/cached-image";
 import { VideoMediaPlayer } from "@/components/video-media-player";
 import { ShimmerProgressBar, WorkingLabel } from "@/features/convert/components/convert-progress";
 import { targetLabel, targetMimeForShare } from "@/features/convert/convert-targets";
+import { openMediaExternally } from "@/features/convert/open-media-file";
 import { ConvertTarget } from "@/features/convert/convert.types";
 import { useConvertStore } from "@/features/convert/convert.store";
 import { createConversionJobInput } from "@/features/convert/convert.utils";
@@ -23,8 +23,8 @@ import { formatBytes } from "@/utils/format";
  * Pushed from the Convert screen. Runs ONE conversion, shows live progress, then
  * the result. Unlike compression there is NO keep/delete-original decision and NO
  * App-Lock gate: conversion never touches the source. Image/video output lands in
- * the gallery; audio output (mp3/m4a) is kept in the app sandbox and Shared from
- * the result screen. The user cannot navigate away while converting.
+ * the gallery; audio output (m4a/wav) is saved and can be opened in an external
+ * player from the result screen. The user cannot navigate away while converting.
  */
 export function ConvertRunScreen() {
   const { t } = useTranslation();
@@ -96,15 +96,11 @@ export function ConvertRunScreen() {
     goHome();
   };
 
-  const handleShare = async () => {
+  const handleOpen = async () => {
     if (!job?.outputUri) return;
-    try {
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(job.outputUri, { mimeType: targetMimeForShare(convertTarget), dialogTitle: t("convert.shareTitle") });
-      }
-    } catch {
-      // User dismissed the share sheet or it failed — nothing to recover.
-    }
+    // Hand the converted audio to the OS "Open with…" chooser (an audio player)
+    // rather than a share sheet; falls back to sharing on iOS / older builds.
+    await openMediaExternally(job.outputUri, targetMimeForShare(convertTarget), t("convert.shareTitle"));
   };
 
   const retry = () => {
@@ -169,11 +165,11 @@ export function ConvertRunScreen() {
               <View style={{ gap: 11 }}>
                 {isAudioOutput ? (
                   <Pressable
-                    onPress={handleShare}
+                    onPress={handleOpen}
                     style={{ minHeight: 52, borderRadius: 14, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}
                   >
-                    <Share2 size={18} color="#fff" />
-                    <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>{t("convert.share")}</Text>
+                    <ExternalLink size={18} color="#fff" />
+                    <Text style={{ color: "#fff", fontSize: 16, fontWeight: "900" }}>{t("convert.open")}</Text>
                   </Pressable>
                 ) : null}
                 <Pressable

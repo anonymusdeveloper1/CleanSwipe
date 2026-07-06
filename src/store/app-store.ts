@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
@@ -21,6 +20,7 @@ import { defaultSettings } from "@/services/settings-service";
 import { emptyStats, StatsService } from "@/services/stats-service";
 import { MediaAccessLevel, selectIndexedMediaAssets, useMediaIndexStore } from "@/store/media-index-store";
 import { normalizeLanguagePreference } from "@/i18n/languages";
+import { createDebouncedStorage } from "@/utils/debounced-storage";
 import { filterMarkedItemsByScope, filterPhotosByScope } from "@/utils/months";
 
 type LastSwipe = {
@@ -427,14 +427,20 @@ export const useAppStore = create<AppStore>()(
         }
 
         const clearedBytes = items.reduce((sum, item) => sum + (item.sizeBytes ?? 0), 0);
-        set({
-          markedForDeletion: state.markedForDeletion.filter((item) => !ids.includes(item.photoId)),
-          reviewedPhotoIds: state.reviewedPhotoIds.filter((id) => !ids.includes(id)),
-          history: [...HistoryService.fromMarkedItems(items), ...state.history],
-          stats: StatsService.withPermanentDelete(state.stats, items),
+        // Read state fresh inside the updater rather than reusing the pre-await
+        // snapshot: the OS delete-consent dialog can be open for seconds, during
+        // which a swipe/restore/refresh may have mutated the store. Writing back
+        // `state.history`/`reviewedPhotoIds` captured before the await would clobber
+        // those concurrent changes.
+        const idSet = new Set(ids);
+        set((current) => ({
+          markedForDeletion: current.markedForDeletion.filter((item) => !idSet.has(item.photoId)),
+          reviewedPhotoIds: current.reviewedPhotoIds.filter((id) => !idSet.has(id)),
+          history: [...HistoryService.fromMarkedItems(items), ...current.history],
+          stats: StatsService.withPermanentDelete(current.stats, items),
           photos: [],
           error: undefined
-        });
+        }));
         useMediaIndexStore.getState().removeMediaIds(ids);
         // Advanced-stats ledger: one batched event per delete op (after success).
         // Callers that record their own deletion event (e.g. Smart Clean, whose
@@ -493,7 +499,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: "swipeclean-free-store",
-      storage: createJSONStorage(() => AsyncStorage),
+      // Debounced: zustand-persist writes the FULL partialized store (settings,
+      // stats, history, the marked-deletion queue, and the ever-growing
+      // reviewedPhotoIds list) on every set() — so each swipe re-serialized and
+      // re-wrote the whole blob. Collapsing bursts into one trailing write removes
+      // that per-swipe cost; flushAllDebouncedStorages() (wired on app background)
+      // guarantees the queue is durable before suspend, and the marked list is a
+      // non-destructive queue so losing <400ms of trailing writes on a hard kill
+      // is harmless.
+      storage: createJSONStorage(() => createDebouncedStorage(400)),
       merge: (persistedState, currentState) => {
         // persistedState is undefined on a fresh install (and can be malformed
         // after a failed write). Default it so property reads below never throw

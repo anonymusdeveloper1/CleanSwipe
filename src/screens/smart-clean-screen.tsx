@@ -67,7 +67,13 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
   const scanning = phase === "scanning";
   const indexing = mediaIndexStatus === "scanning" || mediaIndexStatus === "refreshing";
   const expectedIndexAccess = limitedAccess ? "limited" : "full";
-  const mediaScopeReconciling = !canReadMedia || indexing || mediaIndexAccessLevel !== expectedIndexAccess;
+  // Already-computed detector results are only untrustworthy when media can't be
+  // read at all, or the index is reconciling to a DIFFERENT access level
+  // (full↔limited) — those can leave cached groups pointing at now-inaccessible
+  // assets. A routine newest-page refresh / background (re)index at the SAME
+  // access level does NOT invalidate results, so we keep showing them rather than
+  // flashing every card back to "Not scanned" during a background gallery check.
+  const resultsUntrustworthy = !canReadMedia || mediaIndexAccessLevel !== expectedIndexAccess;
   // Same "what it's doing" line the ongoing notification shows (single source in
   // scanStatusText): per-photo count during the pre-pass, else the active category.
   const scanLabel = scanStatusText({ stage, activeDetectorKey: activeKey, analyzed, analyzeTotal });
@@ -113,7 +119,7 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
   };
 
   const handlePrimary = (key: SmartCleanDetectorKey) => {
-    if (mediaScopeReconciling) return;
+    if (resultsUntrustworthy) return;
     const detector = SMART_CLEAN_DETECTORS.find((item) => item.key === key);
     const result = resultsByKey[key];
     if (detector && !canUseFeature(detector.featureKey)) {
@@ -132,7 +138,7 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
   // One-Tap Recommendations: aggregate all ready, entitled detectors. Derived
   // via useMemo over the stable resultsByKey ref (no store-side aggregate).
   const recommendation = useMemo(() => {
-    if (mediaScopeReconciling) return { count: 0, bytes: 0, groups: [] };
+    if (resultsUntrustworthy) return { count: 0, bytes: 0, groups: [] };
     // An asset can match several keeper-less detectors at once (e.g. a screenshot
     // that is also a large photo), so dedupe candidates by mediaId — summing
     // per-detector itemCount/bytes would over-report. An asset kept in ANY group
@@ -155,7 +161,7 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
     let bytes = 0;
     for (const value of candidateBytes.values()) bytes += value;
     return { count: candidateBytes.size, bytes, groups };
-  }, [resultsByKey, canUseFeature, mediaScopeReconciling]);
+  }, [resultsByKey, canUseFeature, resultsUntrustworthy]);
 
   const handleConfirmDelete = async (detectorKey: string, ids: string[], bytes: number) => {
     if (ids.length === 0) return;
@@ -339,7 +345,7 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
         </View>
 
         {SMART_CLEAN_DETECTORS.map((detector) => {
-          const result = mediaScopeReconciling
+          const result = resultsUntrustworthy
             ? placeholderResult(detector.key)
             : resultsByKey[detector.key] ?? placeholderResult(detector.key);
           return (

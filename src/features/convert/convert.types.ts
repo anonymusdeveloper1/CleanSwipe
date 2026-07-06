@@ -6,8 +6,8 @@
  * Two deliberate divergences from compression:
  *  - Conversion is NON-DESTRUCTIVE — there is no keep/delete-original machinery
  *    and no App-Lock gate. The source is never touched.
- *  - Audio output (mp3/m4a) is NOT a MediaLibrary asset type, so it is saved to
- *    the app documents dir (`savedToFile`) and surfaced via Share, while
+ *  - Audio output (m4a/wav) is NOT a MediaLibrary asset type, so it is saved to
+ *    the app documents dir (`savedToFile`) and opened in an external player, while
  *    image/video output is saved to the gallery (`libraryAssetId`).
  */
 
@@ -43,7 +43,7 @@ export type ConversionJob = {
   outputSizeBytes?: number;
   // Set when image/video output is persisted to the device library.
   libraryAssetId?: string;
-  // Set when audio output is written to the app documents dir (Share-only).
+  // Set for audio output (no gallery asset type) — opened via the OS instead.
   savedToFile?: boolean;
   createdAt: number;
   startedAt?: number;

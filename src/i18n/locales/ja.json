@@ -342,7 +342,18 @@
     "totalUsed": "合計使用量",
     "spaceCleared": "解放した容量",
     "photosScanned": "スキャンした写真",
-    "marked": "予定済み"
+    "marked": "予定済み",
+    "reclaimed": "解放された容量",
+    "itemsReviewed": "{{count}} 件を確認済み",
+    "convert": {
+      "title": "変換",
+      "empty": "写真・動画・音声を Studio で変換すると、ここに統計が表示されます。",
+      "total": "変換済み",
+      "processed": "処理済み",
+      "images": "画像",
+      "videos": "動画",
+      "audio": "音声"
+    }
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -573,6 +584,7 @@
     "outputSizeLabel": "変換後のサイズ",
     "savedToFiles": "アプリのファイルに保存しました。共有して保存してください。",
     "savedToGallery": "ギャラリーに保存しました。",
+    "open": "開く",
     "share": "共有",
     "shareTitle": "変換したファイルを共有",
     "close": "閉じる",

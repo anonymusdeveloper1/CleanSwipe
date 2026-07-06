@@ -342,7 +342,18 @@
     "totalUsed": "कुल उपयोग",
     "spaceCleared": "जगह खाली हुई",
     "photosScanned": "स्कैन की गई फ़ोटो",
-    "marked": "चिह्नित"
+    "marked": "चिह्नित",
+    "reclaimed": "पुनः प्राप्त स्थान",
+    "itemsReviewed": "{{count}} आइटम समीक्षित",
+    "convert": {
+      "title": "रूपांतरण",
+      "empty": "यहाँ अपने आँकड़े देखने के लिए Studio में फ़ोटो, वीडियो या ऑडियो कनवर्ट करें।",
+      "total": "रूपांतरित",
+      "processed": "संसाधित",
+      "images": "छवियाँ",
+      "videos": "वीडियो",
+      "audio": "ऑडियो"
+    }
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -573,6 +584,7 @@
     "outputSizeLabel": "अंतिम आकार",
     "savedToFiles": "ऐप की फ़ाइलों में सहेजा गया — रखने के लिए इसे शेयर करें।",
     "savedToGallery": "आपकी गैलरी में सहेजा गया।",
+    "open": "खोलें",
     "share": "शेयर करें",
     "shareTitle": "बदली गई फ़ाइल शेयर करें",
     "close": "बंद करें",

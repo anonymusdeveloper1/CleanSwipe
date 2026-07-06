@@ -17,8 +17,9 @@ type Props = {
 
 export function CachedImage({ uri, contentFit = "cover", style, backgroundColor, allowVideo = false }: Props) {
   const theme = useAppTheme();
-  const [loading, setLoading] = useState(true);
+  const [loadState, setLoadState] = useState({ uri, loading: true });
   const surfaceColor = backgroundColor ?? theme.surfaceStrong;
+  const loading = loadState.uri !== uri || loadState.loading;
 
   // Never hand a video file to expo-image unless explicitly allowed — decoding a
   // high-res frame can OOM-crash the app (see video-thumb-placeholder). Callers
@@ -30,14 +31,15 @@ export function CachedImage({ uri, contentFit = "cover", style, backgroundColor,
   return (
     <View style={[{ backgroundColor: surfaceColor, overflow: "hidden" }, style]}>
       <Image
+        key={uri}
         source={{ uri }}
         contentFit={contentFit}
         cachePolicy="memory-disk"
         transition={120}
         recyclingKey={uri}
-        onLoadStart={() => setLoading(true)}
-        onLoad={() => setLoading(false)}
-        onError={() => setLoading(false)}
+        onLoadStart={() => setLoadState({ uri, loading: true })}
+        onLoad={() => setLoadState({ uri, loading: false })}
+        onError={() => setLoadState({ uri, loading: false })}
         style={StyleSheet.absoluteFill}
       />
       {loading ? (

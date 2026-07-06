@@ -12,10 +12,35 @@ import { createDebouncedStorage } from "@/utils/debounced-storage";
  * (keep/delete-original, App-Lock gate, app-store/compressedMedia coupling,
  * interstitial ads): conversion is non-destructive and produces a fresh artifact.
  */
+/**
+ * Lifetime conversion tally for the Stats screen. Incremented once per completed
+ * conversion and persisted, so it survives clearing the "Recent converted" list
+ * (which prunes the transient `jobs`). Counts are by OUTPUT kind; bytes let Stats
+ * show total media processed and the net size delta.
+ */
+export type ConvertLifetimeStats = {
+  total: number;
+  image: number;
+  video: number;
+  audio: number;
+  inputBytes: number;
+  outputBytes: number;
+};
+
+export const EMPTY_CONVERT_LIFETIME: ConvertLifetimeStats = {
+  total: 0,
+  image: 0,
+  video: 0,
+  audio: 0,
+  inputBytes: 0,
+  outputBytes: 0
+};
+
 type ConvertStore = {
   jobs: Record<string, ConversionJob>;
   jobIdByMediaId: Record<string, string>;
   completedMediaIds: Record<string, true>;
+  lifetime: ConvertLifetimeStats;
   activeJobId?: string;
   lastFinishedJobId?: string;
   lastErrorMessage?: string;
@@ -45,6 +70,7 @@ export const useConvertStore = create<ConvertStore>()(
       jobs: {},
       jobIdByMediaId: {},
       completedMediaIds: {},
+      lifetime: EMPTY_CONVERT_LIFETIME,
       activeJobId: undefined,
       lastFinishedJobId: undefined,
       lastErrorMessage: undefined,
@@ -148,10 +174,14 @@ export const useConvertStore = create<ConvertStore>()(
         set((state) => {
           const job = state.jobs[jobId];
           if (!job || job.status === "cancelled") return {};
+          // Count each conversion once: a job already marked "completed" (e.g. a
+          // duplicate callback) must not inflate the lifetime tally.
+          const lifetime = job.status === "completed" ? state.lifetime : addConversionToLifetime(state.lifetime, job, result);
           return {
             activeJobId: state.activeJobId === jobId ? undefined : state.activeJobId,
             lastFinishedJobId: jobId,
             lastErrorMessage: undefined,
+            lifetime,
             completedMediaIds: { ...state.completedMediaIds, [job.mediaId]: true },
             jobs: {
               ...state.jobs,
@@ -260,12 +290,21 @@ export const useConvertStore = create<ConvertStore>()(
       name: "swipeclean-convert-store",
       storage: createJSONStorage(() => createDebouncedStorage(900)),
       onRehydrateStorage: () => (state) => {
+        // One-time backfill: a store persisted before lifetime stats existed has an
+        // empty tally but may already hold completed jobs. Seed from them so an
+        // existing user doesn't see 0 conversions. Runs only while total is 0, so
+        // later increments (markCompleted) never re-seed.
+        if (state && state.lifetime.total === 0) {
+          const seeded = seedLifetimeFromCompletedJobs(state.jobs);
+          if (seeded.total > 0) state.lifetime = seeded;
+        }
         void state?.resumePendingJobs();
       },
       partialize: (state) => ({
         jobs: state.jobs,
         jobIdByMediaId: state.jobIdByMediaId,
         completedMediaIds: state.completedMediaIds,
+        lifetime: state.lifetime,
         activeJobId: state.activeJobId,
         lastFinishedJobId: state.lastFinishedJobId,
         lastErrorMessage: state.lastErrorMessage,
@@ -321,6 +360,37 @@ async function runConversionJob(jobId: string) {
       useConvertStore.getState().markFailed(jobId, error);
     }
   }
+}
+
+function addConversionToLifetime(
+  lifetime: ConvertLifetimeStats,
+  job: ConversionJob,
+  result: ConversionResult
+): ConvertLifetimeStats {
+  return {
+    total: lifetime.total + 1,
+    image: lifetime.image + (job.outputKind === "image" ? 1 : 0),
+    video: lifetime.video + (job.outputKind === "video" ? 1 : 0),
+    audio: lifetime.audio + (job.outputKind === "audio" ? 1 : 0),
+    inputBytes: lifetime.inputBytes + (job.originalSizeBytes ?? 0),
+    outputBytes: lifetime.outputBytes + (result.outputSizeBytes ?? 0)
+  };
+}
+
+function seedLifetimeFromCompletedJobs(jobs: Record<string, ConversionJob>): ConvertLifetimeStats {
+  let acc = EMPTY_CONVERT_LIFETIME;
+  for (const job of Object.values(jobs)) {
+    if (job.status !== "completed") continue;
+    acc = {
+      total: acc.total + 1,
+      image: acc.image + (job.outputKind === "image" ? 1 : 0),
+      video: acc.video + (job.outputKind === "video" ? 1 : 0),
+      audio: acc.audio + (job.outputKind === "audio" ? 1 : 0),
+      inputBytes: acc.inputBytes + (job.originalSizeBytes ?? 0),
+      outputBytes: acc.outputBytes + (job.outputSizeBytes ?? 0)
+    };
+  }
+  return acc;
 }
 
 function createConversionJob(input: ConversionJobInput): ConversionJob {

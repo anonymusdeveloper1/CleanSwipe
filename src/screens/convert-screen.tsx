@@ -1,13 +1,13 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import * as Sharing from "expo-sharing";
 import { FileUp, FolderOpen, Image as ImageIcon, Music, Plus, Repeat, Trash2, Video } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
 import { ConvertFormatSheet, FormatPill } from "@/features/convert/components/convert-format-sheet";
-import { getSelectableTargets, sourceFormat, sourceFormatLabel, targetLabel, targetMimeForShare } from "@/features/convert/convert-targets";
+import { convertedFileName, getSelectableTargets, sourceFormat, sourceFormatLabel, targetLabel, targetMimeForShare } from "@/features/convert/convert-targets";
+import { openMediaExternally } from "@/features/convert/open-media-file";
 import { selectRecentConvertedJobs } from "@/features/convert/convert.selectors";
 import { useConvertStore } from "@/features/convert/convert.store";
 import { ConversionJob, ConversionJobInput, ConvertTarget } from "@/features/convert/convert.types";
@@ -119,7 +119,9 @@ export function ConvertScreen() {
   const openRecent = (job: ConversionJob) => {
     if (!job.outputUri) return;
     if (job.outputKind === "audio") {
-      void shareUri(job.outputUri, targetMimeForShare(job.target), t("convert.shareTitle"));
+      // Open the converted audio in an external player (OS "Open with…" on
+      // Android); falls back to the share sheet on iOS / older builds.
+      void openMediaExternally(job.outputUri, targetMimeForShare(job.target), t("convert.shareTitle"));
       return;
     }
     router.push({ pathname: "/compression-media-viewer", params: { uri: job.outputUri, media: job.outputKind === "video" ? "video" : "photo" } } as never);
@@ -251,7 +253,7 @@ export function ConvertScreen() {
                 )}
               </View>
               <View style={{ flex: 1, gap: 3 }}>
-                <Text numberOfLines={1} style={{ color: theme.text, fontSize: 15, fontWeight: "800" }}>{job.fileName}</Text>
+                <Text numberOfLines={1} style={{ color: theme.text, fontSize: 15, fontWeight: "800" }}>{convertedFileName(job.fileName, job.target)}</Text>
                 <Text style={{ color: theme.muted, fontSize: 12, fontWeight: "700" }}>
                   {`${targetLabel(job.target)} · ${formatBytes(job.outputSizeBytes ?? 0)}${job.completedAt ? ` · ${formatShortDate(job.completedAt)}` : ""}`}
                 </Text>
@@ -287,14 +289,6 @@ function GroupHeader({ icon, label, color }: { icon: React.ReactNode; label: str
       <Text style={{ color, fontSize: 11, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase" }}>{label}</Text>
     </View>
   );
-}
-
-async function shareUri(uri: string, mime: string, dialogTitle: string) {
-  try {
-    if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: mime, dialogTitle });
-  } catch {
-    // User dismissed the share sheet or it failed — nothing to recover.
-  }
 }
 
 function dedupeById(list: PhotoAsset[]): PhotoAsset[] {

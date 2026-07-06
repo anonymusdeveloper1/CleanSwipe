@@ -342,7 +342,18 @@
     "totalUsed": "إجمالي المستخدم",
     "spaceCleared": "المساحة المحررة",
     "photosScanned": "الصور المفحوصة",
-    "marked": "محدد"
+    "marked": "محدد",
+    "reclaimed": "المساحة المستعادة",
+    "itemsReviewed": "تمت مراجعة {{count}} عنصر",
+    "convert": {
+      "title": "التحويلات",
+      "empty": "حوّل الصور أو الفيديو أو الصوت في Studio لرؤية إحصاءاتك هنا.",
+      "total": "المحوّلة",
+      "processed": "المعالَجة",
+      "images": "الصور",
+      "videos": "الفيديو",
+      "audio": "الصوت"
+    }
   },
   "premium": {
     "title": "SwipeClean Pro",
@@ -573,6 +584,7 @@
     "outputSizeLabel": "الحجم الناتج",
     "savedToFiles": "تم الحفظ في ملفات التطبيق — شاركه للاحتفاظ به.",
     "savedToGallery": "تم الحفظ في معرض الصور.",
+    "open": "فتح",
     "share": "مشاركة",
     "shareTitle": "مشاركة الملف المحوَّل",
     "close": "إغلاق",

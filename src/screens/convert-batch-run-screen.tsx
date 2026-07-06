@@ -1,5 +1,4 @@
 import { router, useLocalSearchParams } from "expo-router";
-import * as Sharing from "expo-sharing";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2 } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, BackHandler, Modal, Pressable, ScrollView, Text, View } from "react-native";
@@ -8,7 +7,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CachedImage } from "@/components/cached-image";
 import { VideoMediaPlayer } from "@/components/video-media-player";
 import { ShimmerProgressBar, WorkingLabel } from "@/features/convert/components/convert-progress";
-import { targetLabel, targetMimeForShare } from "@/features/convert/convert-targets";
+import { convertedFileName, targetLabel, targetMimeForShare } from "@/features/convert/convert-targets";
+import { openMediaExternally } from "@/features/convert/open-media-file";
 import { isActiveConversionJob, selectBatchProgress, selectJobsByBatch } from "@/features/convert/convert.selectors";
 import { useConvertStore } from "@/features/convert/convert.store";
 import { ConversionJob } from "@/features/convert/convert.types";
@@ -81,7 +81,9 @@ export function ConvertBatchRunScreen() {
     }
     if (job.status !== "completed" || !job.outputUri) return;
     if (job.outputKind === "audio") {
-      void shareUri(job.outputUri, targetMimeForShare(job.target), t("convert.shareTitle"));
+      // Open the converted audio in an external player (OS "Open with…" on
+      // Android); falls back to the share sheet on iOS / older builds.
+      void openMediaExternally(job.outputUri, targetMimeForShare(job.target), t("convert.shareTitle"));
       return;
     }
     router.push({ pathname: "/compression-media-viewer", params: { uri: job.outputUri, media: job.outputKind === "video" ? "video" : "photo" } } as never);
@@ -158,7 +160,7 @@ export function ConvertBatchRunScreen() {
                   style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: theme.surface, borderRadius: 12, borderWidth: 1, borderColor: isActiveRow ? theme.accent : theme.border, padding: 10 }}
                 >
                   <View style={{ flex: 1, gap: 3 }}>
-                    <Text numberOfLines={1} style={{ color: theme.text, fontSize: 14, fontWeight: "800" }}>{job.fileName}</Text>
+                    <Text numberOfLines={1} style={{ color: theme.text, fontSize: 14, fontWeight: "800" }}>{convertedFileName(job.fileName, job.target)}</Text>
                     <Text style={{ color: theme.muted, fontSize: 12, fontWeight: "700" }}>{`${fileExtLabel(job.fileName, job.inputKind === "video" ? "VIDEO" : "PHOTO")} → ${targetLabel(job.target)}`}</Text>
                   </View>
                   <StatusPill job={job} />
@@ -218,14 +220,6 @@ function StatusPill({ job }: { job: ConversionJob }) {
     return <Text style={{ color: theme.accent, fontSize: 12, fontWeight: "900", fontVariant: ["tabular-nums"] }}>{`${Math.round(job.progress * 100)}%`}</Text>;
   }
   return <Text style={{ color: theme.muted, fontSize: 12, fontWeight: "900" }}>{t("convert.statusQueued")}</Text>;
-}
-
-async function shareUri(uri: string, mime: string, dialogTitle: string) {
-  try {
-    if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: mime, dialogTitle });
-  } catch {
-    // User dismissed the share sheet or it failed — nothing to recover.
-  }
 }
 
 function fileExtLabel(name?: string, fallback = ""): string {

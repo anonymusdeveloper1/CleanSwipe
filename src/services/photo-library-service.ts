@@ -1,6 +1,6 @@
 import * as MediaLibrary from "expo-media-library";
 import { PhotoAsset } from "@/models/photo";
-import { getMonthKey } from "@/utils/date";
+import { resolveMediaDate } from "@/utils/date";
 
 export type GetPhotosOptions = {
   first?: number;
@@ -118,34 +118,42 @@ export const PhotoLibraryService: IPhotoLibraryService = {
 
 async function mapAsset(asset: MediaLibrary.Asset): Promise<PhotoAsset | null> {
   try {
-    const info = await MediaLibrary.getAssetInfoAsync(asset);
-    const creationTime = info.creationTime || info.modificationTime || Date.now();
+    // shouldDownloadFromNetwork defaults to TRUE, which on iOS makes
+    // getAssetInfoAsync pull the full asset down from iCloud for any photo not
+    // stored locally — done here for EVERY asset on every page fetch and across
+    // the whole library during a full scan, it stalls cold launch and burns data.
+    // We only need local metadata (size/creationTime/localUri), so opt out.
+    const info = await MediaLibrary.getAssetInfoAsync(asset, { shouldDownloadFromNetwork: false });
+    // creationTime + monthKey resolved TOGETHER so they can never disagree
+    // (a missing creation date recovers from modificationTime, else UNKNOWN).
+    const { time, monthKey } = resolveMediaDate(info.creationTime ?? undefined, info.modificationTime ?? asset.modificationTime);
     return {
       id: asset.id,
       uri: info.localUri ?? asset.uri,
       filename: asset.filename,
       width: asset.width,
       height: asset.height,
-      creationTime,
-      modificationTime: asset.modificationTime,
+      creationTime: time,
+      modificationTime: info.modificationTime ?? asset.modificationTime,
       duration: asset.duration,
       mediaType: asset.mediaType === "video" ? "video" : asset.mediaType === "photo" ? "photo" : "unknown",
       sizeBytes: getInfoSizeBytes(info) ?? estimateSizeBytes(asset.width, asset.height, asset.mediaType, asset.duration),
-      monthKey: getMonthKey(creationTime)
+      monthKey
     };
   } catch {
+    const { time, monthKey } = resolveMediaDate(asset.creationTime, asset.modificationTime);
     return {
       id: asset.id,
       uri: asset.uri,
       filename: asset.filename,
       width: asset.width,
       height: asset.height,
-      creationTime: asset.creationTime,
+      creationTime: time,
       modificationTime: asset.modificationTime,
       duration: asset.duration,
       mediaType: asset.mediaType === "video" ? "video" : asset.mediaType === "photo" ? "photo" : "unknown",
       sizeBytes: estimateSizeBytes(asset.width, asset.height, asset.mediaType, asset.duration),
-      monthKey: getMonthKey(asset.creationTime)
+      monthKey
     };
   }
 }

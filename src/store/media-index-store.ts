@@ -7,6 +7,7 @@ import { CompressionService } from "@/services/compression-service";
 import { ImageCacheService } from "@/services/image-cache-service";
 import { PermissionService } from "@/services/permission-service";
 import { PhotoLibraryService } from "@/services/photo-library-service";
+import { resolveMediaDate } from "@/utils/date";
 
 export type MediaIndexStatus = "idle" | "refreshing" | "scanning" | "complete" | "error";
 
@@ -182,12 +183,14 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
 
           set((state) => ({ status: state.status === "scanning" ? "scanning" : "refreshing", error: undefined }));
           const page = await PhotoLibraryService.getPhotosPage({ first: QUICK_PAGE_SIZE });
+          let mergeUnchanged = false;
           set((state) => {
             const indexed = page.photos.map(toIndexedMediaAsset);
             const merged = mergeIndexedAssets(state, indexed);
             // An unchanged merge keeps the same assetsById/orderedIds references,
             // so subscribed screens skip their derive/re-render work entirely.
             const unchanged = merged.assetsById === state.assetsById && merged.orderedIds === state.orderedIds;
+            mergeUnchanged = unchanged;
             return {
               ...merged,
               // Keep the summary in lockstep with the merged asset set so the
@@ -202,7 +205,11 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
               error: undefined
             };
           });
-          ImageCacheService.prefetchPhotos(page.photos);
+          // Only warm the image cache when the newest page actually changed.
+          // refreshNewestPage runs on every reconcile (launch, foreground, and the
+          // 45s poll); prefetching 36 full-resolution assets on every idle poll is
+          // wasted decode/network work (especially for iOS ph:// URIs).
+          if (!mergeUnchanged) ImageCacheService.prefetchPhotos(page.photos);
         })().finally(() => {
           quickRefreshPromise = undefined;
         });
@@ -424,6 +431,15 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
       merge: (persistedState, currentState) => {
         const persisted = (persistedState ?? {}) as Partial<MediaIndexStore>;
         const merged = { ...currentState, ...persisted };
+        // Defensively repair + re-order the rehydrated index: a stale index
+        // persisted by an older build can hold undated assets with a bogus
+        // "current-month" monthKey (that sort to the bottom) and be out of
+        // creationTime order — the month-sectioned gallery renders both as
+        // duplicate month headers. (`canSkip` in startFullScan may never trigger
+        // a re-scan to fix it.) repairIndexedAssets makes monthKey agree with the
+        // sort time; normalizeOrderedIds dedupes + sorts newest-first.
+        const assetsById = repairIndexedAssets(merged.assetsById ?? {});
+        const orderedIds = normalizeOrderedIds(assetsById, merged.orderedIds ?? []);
         // A scan interrupted by process death can leave a partial summary in
         // storage (mid-scan states get persisted). Recompute it from the
         // rehydrated assets so the "unchanged merge keeps the summary"
@@ -431,8 +447,9 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
         // baseline.
         return {
           ...merged,
+          orderedIds,
           summary: summarizeIndexedAssets(
-            selectIndexedMediaAssets({ assetsById: merged.assetsById ?? {}, orderedIds: merged.orderedIds ?? [] }),
+            selectIndexedMediaAssets({ assetsById, orderedIds }),
             merged.ignoredSourceKey
           )
         };
@@ -517,6 +534,57 @@ function mergeIndexedAssets(
     .sort((a, b) => (b.creationTime ?? 0) - (a.creationTime ?? 0))
     .map((asset) => asset.id);
   return { assetsById, orderedIds };
+}
+
+/**
+ * Re-derive a clean id list from a rehydrated index. A `orderedIds` persisted by
+ * an OLDER build (different/no sort), or saved mid-scan, can be out of
+ * creationTime order, hold a now-missing id, or (rarely) a duplicate. The
+ * month-sectioned gallery renders an out-of-order list as DUPLICATE / non-
+ * contiguous month headers (the "June … June" bug) and Swipe would show cards out
+ * of chronological order. This dedupes, drops ids with no asset, folds in any
+ * asset missing from the list, and sorts newest-first — the same invariant
+ * `mergeIndexedAssets` maintains. Runs once per launch (in `merge`).
+ */
+/**
+ * Repair a rehydrated asset map in place: re-resolve each asset's creationTime +
+ * monthKey together (see resolveMediaDate) so a stale index built by an older
+ * build — where an undated asset got a bogus "current month" monthKey but sorts
+ * to the bottom — is fixed WITHOUT waiting for a full re-scan (which `canSkip`
+ * may never trigger). Returns the same reference when nothing needed fixing.
+ */
+function repairIndexedAssets(assetsById: Record<string, IndexedMediaAsset>): Record<string, IndexedMediaAsset> {
+  let changed = false;
+  const out: Record<string, IndexedMediaAsset> = {};
+  for (const id of Object.keys(assetsById)) {
+    const asset = assetsById[id];
+    const { time, monthKey } = resolveMediaDate(asset.creationTime, asset.modificationTime);
+    if (asset.creationTime === time && asset.monthKey === monthKey) {
+      out[id] = asset;
+    } else {
+      out[id] = { ...asset, creationTime: time, monthKey };
+      changed = true;
+    }
+  }
+  return changed ? out : assetsById;
+}
+
+function normalizeOrderedIds(assetsById: Record<string, IndexedMediaAsset>, orderedIds: string[]): string[] {
+  const seen = new Set<string>();
+  const clean: string[] = [];
+  for (const id of orderedIds) {
+    if (assetsById[id] && !seen.has(id)) {
+      seen.add(id);
+      clean.push(id);
+    }
+  }
+  for (const id of Object.keys(assetsById)) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      clean.push(id);
+    }
+  }
+  return clean.sort((a, b) => (assetsById[b]?.creationTime ?? 0) - (assetsById[a]?.creationTime ?? 0));
 }
 
 function removeUnseenAfterCompleteScan(

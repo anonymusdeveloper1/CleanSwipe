@@ -4,7 +4,7 @@ import { Image as ExpoImage } from "expo-image";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { AppState } from "react-native";
+import { AppState, InteractionManager } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import mobileAds from "react-native-google-mobile-ads";
 import { AppLockGate } from "@/components/app-lock-gate";
@@ -29,17 +29,25 @@ export default function RootLayout() {
   usePhotoLibrarySync();
 
   useEffect(() => {
-    // GDPR/UMP: gather consent BEFORE initializing the Mobile Ads SDK. The gather
-    // call fails open, so ad init always runs regardless of the consent outcome.
-    void AdsConsentService.gather().finally(() => {
-      void mobileAds()
-        .initialize()
-        .then(() => {
-          InterstitialAdService.preload();
-          RewardedAdService.preload();
-        })
-        .catch(() => undefined);
+    // Ad SDK init + consent gather + preloads are not needed for first paint, and
+    // the UMP form can present a modal on iOS. Defer the whole chain until after
+    // the initial navigation/animations settle so it never competes with the cold
+    // launch. GDPR/UMP: gather consent BEFORE initializing the Mobile Ads SDK.
+    const task = InteractionManager.runAfterInteractions(() => {
+      void AdsConsentService.gather().then((canRequestAds) => {
+        void mobileAds()
+          .initialize()
+          .then(() => {
+            // Honor the UMP outcome: when consent is required but not granted,
+            // canRequestAds is false and we must NOT request/preload any ads.
+            if (!canRequestAds) return;
+            InterstitialAdService.preload();
+            RewardedAdService.preload();
+          })
+          .catch(() => undefined);
+      });
     });
+    return () => task.cancel();
   }, []);
 
   // Smart Clean scan notification: clear any stale "Scanning…" notification left

@@ -293,6 +293,15 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
         const CHEAP_END = 0.1;
         const PREPASS_END = 0.85;
 
+        // Keep the previously-computed results visible while a NEW (non-resume)
+        // scan runs, instead of blanking them. `seeded` (the resume skip-set) is
+        // empty for a fresh rescan, so blanking here used to drop the whole
+        // recommendation set the instant "Scan again" was tapped — and a manual
+        // Stop then left nothing behind (the user's reported bug). Each detector
+        // overwrites its own entry as it recomputes, so at worst a stop leaves a
+        // mix of prior + freshly-recomputed results, never an empty set.
+        const previousResults = { ...get().resultsByKey };
+
         set({
           phase: "scanning",
           progress: 0,
@@ -302,12 +311,12 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
           analyzed: 0,
           analyzeTotal: 0,
           error: undefined,
-          resultsByKey: seeded,
+          resultsByKey: previousResults,
           restoredCompact: null,
           runSignature: signature
         });
 
-        const acc: Record<string, SmartCleanResult> = { ...seeded };
+        const acc: Record<string, SmartCleanResult> = { ...previousResults };
 
         // Run one detector within its progress band. Seeded detectors (resume) are
         // skipped. Keeps the per-detector checkpoint + token/abort discipline.

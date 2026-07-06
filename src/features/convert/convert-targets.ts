@@ -14,7 +14,11 @@ import { PhotoAsset } from "@/models/photo";
 
 export const IMAGE_TARGETS: ConvertTarget[] = ["jpg", "png", "webp"];
 export const VIDEO_TARGETS: ConvertTarget[] = ["mp4", "webm", "gif"];
-export const AUDIO_TARGETS: ConvertTarget[] = ["mp3", "m4a", "wav"];
+// MP3 is intentionally NOT offered for now (product decision, 2026-07-05). The
+// "mp3" token, its output-kind/mime/label maps, the LAME engine path, and the
+// `audioMp3` capability all stay in place — re-add "mp3" here to bring the chip
+// back with no other change.
+export const AUDIO_TARGETS: ConvertTarget[] = ["m4a", "wav"];
 
 const OUTPUT_KIND: Record<ConvertTarget, ConvertOutputKind> = {
   jpg: "image",
@@ -139,6 +143,20 @@ export function targetOutputKind(target: ConvertTarget): ConvertOutputKind {
 
 export function targetExtension(target: ConvertTarget): string {
   return target;
+}
+
+/**
+ * Display name for a converted artifact: the source's basename with the TARGET
+ * extension (e.g. "clip.mp4" → "clip.webm", "photo.HEIC" → "photo.jpg"). The
+ * on-disk file already uses the correct extension; this stops the Convert UI from
+ * labeling a WebM/M4A output with the source's ".mp4". Falls back to "converted"
+ * when the source has no usable basename.
+ */
+export function convertedFileName(sourceName: string | undefined, target: ConvertTarget): string {
+  const base = (sourceName ?? "").split(/[?#]/)[0].split(/[\\/]/).pop() ?? "";
+  const dot = base.lastIndexOf(".");
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  return `${stem.length > 0 ? stem : "converted"}.${targetExtension(target)}`;
 }
 
 export function targetMimeForShare(target: ConvertTarget): string {

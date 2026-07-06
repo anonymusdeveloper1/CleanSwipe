@@ -14,6 +14,8 @@ module.exports = [
       ".codex/*",
       "demo/*",
       "scripts/*",
+      // Local scratch/creative output tree (not app source; has its own tooling).
+      "outputs/**",
       "*.config.js",
       "*.config.ts"
     ]

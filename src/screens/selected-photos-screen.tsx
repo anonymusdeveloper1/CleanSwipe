@@ -84,12 +84,13 @@ export function SelectedPhotosScreen() {
     () => buildGalleryLayout(selectedPhotos, { numColumns, rowHeight, headerHeight: HEADER_H }),
     [selectedPhotos, numColumns, rowHeight]
   );
+  const photoById = useMemo(() => new Map(selectedPhotos.map((photo) => [photo.id, photo])), [selectedPhotos]);
   const paddingBottom = insets.bottom + 24;
   const contentHeight = layout.contentHeight + paddingBottom;
   const maxScroll = Math.max(1, contentHeight - listH);
   // Show the fast-scroll scrubber whenever the list actually scrolls (incl. a
   // single-month scope — the bubble then shows the weekday+day instead of a date).
-  const showScrubber = maxScroll > 1 && total > 0;
+  const showScrubber = listH > 0 && maxScroll > 1 && total > 0;
   const isSingleMonth = selectedMonthKey !== "all";
 
   // ── Selection state ─────────────────────────────────────────────────────────
@@ -391,9 +392,9 @@ export function SelectedPhotosScreen() {
   }, [listH, beginPaintAt, updateDragAt, setAutoScroll, endDrag, tapAt]);
 
 
-  // Re-render the mounted rows when selection/marks change (rows themselves are
-  // selection-independent, so FlashList needs this nudge).
-  const listExtraData = useMemo(() => ({ selectedIds, markedIds }), [selectedIds, markedIds]);
+  // Re-render mounted rows when selection/marks or the row-to-asset mapping
+  // changes. Row data carries itemIds so recycled cells don't read stale indexes.
+  const listExtraData = useMemo(() => ({ selectedIds, markedIds, layoutRows: layout.rows }), [selectedIds, markedIds, layout.rows]);
 
   const renderRow = useCallback(
     ({ item: row }: { item: GalleryRow }) => {
@@ -412,7 +413,8 @@ export function SelectedPhotosScreen() {
       return (
         <View style={{ flexDirection: "row", height: row.height }}>
           {Array.from({ length: numColumns }, (_, col) => {
-            const photo = col < row.count ? selectedPhotos[row.startIndex + col] : undefined;
+            const photoId = col < row.count ? row.itemIds[col] : undefined;
+            const photo = photoId ? photoById.get(photoId) : undefined;
             if (!photo) return <View key={`pad:${row.startIndex}:${col}`} style={{ flex: 1 }} />;
             return (
               <View key={photo.id} style={{ flex: 1, padding: GAP / 2 }}>
@@ -423,7 +425,7 @@ export function SelectedPhotosScreen() {
         </View>
       );
     },
-    [numColumns, selectedPhotos, selectedIds, markedIds, cellDp, tileColors, theme.text, theme.muted, selectedMediaType]
+    [numColumns, photoById, selectedIds, markedIds, cellDp, tileColors, theme.text, theme.muted, selectedMediaType]
   );
 
   return (
@@ -472,6 +474,7 @@ export function SelectedPhotosScreen() {
                 extraData={listExtraData}
                 keyExtractor={(row) => row.key}
                 getItemType={(row) => row.type}
+                maintainVisibleContentPosition={{ disabled: true }}
                 scrollEnabled={!scrubbing && !painting}
                 onScroll={onScroll}
                 scrollEventThrottle={16}
@@ -486,6 +489,7 @@ export function SelectedPhotosScreen() {
 
           {showScrubber && !selectMode ? (
             <GalleryMonthScrubber
+              key={`scrubber:${listH}`}
               scrollY={scrollYSV}
               maxScroll={maxScroll}
               trackHeight={listH}
