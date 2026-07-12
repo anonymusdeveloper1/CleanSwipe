@@ -81,7 +81,17 @@ export async function verifyCompressedOutput({
     };
   }
 
-  const knownOriginalSize = originalSizeBytes && originalSizeBytes > 0 ? originalSizeBytes : await readKnownFileSize(originalUri);
+  // Delete-safety: this "did it shrink?" check gates whether the ORIGINAL may be
+  // deleted, so it MUST compare against the REAL original file size, never the
+  // caller's estimate. `originalSizeBytes` comes from getOriginalBytes(), which
+  // returns a pixels-based ESTIMATE when the media index has no real size. An
+  // estimate that over-states the original would let a compressed copy that is
+  // actually LARGER than the true original pass verification and allow deleting
+  // the smaller real file. So read the real size first; fall back to the estimate
+  // only when the file genuinely cannot be read.
+  const realOriginalSize = await readKnownFileSize(originalUri);
+  const knownOriginalSize =
+    realOriginalSize > 0 ? realOriginalSize : originalSizeBytes && originalSizeBytes > 0 ? originalSizeBytes : 0;
   if (!Number.isFinite(knownOriginalSize) || knownOriginalSize <= 0) {
     return {
       isValid: false,

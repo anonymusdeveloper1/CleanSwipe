@@ -1,7 +1,7 @@
 # Stats screen: the four stat cards, the Swipe Distribution chart, and the
 # Free-user Advanced Stats locked card → paywall sheet → dismiss.
 # Assumes a Free user (the default state; Pro shows the report instead).
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Stats and Advanced Stats paywall
 tags:
   - stats

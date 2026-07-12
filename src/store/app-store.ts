@@ -58,7 +58,7 @@ type AppStore = {
   refreshPermissionStatus: () => Promise<void>;
   setSelectedMonth: (key: string) => void;
   setSelectedMediaType: (mediaType: MediaTypeFilter) => void;
-  swipeCurrentPhoto: (action: SwipeAction) => void;
+  swipeCurrentPhoto: (action: SwipeAction, photoId?: string) => void;
   keepPhoto: (photoId: string) => void;
   markPhotoForDeletion: (photo: PhotoAsset) => void;
   markManyForDeletion: (photos: PhotoAsset[]) => void;
@@ -301,9 +301,17 @@ export const useAppStore = create<AppStore>()(
         set({ selectedMediaType: mediaType, currentIndex: 0 });
       },
 
-      swipeCurrentPhoto(action) {
+      swipeCurrentPhoto(action, targetPhotoId) {
         const state = get();
-        const photo = state.currentPhoto();
+        // Bind the keep/delete decision to the SPECIFIC card the user swiped
+        // (targetPhotoId), not a re-resolved "current photo". The visible list can
+        // reorder during the ~300ms swipe fly-off animation — a background full-scan
+        // page commit re-sorts newest-first, or a newest-page refresh inserts a fresh
+        // capture at index 0 — which would otherwise mark/keep the WRONG asset. Fall
+        // back to currentPhoto() only when no id is passed (defensive/back-compat).
+        const photo = targetPhotoId
+          ? useMediaIndexStore.getState().assetsById[targetPhotoId]
+          : state.currentPhoto();
         if (!photo) return;
 
         const existingMarked = dedupeMarkedItems(state.markedForDeletion);

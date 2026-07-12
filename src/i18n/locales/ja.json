@@ -78,7 +78,8 @@
       "advancedCompression": "高度な圧縮",
       "advancedStats": "高度な統計",
       "noAds": "広告なし",
-      "fileConversion": "ファイル変換"
+      "imageConversion": "画像変換",
+      "videoConversion": "動画変換"
     },
     "choosePlan": "プランを選択",
     "monthlyTitle": "月額",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "購入を復元",
     "restoredMessage": "No active subscription was found for this store account.",
+    "redeemCode": "コードを利用",
+    "redeemFailedTitle": "コード利用を開けませんでした",
+    "redeemFailedMessage": "コード利用画面を開けませんでした。もう一度お試しください。",
     "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
   },
   "smartClean": {
@@ -239,7 +243,8 @@
     "supportEmailUnavailableMessage": "この端末でメールアプリを設定してから、もう一度お試しください。",
     "privacyPolicyPendingTitle": "プライバシーポリシーは近日公開予定です",
     "privacyPolicyPendingMessage": "プライバシーポリシーのリンクはまだ追加されていません。",
-    "madeBy": "SwipeClean - Cognitxチーム制作"
+    "madeBy": "SwipeClean - Cognitxチーム制作",
+    "openSourceLicenses": "オープンソースライセンス"
   },
   "lock": {
     "title": "パスコードを入力",
@@ -267,7 +272,8 @@
     "needAppLockTitle": "先にアプリロックを設定してください",
     "needAppLockMessage": "生体認証によるロック解除を有効にする前に、アプリロックをオンにしてパスコードを設定してください。",
     "noBiometricTitle": "生体認証が見つかりません",
-    "noBiometricMessage": "生体認証によるロック解除を使用するには、デバイスの設定でFace IDまたはTouch IDを設定してください。"
+    "noBiometricMessage": "生体認証によるロック解除を使用するには、デバイスの設定でFace IDまたはTouch IDを設定してください。",
+    "tooManyAttempts": "試行回数が多すぎます。しばらく待ってからもう一度お試しください。"
   },
   "reminders": {
     "cleanupTitle": "さっとお片付けの時間です",
@@ -643,5 +649,13 @@
       "m4a": "AAC音声",
       "wav": "非圧縮"
     }
+  },
+  "licenses": {
+    "title": "オープンソースライセンス",
+    "intro": "SwipeClean はオープンソースソフトウェアで構築されています。これらのプロジェクトの作者に感謝します。",
+    "componentsHeading": "含まれるコンポーネント",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "ライブラリのソースを請求する"
   }
 }

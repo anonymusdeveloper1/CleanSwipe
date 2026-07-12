@@ -78,7 +78,8 @@
       "advancedCompression": "Erweiterte Komprimierung",
       "advancedStats": "Erweiterte Statistik",
       "noAds": "Keine Werbung",
-      "fileConversion": "Dateikonvertierung"
+      "imageConversion": "Bildkonvertierung",
+      "videoConversion": "Videokonvertierung"
     },
     "choosePlan": "Wähle deinen Tarif",
     "monthlyTitle": "Monatlich",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Wiederherstellung fehlgeschlagen",
     "restoredTitle": "Käufe wiederherstellen",
     "restoredMessage": "Fur dieses Store-Konto wurde kein aktives Abonnement gefunden.",
+    "redeemCode": "Code einlösen",
+    "redeemFailedTitle": "Einlösung nicht möglich",
+    "redeemFailedMessage": "Der Code-Einlösebildschirm konnte nicht geöffnet werden. Bitte versuche es erneut.",
     "billingDisclaimer": "Die Zahlung wird vom App Store abgewickelt. Abonnements verlangern sich automatisch, sofern sie nicht im Store-Konto gekundigt werden."
   },
   "smartClean": {
@@ -239,7 +243,8 @@
     "supportEmailUnavailableMessage": "Richte auf diesem Telefon eine E-Mail-App ein und versuche es erneut.",
     "privacyPolicyPendingTitle": "Datenschutzerklärung folgt in Kürze",
     "privacyPolicyPendingMessage": "Der Link zur Datenschutzerklärung wurde noch nicht hinzugefügt.",
-    "madeBy": "SwipeClean vom Cognitx-Team"
+    "madeBy": "SwipeClean vom Cognitx-Team",
+    "openSourceLicenses": "Open-Source-Lizenzen"
   },
   "lock": {
     "title": "Code eingeben",
@@ -267,7 +272,8 @@
     "needAppLockTitle": "Richte zuerst die App-Sperre ein",
     "needAppLockMessage": "Aktiviere die App-Sperre und lege einen Code fest, bevor du die biometrische Entsperrung aktivierst.",
     "noBiometricTitle": "Keine Biometrie gefunden",
-    "noBiometricMessage": "Richte Face ID oder Touch ID in den Geräteeinstellungen ein, um die biometrische Entsperrung zu nutzen."
+    "noBiometricMessage": "Richte Face ID oder Touch ID in den Geräteeinstellungen ein, um die biometrische Entsperrung zu nutzen.",
+    "tooManyAttempts": "Zu viele Versuche. Bitte warte und versuche es erneut."
   },
   "reminders": {
     "cleanupTitle": "Zeit für ein schnelles Aufräumen",
@@ -643,5 +649,13 @@
       "m4a": "AAC-Audio",
       "wav": "Unkomprimiert"
     }
+  },
+  "licenses": {
+    "title": "Open-Source-Lizenzen",
+    "intro": "SwipeClean wurde mit Open-Source-Software entwickelt. Wir danken den Autoren dieser Projekte.",
+    "componentsHeading": "Enthaltene Komponenten",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "Bibliotheksquellcode anfordern"
   }
 }

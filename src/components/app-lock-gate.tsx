@@ -1,6 +1,6 @@
 import { Fingerprint, LucideIcon, ScanFace } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Animated, Platform, Pressable, Text, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, AppState, Platform, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppLogo } from "@/components/app-logo";
@@ -11,12 +11,19 @@ import { useAppStore } from "@/store/app-store";
 
 type LockView = "resolving" | "biometric" | "pin";
 
+// Re-lock after this long in the background. A grace period keeps quick
+// round-trips (share sheet, OS media picker, permission/biometric dialogs, the
+// app switcher) from re-arming the lock the instant the user returns.
+const RELOCK_GRACE_MS = 15_000;
+
 /**
- * Root-mounted, cold-start-only app lock. A configured and usable biometric
- * method gets its own first screen; the PIN pad is an explicit fallback. If
- * biometrics are unavailable/disabled, PIN is the first screen. The gate still
- * fails open when no encrypted passcode exists so a broken native module can
- * never strand the user.
+ * Root-mounted app lock. Locks on cold start AND re-locks when the app returns
+ * to the foreground after being backgrounded past a short grace period, so the
+ * photo library / delete queue don't stay exposed for the life of the process.
+ * A configured and usable biometric method gets its own first screen; the PIN
+ * pad is an explicit fallback. If biometrics are unavailable/disabled, PIN is
+ * the first screen. The gate still fails open when no encrypted passcode exists
+ * so a broken native module can never strand the user.
  */
 export function AppLockGate() {
   const theme = useAppTheme();
@@ -31,6 +38,7 @@ export function AppLockGate() {
   const [lockView, setLockView] = useState<LockView>("resolving");
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
+  const [lockedOut, setLockedOut] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
   const [biometricKind, setBiometricKind] = useState<BiometricKind>("generic");
   const [biometricUsable, setBiometricUsable] = useState(false);
@@ -38,18 +46,58 @@ export function AppLockGate() {
 
   const initializedRef = useRef(false);
   const promptedRef = useRef(false);
+  const lockedRef = useRef(false);
+  const armGenRef = useRef(0);
+  const backgroundedAtRef = useRef<number | null>(null);
   const entranceOpacity = useRef(new Animated.Value(0)).current;
   const entranceY = useRef(new Animated.Value(16)).current;
   const pulse = useRef(new Animated.Value(0)).current;
 
+  useEffect(() => {
+    lockedRef.current = locked;
+  }, [locked]);
+
   const unlock = useCallback(() => {
+    armGenRef.current += 1; // cancel any in-flight arm resolution
     promptedRef.current = false;
     setValue("");
     setError(false);
+    setLockedOut(false);
     setAuthenticating(false);
     setLockView("resolving");
     setLocked(false);
   }, []);
+
+  // Raise the lock and resolve which first screen (biometric vs PIN) to show.
+  // Fails open (unlocks) when no passcode is stored. A generation token guards
+  // against a stale async resolution landing after unlock or a newer arm.
+  const armLock = useCallback(() => {
+    const gen = ++armGenRef.current;
+    setValue("");
+    setError(false);
+    setLockedOut(false);
+    setAuthenticating(false);
+    promptedRef.current = false;
+    setLockView("resolving");
+    setLocked(true);
+
+    const capability = biometricEnabled
+      ? AppLockService.getBiometricCapability()
+      : Promise.resolve({ available: false, enrolled: false, kind: "generic" as BiometricKind });
+
+    void Promise.all([AppLockService.hasPasscode(), capability]).then(([hasPasscode, biometric]) => {
+      if (gen !== armGenRef.current) return;
+      if (!hasPasscode) {
+        unlock();
+        return;
+      }
+      const usable = biometricEnabled && biometric.available;
+      setBiometricKind(biometric.kind);
+      setBiometricUsable(usable);
+      promptedRef.current = false;
+      setLockView(usable ? "biometric" : "pin");
+    });
+  }, [biometricEnabled, unlock]);
 
   useEffect(() => {
     let active = true;
@@ -63,37 +111,32 @@ export function AppLockGate() {
     };
   }, []);
 
-  // Resolve the two facts that select the first lock screen in parallel. The
-  // full-screen gate is already covering app content while these checks run.
+  // Cold-start lock: raise it once, as soon as settings hydrate. The full-screen
+  // gate is already covering app content while armLock's checks run.
   useEffect(() => {
     if (!hasHydrated || initializedRef.current) return;
     initializedRef.current = true;
     if (!appLockEnabled) return;
+    armLock();
+  }, [appLockEnabled, hasHydrated, armLock]);
 
-    let active = true;
-    setLocked(true);
-    setLockView("resolving");
-    const capability = biometricEnabled
-      ? AppLockService.getBiometricCapability()
-      : Promise.resolve({ available: false, enrolled: false, kind: "generic" as BiometricKind });
-
-    void Promise.all([AppLockService.hasPasscode(), capability]).then(([hasPasscode, biometric]) => {
-      if (!active) return;
-      if (!hasPasscode) {
-        unlock();
+  // Re-lock on return to foreground. Record when we leave; on return, if we were
+  // away longer than the grace period and aren't already locked, re-arm the gate.
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "background" || state === "inactive") {
+        if (backgroundedAtRef.current === null) backgroundedAtRef.current = Date.now();
         return;
       }
-      const usable = biometricEnabled && biometric.available;
-      setBiometricKind(biometric.kind);
-      setBiometricUsable(usable);
-      promptedRef.current = false;
-      setLockView(usable ? "biometric" : "pin");
+      if (state !== "active") return;
+      const since = backgroundedAtRef.current;
+      backgroundedAtRef.current = null;
+      if (since === null) return;
+      if (!appLockEnabled || lockedRef.current) return;
+      if (Date.now() - since >= RELOCK_GRACE_MS) armLock();
     });
-
-    return () => {
-      active = false;
-    };
-  }, [appLockEnabled, biometricEnabled, hasHydrated, unlock]);
+    return () => subscription.remove();
+  }, [appLockEnabled, armLock]);
 
   // Disabling App Lock from Settings must drop any active lock.
   useEffect(() => {
@@ -159,10 +202,15 @@ export function AppLockGate() {
       if (!active) return;
       if (ok) {
         unlock();
-      } else {
-        setError(true);
-        setValue("");
+        return;
       }
+      setError(true);
+      setValue("");
+      // Distinguish a plain wrong PIN from a rate-limit lockout so the subtitle
+      // can tell the user to wait rather than implying the PIN itself is wrong.
+      void AppLockService.getLockRemainingMs().then((ms) => {
+        if (active) setLockedOut(ms > 0);
+      });
     });
     return () => {
       active = false;
@@ -171,6 +219,7 @@ export function AppLockGate() {
 
   const handleChange = (next: string) => {
     if (error) setError(false);
+    if (lockedOut) setLockedOut(false);
     setValue(next);
   };
 
@@ -313,7 +362,7 @@ export function AppLockGate() {
                 <AppLogo size={56} color={theme.accent} />
                 <Text style={{ color: theme.text, fontSize: 22, fontWeight: "900" }}>{t("lock.title")}</Text>
                 <Text style={{ color: error ? theme.red : theme.muted, fontSize: 15, textAlign: "center" }}>
-                  {error ? t("lock.wrongPasscode") : t("lock.subtitle")}
+                  {error ? (lockedOut ? t("lock.tooManyAttempts") : t("lock.wrongPasscode")) : t("lock.subtitle")}
                 </Text>
               </View>
 

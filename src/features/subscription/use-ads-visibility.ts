@@ -1,3 +1,4 @@
+import { useAdsConsentStore } from "@/features/ads/ads-consent-store";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 
 /**
@@ -7,10 +8,13 @@ import { useFeatureAccess } from "@/features/subscription/use-feature-access";
  * Rules:
  *   - Free users: ads can be shown.
  *   - Pro users: ads hidden.
+ *   - AND only when UMP/GDPR consent allows requesting ads at all — a user who
+ *     denied consent in a regulated region sees NO ads, including the banner.
  * `noAds` is a Pro feature flag, so "no ads" === "has the noAds entitlement".
  */
 export function useAdsVisibility() {
   const { canUseFeature } = useFeatureAccess();
-  const shouldShowAds = !canUseFeature("noAds");
+  const canRequestAds = useAdsConsentStore((state) => state.canRequestAds);
+  const shouldShowAds = !canUseFeature("noAds") && canRequestAds;
   return { shouldShowAds };
 }

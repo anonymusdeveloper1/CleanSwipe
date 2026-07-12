@@ -19,7 +19,7 @@ They run against the built Android app on a connected device or emulator.
 
 ## Prerequisites
 
-1. **App installed** on the device/emulator (`com.swipeclean.free`).
+1. **App installed** on the device/emulator (`com.cognitix.swipeclean`).
 2. **JS available:**
    - Dev-client (debug) build → **Metro must be running**: `npm run start`, then launch the app once so it connects.
    - Standalone release build (embedded JS) → no Metro needed.

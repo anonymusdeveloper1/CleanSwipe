@@ -20,8 +20,9 @@ function withAlpha(hex: string, alpha: number): string {
  * Lifetime conversion stats for the Stats screen — total conversions, a
  * by-output-kind breakdown (images / videos / audio) with animated proportion
  * bars, and the total media processed. Reads the durable `lifetime` tally from
- * the convert store (survives clearing the Recent list). Everyone sees it; a user
- * who hasn't converted anything gets a friendly empty state.
+ * the convert store (survives clearing the Recent list). Shown to Pro users only
+ * (gated at the Stats screen call site via `canUseFeature("mediaFormatConvert")`);
+ * a Pro user who hasn't converted anything gets a friendly empty state.
  */
 export function ConvertStatsSection() {
   const theme = useAppTheme();

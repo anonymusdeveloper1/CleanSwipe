@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import Svg, { Circle } from "react-native-svg";
 import { AppHeader } from "@/components/app-header";
 import { EmptyState } from "@/components/empty-state";
+import { IndexingIndicator } from "@/components/indexing-indicator";
 import { MonthSelector } from "@/components/month-selector";
 import { SwipePhotoCard } from "@/components/swipe-photo-card";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -155,6 +156,7 @@ export function SwipeScreen() {
           <Trash2 size={22} color={visibleMarkedCount > 0 ? theme.accent : theme.muted} />
         </ControlIconButton>
       </View>
+      <IndexingIndicator />
       <View style={{ flex: 1, minHeight: 0, paddingHorizontal: 22, paddingTop: 18, paddingBottom: 12, gap: 12 }}>
         {loadingPhotos ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14 }}>

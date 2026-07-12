@@ -78,7 +78,8 @@
       "advancedCompression": "ضغط متقدم",
       "advancedStats": "إحصائيات متقدمة",
       "noAds": "بدون إعلانات",
-      "fileConversion": "تحويل الملفات"
+      "imageConversion": "تحويل الصور",
+      "videoConversion": "تحويل الفيديو"
     },
     "choosePlan": "اختر خطتك",
     "monthlyTitle": "شهري",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "استعادة المشتريات",
     "restoredMessage": "No active subscription was found for this store account.",
+    "redeemCode": "استخدام رمز",
+    "redeemFailedTitle": "تعذّر فتح الاستخدام",
+    "redeemFailedMessage": "تعذّر علينا فتح شاشة استخدام الرمز. يرجى المحاولة مرة أخرى.",
     "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
   },
   "smartClean": {
@@ -239,7 +243,8 @@
     "supportEmailUnavailableMessage": "قم بإعداد تطبيق بريد إلكتروني على هذا الهاتف ثم حاول مرة أخرى.",
     "privacyPolicyPendingTitle": "سياسة الخصوصية قريبًا",
     "privacyPolicyPendingMessage": "لم تتم إضافة رابط سياسة الخصوصية بعد.",
-    "madeBy": "SwipeClean من فريق Cognitx"
+    "madeBy": "SwipeClean من فريق Cognitx",
+    "openSourceLicenses": "تراخيص المصادر المفتوحة"
   },
   "lock": {
     "title": "أدخل رمز المرور",
@@ -267,7 +272,8 @@
     "needAppLockTitle": "أعدّ قفل التطبيق أولاً",
     "needAppLockMessage": "فعّل قفل التطبيق وعيّن رمز مرور قبل تفعيل الفتح البيومتري.",
     "noBiometricTitle": "لم يتم العثور على بيانات بيومترية",
-    "noBiometricMessage": "أعدّ Face ID أو Touch ID في إعدادات جهازك لاستخدام الفتح البيومتري."
+    "noBiometricMessage": "أعدّ Face ID أو Touch ID في إعدادات جهازك لاستخدام الفتح البيومتري.",
+    "tooManyAttempts": "محاولات كثيرة جدًا. يرجى الانتظار والمحاولة مرة أخرى."
   },
   "reminders": {
     "cleanupTitle": "حان وقت تنظيف سريع",
@@ -643,5 +649,13 @@
       "m4a": "صوت AAC",
       "wav": "غير مضغوط"
     }
+  },
+  "licenses": {
+    "title": "تراخيص المصادر المفتوحة",
+    "intro": "تم إنشاء SwipeClean باستخدام برمجيات مفتوحة المصدر. نحن ممتنون لمؤلفي هذه المشاريع.",
+    "componentsHeading": "المكوّنات المُضمَّنة",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "طلب مصدر المكتبة"
   }
 }

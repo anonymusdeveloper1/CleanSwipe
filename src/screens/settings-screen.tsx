@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Gauge, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, ShieldCheck, Star, ToggleLeft, XCircle } from "lucide-react-native";
+import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Gauge, Gift, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, ScrollText, ShieldCheck, Star, ToggleLeft, XCircle } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AppState, Linking, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -28,7 +28,7 @@ type BioCapability = { moduleAvailable: boolean; available: boolean; kind: Biome
 const SUPPORT_EMAIL = "info.cognitix@gmail.com";
 // The published policy URL will be supplied in a follow-up. Keeping it here
 // makes enabling the row a one-line update.
-const PRIVACY_POLICY_URL = "";
+const PRIVACY_POLICY_URL = "https://effervescent-douhua-6f5c1d.netlify.app";
 
 export function SettingsScreen() {
   const theme = useAppTheme();
@@ -47,6 +47,7 @@ export function SettingsScreen() {
   const refreshPermissionStatus = useAppStore((state) => state.refreshPermissionStatus);
   const subscriptionStatus = useSubscriptionStore((state) => state.subscriptionStatus);
   const cancelSubscription = useSubscriptionStore((state) => state.cancelSubscription);
+  const redeemCode = useSubscriptionStore((state) => state.redeemCode);
   const { isPro } = useFeatureAccess();
   const selectedLanguage = languageOptions.find((option) => option.value === settings.language) ?? languageOptions[0];
 
@@ -209,6 +210,19 @@ export function SettingsScreen() {
     }
   };
 
+  // Reuses the shared subscription store action (same one the paywall button
+  // uses): opens the native store code-redemption flow. Pro unlock arrives via
+  // the RevenueCat customerInfo listener, so only surface a friendly error here.
+  const handleRedeem = () => {
+    void (async () => {
+      try {
+        await redeemCode();
+      } catch {
+        Alert.alert(t("subscription.redeemFailedTitle"), t("subscription.redeemFailedMessage"));
+      }
+    })();
+  };
+
   const openPrivacyPolicy = async () => {
     if (!PRIVACY_POLICY_URL) {
       Alert.alert(t("settings.privacyPolicyPendingTitle"), t("settings.privacyPolicyPendingMessage"));
@@ -318,9 +332,11 @@ export function SettingsScreen() {
             trailing={chevron}
           />
         ) : null}
+        <SettingsRow icon={Gift} title={t("subscription.redeemCode")} onPress={handleRedeem} trailing={chevron} />
         <SettingsRow icon={ToggleLeft} title={t("settings.leaveFeedback")} onPress={() => void openSupportEmail("feedback")} trailing={chevron} />
         <SettingsRow icon={Bug} title={t("settings.reportBug")} onPress={() => void openSupportEmail("bug")} trailing={chevron} />
         <SettingsRow icon={ShieldCheck} title={t("settings.privacyPolicy")} onPress={() => void openPrivacyPolicy()} trailing={chevron} />
+        <SettingsRow icon={ScrollText} title={t("settings.openSourceLicenses")} onPress={() => router.push("/licenses" as never)} trailing={chevron} />
       </SettingsSection>
 
       <AdBanner />

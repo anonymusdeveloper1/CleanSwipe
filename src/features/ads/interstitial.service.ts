@@ -1,5 +1,6 @@
 import { AdEventType, InterstitialAd } from "react-native-google-mobile-ads";
 import { INTERSTITIAL_AD_UNIT_ID } from "@/features/ads/ad-config";
+import { useAdsConsentStore } from "@/features/ads/ads-consent-store";
 import { canShowFullScreenAd, markFullScreenAdShown } from "@/features/ads/full-screen-ad-gate";
 import { canUseFeatureNow } from "@/store/subscription-store";
 
@@ -38,6 +39,7 @@ function ensureCreated() {
 export const InterstitialAdService = {
   /** Create + preload the first interstitial. Call once after SDK init. */
   preload() {
+    if (!useAdsConsentStore.getState().canRequestAds) return; // no UMP consent: never request
     if (canUseFeatureNow("noAds")) return; // Pro: don't even load
     ensureCreated().load();
   },
@@ -47,6 +49,7 @@ export const InterstitialAdService = {
    * Safe to call from any task-end handler; it self-gates and never throws.
    */
   maybeShow() {
+    if (!useAdsConsentStore.getState().canRequestAds) return; // no UMP consent: never request
     if (canUseFeatureNow("noAds")) return;
     // Shared cooldown across all full-screen ads: skips right after a rewarded
     // video and de-dupes rapid back-to-back compressions.

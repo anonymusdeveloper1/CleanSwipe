@@ -10,6 +10,7 @@ import mobileAds from "react-native-google-mobile-ads";
 import { AppLockGate } from "@/components/app-lock-gate";
 import { ProUpgradeSheet } from "@/components/pro-upgrade-sheet";
 import { AdsConsentService } from "@/features/ads/consent.service";
+import { useAdsConsentStore } from "@/features/ads/ads-consent-store";
 import { InterstitialAdService } from "@/features/ads/interstitial.service";
 import { RewardedAdService } from "@/features/ads/rewarded.service";
 import { SmartCleanPreviewOverlay } from "@/features/smart-clean/components/smart-clean-preview-overlay";
@@ -35,6 +36,9 @@ export default function RootLayout() {
     // launch. GDPR/UMP: gather consent BEFORE initializing the Mobile Ads SDK.
     const task = InteractionManager.runAfterInteractions(() => {
       void AdsConsentService.gather().then((canRequestAds) => {
+        // Publish the consent outcome so every ad surface (incl. the banner via
+        // useAdsVisibility) can honor it, not just the preloads below.
+        useAdsConsentStore.getState().setCanRequestAds(canRequestAds);
         void mobileAds()
           .initialize()
           .then(() => {
@@ -74,6 +78,22 @@ export default function RootLayout() {
     };
   }, []);
 
+  // Smart Clean is Pro-gated: if Pro access is lost (subscription cancelled or
+  // expired) while a scan is in progress, halt it immediately instead of letting
+  // it keep scanning. Routed through the store's cancel() — the same path the
+  // notification Stop button uses — which aborts the run AND clears the scan
+  // notification. Reacting to the store's subscriptionStatus covers both the
+  // RevenueCat customerInfo listener (real expiry) and the Test Store local
+  // cancel, since both flip the entitlement out of "active".
+  useEffect(() => {
+    return useSubscriptionStore.subscribe((state, prev) => {
+      const lostPro = prev.subscriptionStatus === "active" && state.subscriptionStatus !== "active";
+      if (lostPro && useSmartCleanStore.getState().phase === "scanning") {
+        useSmartCleanStore.getState().cancel();
+      }
+    });
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.background }}>
       <I18nPreferenceSync />
@@ -89,6 +109,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="settings" options={{ presentation: "card" }} />
+        <Stack.Screen name="licenses" options={{ presentation: "card" }} />
         <Stack.Screen
           name="month-selector"
           options={{

@@ -108,9 +108,12 @@ export function StatsScreen() {
           <SwipeDistributionChart stats={stats} />
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(420).delay(210)}>
-          <ConvertStatsSection />
-        </Animated.View>
+        {/* Conversion stats are a Pro feature — hidden entirely for Free users. */}
+        {canUseFeature("mediaFormatConvert") ? (
+          <Animated.View entering={FadeInDown.duration(420).delay(210)}>
+            <ConvertStatsSection />
+          </Animated.View>
+        ) : null}
 
         {/* Advanced stats (Pro). Independent of the loadingPhotos guard — events
             are not media-index-derived, so a media reconcile must not hide it. */}

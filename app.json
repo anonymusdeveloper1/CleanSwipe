@@ -3,19 +3,19 @@
     "name": "SwipeClean",
     "slug": "swipeclean-free",
     "scheme": "swipeclean",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.swipeclean.free",
+      "bundleIdentifier": "com.cognitix.swipeclean",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "SwipeClean needs media access so you can review and clean your photos and videos.",
         "NSPhotoLibraryAddUsageDescription": "SwipeClean saves only when you choose to restore or share photos."
       }
     },
     "android": {
-      "package": "com.swipeclean.free",
+      "package": "com.cognitix.swipeclean",
       "allowBackup": false,
       "permissions": [
         "READ_MEDIA_IMAGES",
@@ -69,7 +69,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "SwipeClean needs media access so you can pick a photo or video to compress."
+          "photosPermission": "SwipeClean needs media access so you can pick a photo or video to compress.",
+          "cameraPermission": false
         }
       ]
     ],

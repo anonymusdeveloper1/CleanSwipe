@@ -1,7 +1,7 @@
 # Swipe interaction: performs a left swipe (mark for deletion) and then undoes
 # it, leaving state unchanged. Fully media-tolerant — every step is guarded on a
 # swipe card being present, so it passes on an empty/permission-less library too.
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Swipe interaction (conditional)
 tags:
   - swipe

@@ -1,4 +1,4 @@
-package com.swipeclean.free
+package com.cognitix.swipeclean
 
 import android.app.Application
 import android.content.res.Configuration

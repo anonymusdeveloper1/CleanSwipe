@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BarChart3, Check, Crown, Repeat, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
+import { BarChart3, Check, Crown, FileImage, FileVideo, Gift, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import Animated, { Easing, FadeInDown, FadeInRight, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { AdBanner } from "@/components/ad-banner";
+import { AppDialog, AppDialogTone } from "@/components/app-dialog";
 import { AppHeader } from "@/components/app-header";
 import { StudioScreen } from "@/screens/studio-screen";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
@@ -59,11 +60,13 @@ function UpgradeView() {
   const initializeBilling = useSubscriptionStore((state) => state.initializeBilling);
   const purchasePlan = useSubscriptionStore((state) => state.purchasePlan);
   const restorePurchases = useSubscriptionStore((state) => state.restorePurchases);
+  const redeemCode = useSubscriptionStore((state) => state.redeemCode);
   const plans = useSubscriptionStore((state) => state.plans);
   const offeringsLoading = useSubscriptionStore((state) => state.offeringsLoading);
   const purchaseInProgress = useSubscriptionStore((state) => state.purchaseInProgress);
   const billingError = useSubscriptionStore((state) => state.billingError);
   const [selectedPlan, setSelectedPlan] = useState<PaidPlan>("yearly");
+  const [dialog, setDialog] = useState<{ title: string; message?: string; tone: AppDialogTone } | null>(null);
 
   useEffect(() => {
     void initializeBilling();
@@ -82,7 +85,8 @@ function UpgradeView() {
   const proFeatures = [
     { icon: Wand2, label: t("subscription.pro.smartClean") },
     { icon: Video, label: t("subscription.pro.videoCompression") },
-    { icon: Repeat, label: t("subscription.pro.fileConversion") },
+    { icon: FileImage, label: t("subscription.pro.imageConversion") },
+    { icon: FileVideo, label: t("subscription.pro.videoConversion") },
     { icon: BarChart3, label: t("subscription.pro.advancedStats") },
     { icon: ShieldOff, label: t("subscription.pro.noAds") }
   ];
@@ -97,10 +101,10 @@ function UpgradeView() {
     try {
       const snapshot = await purchasePlan(plan);
       if (snapshot.isPro) {
-        Alert.alert(t("subscription.purchaseSuccessTitle"), t("subscription.purchaseSuccessMessage"));
+        setDialog({ title: t("subscription.purchaseSuccessTitle"), message: t("subscription.purchaseSuccessMessage"), tone: "success" });
       }
     } catch (error) {
-      Alert.alert(t("subscription.purchaseFailedTitle"), formatBillingError(error instanceof Error ? error.message : billingError));
+      setDialog({ title: t("subscription.purchaseFailedTitle"), message: formatBillingError(error instanceof Error ? error.message : billingError), tone: "error" });
     }
   };
 
@@ -109,12 +113,25 @@ function UpgradeView() {
       try {
         const snapshot = await restorePurchases();
         if (snapshot.isPro) {
-          Alert.alert(t("subscription.restoreSuccessTitle"), t("subscription.restoreSuccessMessage"));
+          setDialog({ title: t("subscription.restoreSuccessTitle"), message: t("subscription.restoreSuccessMessage"), tone: "success" });
         } else {
-          Alert.alert(t("subscription.restoredTitle"), t("subscription.restoredMessage"));
+          setDialog({ title: t("subscription.restoredTitle"), message: t("subscription.restoredMessage"), tone: "info" });
         }
       } catch (error) {
-        Alert.alert(t("subscription.restoreFailedTitle"), formatBillingError(error instanceof Error ? error.message : billingError));
+        setDialog({ title: t("subscription.restoreFailedTitle"), message: formatBillingError(error instanceof Error ? error.message : billingError), tone: "error" });
+      }
+    })();
+  };
+
+  // Opens the native store redemption flow. Pro unlock (iOS) arrives via the
+  // RevenueCat customerInfo listener, so there's nothing to do on success —
+  // only surface a friendly message if the sheet / redeem page can't open.
+  const handleRedeem = () => {
+    void (async () => {
+      try {
+        await redeemCode();
+      } catch {
+        setDialog({ title: t("subscription.redeemFailedTitle"), message: t("subscription.redeemFailedMessage"), tone: "error" });
       }
     })();
   };
@@ -228,9 +245,28 @@ function UpgradeView() {
         <Text style={{ color: theme.accent, fontSize: 15, fontWeight: "900" }}>{t("subscription.restore")}</Text>
       </Pressable>
 
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("subscription.redeemCode")}
+        disabled={purchaseInProgress}
+        onPress={handleRedeem}
+        style={{ minHeight: 44, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, opacity: purchaseInProgress ? 0.55 : 1 }}
+      >
+        <Gift size={17} color={theme.accent} />
+        <Text style={{ color: theme.accent, fontSize: 15, fontWeight: "900" }}>{t("subscription.redeemCode")}</Text>
+      </Pressable>
+
       <Text selectable style={{ color: theme.faint, fontSize: 12, lineHeight: 17, textAlign: "center" }}>
         {t("subscription.billingDisclaimer")}
       </Text>
+
+      <AppDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ""}
+        message={dialog?.message}
+        tone={dialog?.tone ?? "info"}
+        onClose={() => setDialog(null)}
+      />
     </View>
   );
 }

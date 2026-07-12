@@ -36,6 +36,10 @@ type SubscriptionStore = {
   purchaseInProgress: boolean;
   billingError?: string;
   plans: BillingPlans;
+  // Transient (never persisted): set while a code redemption is in flight so the
+  // entitlement gets refreshed once the redemption resolves / the app returns to
+  // the foreground. Consumed by refreshSubscriptionStatus.
+  pendingRedeemRefresh: boolean;
 
   setHasHydrated: (hasHydrated: boolean) => void;
   initializeBilling: () => Promise<SubscriptionSnapshot>;
@@ -43,6 +47,7 @@ type SubscriptionStore = {
   purchasePlan: (plan: Exclude<SubscriptionPlan, "none">) => Promise<SubscriptionSnapshot>;
   restorePurchases: () => Promise<SubscriptionSnapshot>;
   cancelSubscription: () => Promise<void>;
+  redeemCode: () => Promise<void>;
   getCurrentSubscription: () => SubscriptionSnapshot;
   isProUser: () => boolean;
 };
@@ -64,6 +69,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       offeringsLoading: false,
       purchaseInProgress: false,
       billingError: undefined,
+      pendingRedeemRefresh: false,
       plans: {},
 
       setHasHydrated(hasHydrated) {
@@ -121,6 +127,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       async refreshSubscriptionStatus() {
+        // A refresh is now servicing any in-flight redeem, so consume the marker.
+        // This is why returning from the Android Play redeem page needs no extra
+        // work: the existing SubscriptionSync foreground refresh runs this.
+        if (get().pendingRedeemRefresh) set({ pendingRedeemRefresh: false });
         try {
           const configured = await RevenueCatSubscriptionService.configure(handleCustomerInfoUpdate);
           if (!configured) {
@@ -212,6 +222,36 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         // back to Pro) until the user purchases again. This path runs only for
         // non-store subscriptions, so it never affects a real paying customer.
         set({ localCancelled: true, subscriptionStatus: "free", plan: "none", source: "none", expiresAt: undefined, managementUrl: undefined });
+      },
+
+      // Trigger the native store code-redemption flow (Apple offer-code sheet on
+      // iOS, Play redeem page on Android) and make sure the entitlement refreshes
+      // so Pro appears without a manual Restore. No entitlement is set manually
+      // here — the refreshed customerInfo drives it (as does the live listener).
+      async redeemCode() {
+        // Mark a redemption in flight; refreshSubscriptionStatus clears it.
+        set({ pendingRedeemRefresh: true });
+        let completedInApp = false;
+        try {
+          ({ completedInApp } = await RevenueCatSubscriptionService.presentCodeRedemption());
+        } catch (error) {
+          // Nothing was redeemed (sheet / redeem page failed to open) — drop the
+          // marker and let the caller surface the friendly message.
+          set({ pendingRedeemRefresh: false });
+          throw error;
+        }
+        if (completedInApp) {
+          // iOS: the redemption sheet has been dismissed, so refresh entitlement
+          // now (belt-and-suspenders on top of the customerInfo listener).
+          try {
+            await get().refreshSubscriptionStatus();
+          } catch {
+            // Silent background refresh; refreshSubscriptionStatus owns its errors.
+          }
+        }
+        // Android: redemption completes on the Play page after we return to the
+        // foreground, where the existing SubscriptionSync AppState refresh runs
+        // (and consumes pendingRedeemRefresh). No second listener → no double refresh.
       },
 
       getCurrentSubscription() {

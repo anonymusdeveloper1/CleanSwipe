@@ -78,7 +78,8 @@
       "advancedCompression": "Kompresi lanjutan",
       "advancedStats": "Statistik lanjutan",
       "noAds": "Tanpa iklan",
-      "fileConversion": "Konversi file"
+      "imageConversion": "Konversi gambar",
+      "videoConversion": "Konversi video"
     },
     "choosePlan": "Pilih paket Anda",
     "monthlyTitle": "Bulanan",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Pemulihan gagal",
     "restoredTitle": "Pulihkan Pembelian",
     "restoredMessage": "Tidak ada langganan aktif yang ditemukan untuk akun toko ini.",
+    "redeemCode": "Tukarkan kode",
+    "redeemFailedTitle": "Tidak dapat membuka penukaran",
+    "redeemFailedMessage": "Kami tidak dapat membuka layar penukaran kode. Silakan coba lagi.",
     "billingDisclaimer": "Pembayaran ditangani oleh toko aplikasi. Langganan diperpanjang otomatis kecuali dibatalkan di akun toko Anda."
   },
   "smartClean": {
@@ -239,7 +243,8 @@
     "supportEmailUnavailableMessage": "Siapkan aplikasi email di ponsel ini lalu coba lagi.",
     "privacyPolicyPendingTitle": "Kebijakan Privasi segera hadir",
     "privacyPolicyPendingMessage": "Tautan Kebijakan Privasi belum ditambahkan.",
-    "madeBy": "SwipeClean oleh tim Cognitx"
+    "madeBy": "SwipeClean oleh tim Cognitx",
+    "openSourceLicenses": "Lisensi Sumber Terbuka"
   },
   "lock": {
     "title": "Masukkan Sandi",
@@ -267,7 +272,8 @@
     "needAppLockTitle": "Atur Kunci Aplikasi dulu",
     "needAppLockMessage": "Aktifkan Kunci Aplikasi dan atur sandi sebelum mengaktifkan buka kunci biometrik.",
     "noBiometricTitle": "Tidak ada biometrik ditemukan",
-    "noBiometricMessage": "Atur Face ID atau Touch ID di pengaturan perangkat Anda untuk menggunakan buka kunci biometrik."
+    "noBiometricMessage": "Atur Face ID atau Touch ID di pengaturan perangkat Anda untuk menggunakan buka kunci biometrik.",
+    "tooManyAttempts": "Terlalu banyak percobaan. Harap tunggu dan coba lagi."
   },
   "reminders": {
     "cleanupTitle": "Waktunya bersih-bersih singkat",
@@ -643,5 +649,13 @@
       "m4a": "Audio AAC",
       "wav": "Tanpa kompresi"
     }
+  },
+  "licenses": {
+    "title": "Lisensi Sumber Terbuka",
+    "intro": "SwipeClean dibuat dengan perangkat lunak sumber terbuka. Kami berterima kasih kepada para penulis proyek ini.",
+    "componentsHeading": "Komponen yang disertakan",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "Minta sumber pustaka"
   }
 }

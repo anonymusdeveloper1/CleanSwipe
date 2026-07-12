@@ -40,6 +40,16 @@ qr-*.svg
 modules/*/android/build/
 modules/*/android/.cxx/
 
+# Release signing — NEVER commit the production keystore or its passwords.
+# (The template debug.keystore is intentionally tracked; these are the real ones.)
+android/keystore.properties
+android/release.jks
+*.jks
+
+# Built app bundles / signed release copies — never commit artifacts
+*.aab
+*.apk
+
 # macOS Finder junk
 .DS_Store
 

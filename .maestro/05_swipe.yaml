@@ -1,7 +1,7 @@
 # Swipe screen: scope label + the month-selector sheet (tabs + month list).
 # Media-tolerant: the month-selector pill only renders once media access is
 # granted, so it's opened conditionally and the flow passes either way.
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Swipe scope and month selector
 tags:
   - swipe

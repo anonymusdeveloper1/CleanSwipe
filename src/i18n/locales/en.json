@@ -78,7 +78,8 @@
       "advancedCompression": "Advanced compression",
       "advancedStats": "Advanced stats",
       "noAds": "No ads",
-      "fileConversion": "File conversion"
+      "imageConversion": "Image conversion",
+      "videoConversion": "Video conversion"
     },
     "choosePlan": "Choose your plan",
     "monthlyTitle": "Monthly",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "Restore Purchases",
     "restoredMessage": "No active subscription was found for this store account.",
+    "redeemCode": "Redeem Code",
+    "redeemFailedTitle": "Couldn't open redemption",
+    "redeemFailedMessage": "We couldn't open the code redemption screen. Please try again.",
     "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
   },
   "smartClean": {
@@ -235,6 +239,7 @@
     "leaveFeedback": "Leave Feedback",
     "reportBug": "Report a Bug",
     "privacyPolicy": "Privacy Policy",
+    "openSourceLicenses": "Open-Source Licenses",
     "supportEmailUnavailableTitle": "Email app unavailable",
     "supportEmailUnavailableMessage": "Set up an email app on this phone and try again.",
     "privacyPolicyPendingTitle": "Privacy Policy coming soon",
@@ -245,6 +250,7 @@
     "title": "Enter Passcode",
     "subtitle": "Enter your passcode to unlock SwipeClean",
     "wrongPasscode": "Wrong passcode. Try again.",
+    "tooManyAttempts": "Too many attempts. Please wait and try again.",
     "useFaceId": "Use Face ID",
     "useTouchId": "Use Touch ID",
     "useFingerprint": "Use fingerprint",
@@ -268,6 +274,14 @@
     "needAppLockMessage": "Turn on App Lock and set a passcode before enabling biometric unlock.",
     "noBiometricTitle": "No biometrics found",
     "noBiometricMessage": "Set up Face ID or Touch ID in your device settings to use biometric unlock."
+  },
+  "licenses": {
+    "title": "Open-Source Licenses",
+    "intro": "SwipeClean is built with open-source software. We are grateful to the authors of these projects.",
+    "componentsHeading": "Included components",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "Request library source"
   },
   "reminders": {
     "cleanupTitle": "Time for a quick clean",

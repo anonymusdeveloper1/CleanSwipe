@@ -78,7 +78,8 @@
       "advancedCompression": "Compressão avançada",
       "advancedStats": "Estatísticas avançadas",
       "noAds": "Sem anúncios",
-      "fileConversion": "Conversão de arquivos"
+      "imageConversion": "Conversão de imagens",
+      "videoConversion": "Conversão de vídeos"
     },
     "choosePlan": "Escolha seu plano",
     "monthlyTitle": "Mensal",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Falha ao restaurar",
     "restoredTitle": "Restaurar compras",
     "restoredMessage": "Nenhuma assinatura ativa foi encontrada para esta conta da loja.",
+    "redeemCode": "Resgatar código",
+    "redeemFailedTitle": "Não foi possível abrir o resgate",
+    "redeemFailedMessage": "Não foi possível abrir a tela de resgate de código. Tente novamente.",
     "billingDisclaimer": "O pagamento e processado pela loja de apps. As assinaturas renovam automaticamente, a menos que sejam canceladas na sua conta da loja."
   },
   "smartClean": {
@@ -239,7 +243,8 @@
     "supportEmailUnavailableMessage": "Configure um aplicativo de e-mail neste telefone e tente novamente.",
     "privacyPolicyPendingTitle": "Política de Privacidade em breve",
     "privacyPolicyPendingMessage": "O link da Política de Privacidade ainda não foi adicionado.",
-    "madeBy": "SwipeClean pela equipe Cognitx"
+    "madeBy": "SwipeClean pela equipe Cognitx",
+    "openSourceLicenses": "Licenças de código aberto"
   },
   "lock": {
     "title": "Digite a senha",
@@ -267,7 +272,8 @@
     "needAppLockTitle": "Configure o bloqueio do app primeiro",
     "needAppLockMessage": "Ative o bloqueio do app e defina uma senha antes de ativar o desbloqueio biométrico.",
     "noBiometricTitle": "Nenhuma biometria encontrada",
-    "noBiometricMessage": "Configure o Face ID ou o Touch ID nos ajustes do seu dispositivo para usar o desbloqueio biométrico."
+    "noBiometricMessage": "Configure o Face ID ou o Touch ID nos ajustes do seu dispositivo para usar o desbloqueio biométrico.",
+    "tooManyAttempts": "Muitas tentativas. Aguarde e tente novamente."
   },
   "reminders": {
     "cleanupTitle": "Hora de uma limpeza rápida",
@@ -643,5 +649,13 @@
       "m4a": "Áudio AAC",
       "wav": "Sem compressão"
     }
+  },
+  "licenses": {
+    "title": "Licenças de código aberto",
+    "intro": "O SwipeClean é construído com software de código aberto. Agradecemos aos autores desses projetos.",
+    "componentsHeading": "Componentes incluídos",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "Solicitar código-fonte da biblioteca"
   }
 }

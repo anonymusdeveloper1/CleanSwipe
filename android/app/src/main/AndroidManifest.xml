@@ -10,6 +10,10 @@
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WAKE_LOCK"/>
   <uses-permission android:name="com.android.vending.BILLING"/>
+  <!-- expo-image-picker's library manifest injects CAMERA, but this app only picks
+       EXISTING media (launchImageLibraryAsync) and never captures from the camera.
+       Strip it at manifest-merge so the shipped AAB does not request CAMERA. -->
+  <uses-permission android:name="android.permission.CAMERA" tools:node="remove"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>

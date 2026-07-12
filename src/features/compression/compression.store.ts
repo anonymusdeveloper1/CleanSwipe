@@ -144,19 +144,22 @@ export const useCompressionStore = create<CompressionStore>()(
           };
         });
 
+        // Guard EVERYTHING below on the POST-set status: the set() above
+        // early-returns for a cancelled job, so a compression that was cancelled
+        // mid-flight must NOT persist its output to `compressedMedia` (which would
+        // add an orphan gallery entry AND exclude the source from every future
+        // cleanup scan) nor count in the stats ledger.
+        const completedJob = get().jobs[jobId];
+        if (!completedJob || completedJob.status !== "completed") return;
+
         useAppStore.setState((state) => ({
           compressedMedia: [result.item, ...state.compressedMedia.filter((item) => item.sourceId !== result.item.sourceId)]
         }));
-        // Advanced-stats ledger. Guard on the POST-set status: the set() above
-        // early-returns for cancelled jobs, so a cancelled job must not count.
-        const completedJob = get().jobs[jobId];
-        if (completedJob && completedJob.status === "completed") {
-          recordCleanupEvent({ type: "itemCompressed", count: 1, bytes: result.savedBytes ?? 0, mediaType: completedJob.mediaType });
-          // Monetize Free users after a successful compression. Self-gating:
-          // no-op for Pro, and the shared full-screen-ad cooldown skips it right
-          // after a rewarded video or an already-shown interstitial.
-          InterstitialAdService.maybeShow();
-        }
+        recordCleanupEvent({ type: "itemCompressed", count: 1, bytes: result.savedBytes ?? 0, mediaType: completedJob.mediaType });
+        // Monetize Free users after a successful compression. Self-gating:
+        // no-op for Pro, and the shared full-screen-ad cooldown skips it right
+        // after a rewarded video or an already-shown interstitial.
+        InterstitialAdService.maybeShow();
       },
 
       requestOriginalDeletionDecision(jobId) {

@@ -1,7 +1,7 @@
 # Settings deep flow: opens the Language picker modal, asserts the Notifications
 # section, and the Compression "After compression" policy row. Complements
 # 03_settings.yaml (which covers Account & Security / Appearance / Permissions).
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Settings - language, notifications, compression
 tags:
   - settings

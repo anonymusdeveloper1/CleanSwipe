@@ -78,7 +78,8 @@
       "advancedCompression": "उन्नत कंप्रेशन",
       "advancedStats": "उन्नत आँकड़े",
       "noAds": "कोई विज्ञापन नहीं",
-      "fileConversion": "फ़ाइल रूपांतरण"
+      "imageConversion": "छवि रूपांतरण",
+      "videoConversion": "वीडियो रूपांतरण"
     },
     "choosePlan": "अपना प्लान चुनें",
     "monthlyTitle": "मासिक",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "खरीदारी पुनर्स्थापित करें",
     "restoredMessage": "No active subscription was found for this store account.",
+    "redeemCode": "कोड रिडीम करें",
+    "redeemFailedTitle": "रिडेम्पशन नहीं खुल सका",
+    "redeemFailedMessage": "हम कोड रिडेम्पशन स्क्रीन नहीं खोल सके। कृपया पुनः प्रयास करें।",
     "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
   },
   "smartClean": {
@@ -239,7 +243,8 @@
     "supportEmailUnavailableMessage": "इस फ़ोन पर ईमेल ऐप सेट अप करें और फिर से कोशिश करें।",
     "privacyPolicyPendingTitle": "गोपनीयता नीति जल्द आ रही है",
     "privacyPolicyPendingMessage": "गोपनीयता नीति का लिंक अभी जोड़ा नहीं गया है।",
-    "madeBy": "Cognitx टीम द्वारा SwipeClean"
+    "madeBy": "Cognitx टीम द्वारा SwipeClean",
+    "openSourceLicenses": "ओपन-सोर्स लाइसेंस"
   },
   "lock": {
     "title": "पासकोड दर्ज करें",
@@ -267,7 +272,8 @@
     "needAppLockTitle": "पहले ऐप लॉक सेट करें",
     "needAppLockMessage": "बायोमेट्रिक अनलॉक सक्षम करने से पहले ऐप लॉक चालू करें और एक पासकोड सेट करें।",
     "noBiometricTitle": "कोई बायोमेट्रिक्स नहीं मिला",
-    "noBiometricMessage": "बायोमेट्रिक अनलॉक का उपयोग करने के लिए अपने डिवाइस की सेटिंग्स में Face ID या Touch ID सेट करें।"
+    "noBiometricMessage": "बायोमेट्रिक अनलॉक का उपयोग करने के लिए अपने डिवाइस की सेटिंग्स में Face ID या Touch ID सेट करें।",
+    "tooManyAttempts": "बहुत अधिक प्रयास। कृपया प्रतीक्षा करें और पुनः प्रयास करें।"
   },
   "reminders": {
     "cleanupTitle": "एक त्वरित सफ़ाई का समय",
@@ -643,5 +649,13 @@
       "m4a": "AAC ऑडियो",
       "wav": "असंपीड़ित"
     }
+  },
+  "licenses": {
+    "title": "ओपन-सोर्स लाइसेंस",
+    "intro": "SwipeClean ओपन-सोर्स सॉफ़्टवेयर से बना है। हम इन परियोजनाओं के लेखकों के आभारी हैं।",
+    "componentsHeading": "शामिल घटक",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "लाइब्रेरी स्रोत का अनुरोध करें"
   }
 }

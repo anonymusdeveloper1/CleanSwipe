@@ -1,4 +1,5 @@
 import { requireOptionalNativeModule } from "expo-modules-core";
+import { sha256Hex } from "@/utils/sha256";
 
 /**
  * App-lock secure storage + biometric authentication.
@@ -23,6 +24,91 @@ import { requireOptionalNativeModule } from "expo-modules-core";
  */
 
 const PASSCODE_KEY = "swipeclean.app-lock.passcode";
+const ATTEMPTS_KEY = "swipeclean.app-lock.attempts";
+
+// Rate-limiting: the first few misses are free (fat-finger tolerance), then an
+// exponential lockout throttles brute force over the 10,000-PIN space.
+const FREE_ATTEMPTS = 4;
+const BASE_LOCK_MS = 30_000; // 30s after the 5th miss…
+const MAX_LOCK_MS = 5 * 60_000; // …doubling, capped at 5 minutes.
+
+type StoredPasscode = { v: 1; salt: string; hash: string };
+type AttemptRecord = { fails: number; lockedUntil: number };
+
+/**
+ * Per-install salt. Math.random() is not a CSPRNG, but the salt's only job is to
+ * defeat precomputed rainbow tables — and a 4-digit PIN is brute-forceable from
+ * any salt regardless. SecureStore encryption is the real at-rest protection.
+ */
+function randomSalt(): string {
+  let salt = "";
+  for (let i = 0; i < 32; i++) salt += Math.floor(Math.random() * 16).toString(16);
+  return salt;
+}
+
+function parsePasscode(stored: string | null): StoredPasscode | null {
+  if (typeof stored !== "string" || stored.length === 0) return null;
+  try {
+    const parsed = JSON.parse(stored) as Partial<StoredPasscode>;
+    if (parsed && parsed.v === 1 && typeof parsed.salt === "string" && typeof parsed.hash === "string") {
+      return { v: 1, salt: parsed.salt, hash: parsed.hash };
+    }
+  } catch {
+    // Not JSON → legacy plaintext value from a build before hashing landed.
+  }
+  return null;
+}
+
+/** True when `passcode` matches whatever is stored (hashed or legacy plaintext). */
+function matchesStored(stored: string | null, passcode: string): boolean {
+  if (typeof stored !== "string" || stored.length === 0) return false;
+  const parsed = parsePasscode(stored);
+  if (parsed) return sha256Hex(parsed.salt + passcode) === parsed.hash;
+  return stored === passcode; // legacy plaintext (migrated to a hash on success)
+}
+
+type SecureStoreModule = typeof import("expo-secure-store");
+
+async function writeHashedPasscode(SecureStore: SecureStoreModule, passcode: string): Promise<void> {
+  const salt = randomSalt();
+  const payload: StoredPasscode = { v: 1, salt, hash: sha256Hex(salt + passcode) };
+  await SecureStore.setItemAsync(PASSCODE_KEY, JSON.stringify(payload));
+}
+
+async function readAttempts(SecureStore: SecureStoreModule): Promise<AttemptRecord> {
+  try {
+    const raw = await SecureStore.getItemAsync(ATTEMPTS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<AttemptRecord>;
+      return { fails: Number(parsed.fails) || 0, lockedUntil: Number(parsed.lockedUntil) || 0 };
+    }
+  } catch {
+    // Corrupt/absent record → start clean.
+  }
+  return { fails: 0, lockedUntil: 0 };
+}
+
+async function clearAttempts(SecureStore: SecureStoreModule): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(ATTEMPTS_KEY);
+  } catch {
+    // Best-effort.
+  }
+}
+
+async function registerFailure(SecureStore: SecureStoreModule, current: AttemptRecord): Promise<void> {
+  const fails = current.fails + 1;
+  let lockedUntil = 0;
+  if (fails > FREE_ATTEMPTS) {
+    const lockMs = Math.min(BASE_LOCK_MS * 2 ** (fails - FREE_ATTEMPTS - 1), MAX_LOCK_MS);
+    lockedUntil = Date.now() + lockMs;
+  }
+  try {
+    await SecureStore.setItemAsync(ATTEMPTS_KEY, JSON.stringify({ fails, lockedUntil }));
+  } catch {
+    // Best-effort: a failed write just means no throttle this round.
+  }
+}
 
 export type BiometricKind = "face" | "fingerprint" | "iris" | "generic";
 
@@ -145,12 +231,13 @@ export const AppLockService = {
     }
   },
 
-  /** Persist a new passcode. Returns false when secure storage is unavailable. */
+  /** Persist a new passcode (salted SHA-256, never plaintext). Returns false when secure storage is unavailable. */
   async setPasscode(passcode: string): Promise<boolean> {
     const SecureStore = await getSecureStore();
     if (!SecureStore) return false;
     try {
-      await SecureStore.setItemAsync(PASSCODE_KEY, passcode);
+      await writeHashedPasscode(SecureStore, passcode);
+      await clearAttempts(SecureStore); // a fresh/changed PIN clears any lockout
       passcodePresenceCache = true;
       return true;
     } catch {
@@ -158,14 +245,40 @@ export const AppLockService = {
     }
   },
 
+  /** Milliseconds remaining on the current lockout (0 when unlocked). */
+  async getLockRemainingMs(): Promise<number> {
+    const SecureStore = await getSecureStore();
+    if (!SecureStore) return 0;
+    const record = await readAttempts(SecureStore);
+    return Math.max(0, record.lockedUntil - Date.now());
+  },
+
   async verifyPasscode(passcode: string): Promise<boolean> {
     const SecureStore = await getSecureStore();
     if (!SecureStore) return false;
     try {
+      // Rate limit: during a lockout, reject without even comparing so a brute
+      // force can't keep guessing. A correct PIN entered while locked is also
+      // rejected — the user must wait out the (short) backoff.
+      const record = await readAttempts(SecureStore);
+      if (record.lockedUntil > Date.now()) return false;
+
       const stored = await SecureStore.getItemAsync(PASSCODE_KEY);
-      const hasStoredPasscode = typeof stored === "string" && stored.length > 0;
-      passcodePresenceCache = hasStoredPasscode;
-      return hasStoredPasscode && stored === passcode;
+      passcodePresenceCache = typeof stored === "string" && stored.length > 0;
+      const ok = matchesStored(stored, passcode);
+
+      if (ok) {
+        // Lazy migration: an old plaintext passcode is re-persisted as a salted
+        // hash on the first successful verify (also clears the attempt counter).
+        if (stored && !parsePasscode(stored)) {
+          await writeHashedPasscode(SecureStore, passcode);
+        }
+        await clearAttempts(SecureStore);
+        return true;
+      }
+
+      await registerFailure(SecureStore, record);
+      return false;
     } catch {
       return false;
     }
@@ -176,6 +289,7 @@ export const AppLockService = {
     if (!SecureStore) return;
     try {
       await SecureStore.deleteItemAsync(PASSCODE_KEY);
+      await clearAttempts(SecureStore);
       passcodePresenceCache = false;
     } catch {
       // Best-effort: a failed clear leaves the old passcode, which still verifies.

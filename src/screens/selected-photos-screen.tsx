@@ -17,6 +17,7 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { runOnJS, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GalleryMonthScrubber } from "@/components/gallery-month-scrubber";
+import { IndexingIndicator } from "@/components/indexing-indicator";
 import { MediaThumbnail } from "@/components/media-thumbnail";
 import { EmptyState } from "@/components/empty-state";
 import { SelectionActionBar } from "@/components/selection-action-bar";
@@ -457,6 +458,8 @@ export function SelectedPhotosScreen() {
           <View style={{ width: 46 }} />
         </View>
       )}
+
+      <IndexingIndicator />
 
       {total === 0 ? (
         <EmptyState

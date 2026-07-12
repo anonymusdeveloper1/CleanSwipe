@@ -115,6 +115,28 @@ export const RevenueCatSubscriptionService = {
     await Linking.openURL(managementUrl?.trim() ? managementUrl : fallback);
   },
 
+  /**
+   * Open the platform's promo / offer-code redemption flow. iOS exposes Apple's
+   * native offer-code sheet through RevenueCat; Android has no equivalent SDK API,
+   * so we open the Google Play redeem page via Linking instead. After an iOS
+   * redemption the customerInfo listener unlocks Pro automatically — there is no
+   * manual entitlement flip here.
+   *
+   * Returns `{ completedInApp }`: true on iOS, where the promise resolves once the
+   * redemption sheet has been dismissed (so the caller can refresh entitlement
+   * immediately); false on Android, where redemption happens on the Play page in a
+   * browser and the refresh must wait for the app to return to the foreground.
+   */
+  async presentCodeRedemption(): Promise<{ completedInApp: boolean }> {
+    if (Platform.OS === "ios") {
+      await ensureConfigured();
+      await Purchases.presentCodeRedemptionSheet();
+      return { completedInApp: true };
+    }
+    await Linking.openURL("https://play.google.com/redeem");
+    return { completedInApp: false };
+  },
+
   isPurchaseCancelled(error: unknown) {
     const purchasesError = error as Partial<PurchasesError> | undefined;
     return (
@@ -132,7 +154,12 @@ async function ensureConfigured() {
 }
 
 function getApiKey() {
-  if (process.env.EXPO_PUBLIC_REVENUECAT_USE_TEST_STORE === "1") {
+  // The RevenueCat Test Store auto-succeeds purchases with no payment, so it must
+  // NEVER be reachable in a release build. Gate it behind __DEV__ (false in any
+  // production/release bundle) so a stale `.env.local` flag cannot hand every user
+  // free, fully-functional Pro. In release the flag is ignored and the real
+  // store-specific public SDK key is used.
+  if (__DEV__ && process.env.EXPO_PUBLIC_REVENUECAT_USE_TEST_STORE === "1") {
     return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
   }
   if (Platform.OS === "android") return process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY;

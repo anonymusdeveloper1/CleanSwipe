@@ -15,7 +15,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 type Props = {
   photo: PhotoAsset;
   stackPhotos: PhotoAsset[];
-  onSwipe: (action: SwipeAction) => void;
+  onSwipe: (action: SwipeAction, photoId: string) => void;
   onOpen?: () => void;
 };
 
@@ -139,7 +139,11 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
               duration: 300,
               useNativeDriver: true
             }).start(() => {
-              onSwipe(action);
+              // Pass THIS card's photo id (the card is keyed by photo.id and
+              // remounts per photo, so this closure's photo is exactly what the
+              // user swiped) so the store never re-resolves a possibly-reordered
+              // "current photo" after the animation.
+              onSwipe(action, photo.id);
               requestAnimationFrame(() => {
                 animating.current = false;
                 position.setValue({ x: 0, y: 0 });
@@ -165,7 +169,7 @@ export function SwipePhotoCard({ photo, stackPhotos, onSwipe, onOpen }: Props) {
           }).start();
         }
       }),
-    [onSwipe, position, threshold, width]
+    [onSwipe, photo.id, position, threshold, width]
   );
 
   return (

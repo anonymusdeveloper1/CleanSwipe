@@ -19,9 +19,10 @@ const ANDROID_INTERSTITIAL = "ca-app-pub-5256708773143000/2274476985";
 const IOS_BANNER = TestIds.BANNER;
 const IOS_INTERSTITIAL = TestIds.INTERSTITIAL;
 
-// TODO: create a real AdMob REWARDED unit (Android + iOS) before release; none
-// exists yet, so we point at Google's test rewarded unit on every platform for now.
-const ANDROID_REWARDED = TestIds.REWARDED;
+// Real Android rewarded unit (used in release; __DEV__ still serves test ads).
+// iOS is out of v1 scope, so it stays on Google's test rewarded unit until an
+// iOS AdMob app + unit exist.
+const ANDROID_REWARDED = "ca-app-pub-5256708773143000/4491543800";
 const IOS_REWARDED = TestIds.REWARDED;
 
 export const BANNER_AD_UNIT_ID = __DEV__

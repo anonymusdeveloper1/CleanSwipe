@@ -1,5 +1,5 @@
 # Smoke: the app boots and the core shell (brand + 4 tabs) renders.
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Smoke - app launches and shell renders
 tags:
   - smoke

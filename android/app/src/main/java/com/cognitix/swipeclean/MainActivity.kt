@@ -1,4 +1,4 @@
-package com.swipeclean.free
+package com.cognitix.swipeclean
 
 import android.os.Build
 import android.os.Bundle

@@ -1,7 +1,7 @@
 # Compress screen: the Filter bottom-sheet (Both / Photos / Videos segmented
 # control + month list) and the persisted Estimated-savings control. Does NOT
 # start a compression (that writes to the gallery / shows ads).
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Compress filter and estimate
 tags:
   - compress

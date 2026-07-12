@@ -81,19 +81,37 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+/**
+ * Release signing. Put credentials in android/keystore.properties (git-ignored):
+ *   storeFile=release.jks
+ *   storePassword=…
+ *   keyAlias=…
+ *   keyPassword=…
+ * Generate the keystore once (run from the repo root):
+ *   keytool -genkeypair -v -keystore android/release.jks -alias swipeclean-upload \
+ *           -keyalg RSA -keysize 2048 -validity 10000
+ * If keystore.properties is absent, release falls back to debug signing so local
+ * dev builds keep working without the production key.
+ */
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.swipeclean.free'
+    namespace 'com.cognitix.swipeclean'
     defaultConfig {
-        applicationId 'com.swipeclean.free'
+        applicationId 'com.cognitix.swipeclean'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.1.0"
+        versionCode 3
+        versionName "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -104,18 +122,45 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (keystorePropertiesFile.exists()) {
+                // storeFile is resolved from the android/ root, so keystore.properties
+                // can say `storeFile=release.jks` for a key at android/release.jks.
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
-            def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
-            shrinkResources enableShrinkResources.toBoolean()
-            minifyEnabled enableMinifyInReleaseBuilds
+            // Refuse to build a release artifact without the real upload keystore.
+            // The old behavior silently debug-signed the "release" — producing an AAB
+            // Play rejects and a sideloadable APK signed with the PUBLIC debug key.
+            // Fail LOUDLY, but only when a release artifact is actually being
+            // assembled (debug builds and IDE syncs are unaffected).
+            if (!keystorePropertiesFile.exists()) {
+                gradle.taskGraph.whenReady { graph ->
+                    boolean assemblingRelease = graph.allTasks.any { t ->
+                        def n = t.name.toLowerCase()
+                        n.contains("bundlerelease") || n.contains("assemblerelease") || n.contains("packagerelease")
+                    }
+                    if (assemblingRelease) {
+                        throw new GradleException("android/keystore.properties is missing — refusing to sign a release build with the debug key. Create it (storeFile/storePassword/keyAlias/keyPassword pointing at android/release.jks) before running bundleRelease/assembleRelease.")
+                    }
+                }
+            }
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            // R8: minify + resource-shrink the NATIVE/Java side of the release build.
+            // (The JS bundle is minified separately by Metro/Hermes.) Keep rules that
+            // protect JNI / reflection / native-referenced classes live in
+            // proguard-rules.pro.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()

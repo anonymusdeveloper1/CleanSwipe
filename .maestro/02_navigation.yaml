@@ -1,5 +1,5 @@
 # Navigates every bottom tab and asserts a screen-unique element on each.
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Bottom-tab navigation
 tags:
   - navigation

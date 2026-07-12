@@ -1,5 +1,6 @@
 import { AdEventType, RewardedAd, RewardedAdEventType } from "react-native-google-mobile-ads";
 import { REWARDED_AD_UNIT_ID } from "@/features/ads/ad-config";
+import { useAdsConsentStore } from "@/features/ads/ads-consent-store";
 import { markFullScreenAdShown } from "@/features/ads/full-screen-ad-gate";
 import { canUseFeatureNow } from "@/store/subscription-store";
 
@@ -37,6 +38,7 @@ function ensureCreated() {
 export const RewardedAdService = {
   /** Create + preload the first rewarded ad. Call once after SDK init. */
   preload() {
+    if (!useAdsConsentStore.getState().canRequestAds) return; // no UMP consent: never request
     if (canUseFeatureNow("noAds")) return; // Pro: don't even load
     ensureCreated().load();
   },
@@ -51,6 +53,10 @@ export const RewardedAdService = {
    */
   showForReward(): Promise<boolean> {
     return new Promise((resolve) => {
+      if (!useAdsConsentStore.getState().canRequestAds) {
+        resolve(false); // no UMP consent: never request an ad
+        return;
+      }
       const ad = ensureCreated();
       if (!loaded) {
         ad.load(); // not ready this time; warm it for next attempt

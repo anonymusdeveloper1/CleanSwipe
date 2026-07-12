@@ -1,6 +1,6 @@
 # Opens Settings, asserts the key sections render, and exercises the Dark Mode
 # toggle (tapped twice so it ends in its original state).
-appId: com.swipeclean.free
+appId: com.cognitix.swipeclean
 name: Settings screen
 tags:
   - settings

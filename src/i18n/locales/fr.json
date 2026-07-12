@@ -78,7 +78,8 @@
       "advancedCompression": "Compression avancée",
       "advancedStats": "Statistiques avancées",
       "noAds": "Sans publicités",
-      "fileConversion": "Conversion de fichiers"
+      "imageConversion": "Conversion d'images",
+      "videoConversion": "Conversion de vidéos"
     },
     "choosePlan": "Choisissez votre forfait",
     "monthlyTitle": "Mensuel",
@@ -100,6 +101,9 @@
     "restoreFailedTitle": "Echec de la restauration",
     "restoredTitle": "Restaurer les achats",
     "restoredMessage": "Aucun abonnement actif n'a ete trouve pour ce compte de boutique.",
+    "redeemCode": "Utiliser un code",
+    "redeemFailedTitle": "Impossible d'ouvrir l'échange",
+    "redeemFailedMessage": "Nous n'avons pas pu ouvrir l'écran d'échange de code. Veuillez réessayer.",
     "billingDisclaimer": "Le paiement est gere par la boutique d'apps. Les abonnements se renouvellent automatiquement sauf annulation dans votre compte de boutique."
   },
   "smartClean": {
@@ -239,7 +243,8 @@
     "supportEmailUnavailableMessage": "Configurez une application de messagerie sur ce téléphone et réessayez.",
     "privacyPolicyPendingTitle": "Politique de confidentialité bientôt disponible",
     "privacyPolicyPendingMessage": "Le lien vers la Politique de confidentialité n’a pas encore été ajouté.",
-    "madeBy": "SwipeClean par l'équipe Cognitx"
+    "madeBy": "SwipeClean par l'équipe Cognitx",
+    "openSourceLicenses": "Licences open source"
   },
   "lock": {
     "title": "Saisir le code",
@@ -267,7 +272,8 @@
     "needAppLockTitle": "Configurez d'abord le verrouillage de l'app",
     "needAppLockMessage": "Activez le verrouillage de l'app et définissez un code avant d'activer le déverrouillage biométrique.",
     "noBiometricTitle": "Aucune biométrie trouvée",
-    "noBiometricMessage": "Configurez Face ID ou Touch ID dans les réglages de votre appareil pour utiliser le déverrouillage biométrique."
+    "noBiometricMessage": "Configurez Face ID ou Touch ID dans les réglages de votre appareil pour utiliser le déverrouillage biométrique.",
+    "tooManyAttempts": "Trop de tentatives. Veuillez patienter et réessayer."
   },
   "reminders": {
     "cleanupTitle": "C'est l'heure d'un petit nettoyage",
@@ -643,5 +649,13 @@
       "m4a": "Audio AAC",
       "wav": "Non compressé"
     }
+  },
+  "licenses": {
+    "title": "Licences open source",
+    "intro": "SwipeClean est conçu avec des logiciels open source. Nous remercions les auteurs de ces projets.",
+    "componentsHeading": "Composants inclus",
+    "lgplHeading": "LAME MP3 Encoder — LGPL v2.1",
+    "lgplBody": "The LAME MP3 encoder is included as a separately-linked native library and is licensed under the GNU Lesser General Public License, version 2.1. The corresponding library source (LAME 3.100 and any local modifications) is available on request so you can study, modify, and relink it.",
+    "requestSource": "Demander le code source de la bibliothèque"
   }
 }
