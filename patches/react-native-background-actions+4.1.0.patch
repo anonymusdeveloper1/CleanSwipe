@@ -1,0 +1,20 @@
+diff --git a/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java b/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java
+index 963b788..5efde3b 100644
+--- a/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java
++++ b/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java
+@@ -59,7 +59,14 @@ final public class RNBackgroundActionsTask extends HeadlessJsTaskService {
+                 .setSmallIcon(iconInt)
+                 .setContentIntent(contentIntent)
+                 .setOngoing(true)
+-                .setPriority(NotificationCompat.PRIORITY_MIN)
++                .setPriority(NotificationCompat.PRIORITY_LOW)
++                // Android 12+ (API 31) DEFERS a foreground-service notification by 10
++                // seconds unless the notification opts out. Measured on a Galaxy S24:
++                // service up at 241 ms, notification only shown at 10,261 ms. Worse, a
++                // task that finishes inside that 10 s window tears the service down
++                // before the notification is ever displayed — so it never appears at
++                // all. FOREGROUND_SERVICE_IMMEDIATE shows it right away.
++                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                 .setColor(color);
+ 
+         final Bundle progressBarBundle = bgOptions.getProgressBar();

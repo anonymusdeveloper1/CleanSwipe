@@ -94,7 +94,10 @@ async function ensureSetup(Notifications: ExpoNotificationsModule) {
       return {
         shouldPlaySound: !isScan,
         shouldSetBadge: false,
-        shouldShowBanner: true,
+        // The ongoing scan notification is a quiet status line, not an alert: no
+        // foreground banner (on iOS a banner would re-pop on every progress
+        // update); it still lands in the shade / Notification Center via the list.
+        shouldShowBanner: !isScan,
         shouldShowList: true
       };
     }
@@ -113,10 +116,33 @@ async function ensureSetup(Notifications: ExpoNotificationsModule) {
 }
 
 export const SmartCleanScanNotifications = {
-  /** Post/update the ongoing scan notification (Android). `body` is the live
-   * status line (e.g. "Analyzing photos 1,240 of 3,355" / "Scanning Similar photos"). */
+  /**
+   * Request notification permission before a user-initiated scan. Android 13+
+   * SILENTLY suppresses the foreground-service notification when POST_NOTIFICATIONS
+   * is denied (the service still runs — you just see nothing); iOS needs
+   * authorization to present anything at all. Cross-platform. Returns whether
+   * notifications are permitted (the scan proceeds regardless).
+   */
+  async ensurePermission(): Promise<boolean> {
+    const Notifications = await getNotifications();
+    if (!Notifications) return false;
+    try {
+      await ensureSetup(Notifications);
+      const existing = await Notifications.getPermissionsAsync();
+      if (existing.granted || existing.status === "granted") return true;
+      if (existing.canAskAgain === false) return false;
+      const requested = await Notifications.requestPermissionsAsync();
+      return requested.granted || requested.status === "granted";
+    } catch {
+      return false;
+    }
+  },
+
+  /** Post/update the ongoing scan notification. `body` is the live status line
+   * (e.g. "Analyzing photos 1,240 of 3,355" / "Scanning Similar photos"). On
+   * Android this is the degraded (non-foreground-service) path; on iOS it is the
+   * ONLY scan notification, since iOS has no foreground-service concept. */
   showProgress(body: string): Promise<void> {
-    if (Platform.OS !== "android") return Promise.resolve(); // "ongoing" notifications are an Android concept
     return enqueue(async () => {
       const Notifications = await getNotifications();
       if (!Notifications) return;
@@ -134,7 +160,8 @@ export const SmartCleanScanNotifications = {
             autoDismiss: false,
             sound: false
           },
-          trigger: { channelId: SCAN_CHANNEL_ID }
+          // channelId trigger is Android-only; iOS presents immediately (null).
+          trigger: Platform.OS === "android" ? { channelId: SCAN_CHANNEL_ID } : null
         });
         // A native present is now queued behind this resolve — record when, so
         // dismiss() knows to keep retrying until it can't still be in flight.
@@ -160,7 +187,6 @@ export const SmartCleanScanNotifications = {
    * — which terminates promptly because lastScheduleAt is old/zero.
    */
   dismiss(): Promise<void> {
-    if (Platform.OS !== "android") return Promise.resolve(); // scan notification is Android-only
     return enqueue(async () => {
       const Notifications = await getNotifications();
       if (!Notifications) return;

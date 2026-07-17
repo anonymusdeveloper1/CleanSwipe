@@ -178,10 +178,9 @@ function currentScanStatus(): string {
 }
 
 function updateScanNotification(progress: number) {
-  if (Platform.OS !== "android") return;
   lastNotifyAt = Date.now();
   const description = currentScanStatus();
-  if (serviceHeld) {
+  if (Platform.OS === "android" && serviceHeld) {
     void BackgroundSmartCleanScanWorker.update({
       title: i18n.t("smartClean.title"),
       description,
@@ -189,8 +188,9 @@ function updateScanNotification(progress: number) {
       linkingURI: "swipeclean://"
     });
   } else {
-    // Degraded (compression holds the service, or non-service run): the
-    // expo-notifications sticky notification WITH its Stop button.
+    // No foreground service holding the notification: iOS (no FGS concept) or
+    // Android degraded (compression owns the singleton service). Post the
+    // cross-platform expo-notifications ongoing notification WITH its Stop button.
     void SmartCleanScanNotifications.showProgress(description);
   }
 }
@@ -261,47 +261,17 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
         controller = new AbortController();
         const signal = controller.signal;
 
-        const assets = selectIndexedMediaAssets(useMediaIndexStore.getState());
-        const accessLevel = liveAccessLevel();
-        const canUse = imperativeCanUse;
-        const currentSignature = computeSignature();
-
-        // Seed from the persisted checkpoint when resuming an unchanged library.
-        let seeded: Record<string, SmartCleanResult> = {};
-        let signature = currentSignature;
+        // Resume whose persisted checkpoint can't be expanded yet (media index not
+        // ready): bail WITHOUT touching state or starting the service; a later
+        // resume trigger retries. Kept SYNCHRONOUS so an auto-resume at launch never
+        // briefly starts (and flashes) the foreground service just to bail.
         if (resume) {
           get().hydrateFromPersisted();
-          if (get().restoredCompact) {
-            // The media index isn't ready, so the persisted checkpoint couldn't be
-            // expanded. Bail WITHOUT touching state (a later resume trigger retries)
-            // — proceeding would seed empty and overwrite the saved results.
-            return Promise.resolve();
-          }
-          if (get().runSignature === currentSignature) {
-            seeded = { ...get().resultsByKey };
-            signature = currentSignature;
-          }
+          if (get().restoredCompact) return Promise.resolve();
         }
-        const total = SMART_CLEAN_SCAN_ORDER.length;
-        // Pixel detectors depend on the concurrent photo pre-pass; the rest are
-        // cheap metadata/MD5 passes that surface first. (duplicateVideos hashes
-        // video thumbnails itself — videos are few — so it runs in the pixel phase.)
-        const PIXEL_KEYS = new Set<SmartCleanDetectorKey>(["duplicateVideos", "similarPhotos", "blurryPhotos"]);
-        const cheapDetectors = SMART_CLEAN_SCAN_ORDER.filter((detector) => !PIXEL_KEYS.has(detector.key));
-        const pixelDetectors = SMART_CLEAN_SCAN_ORDER.filter((detector) => PIXEL_KEYS.has(detector.key));
-        // Progress bands: cheap [0, 0.10] → pre-pass [0.10, 0.85] → pixel [0.85, 1].
-        const CHEAP_END = 0.1;
-        const PREPASS_END = 0.85;
 
-        // Keep the previously-computed results visible while a NEW (non-resume)
-        // scan runs, instead of blanking them. `seeded` (the resume skip-set) is
-        // empty for a fresh rescan, so blanking here used to drop the whole
-        // recommendation set the instant "Scan again" was tapped — and a manual
-        // Stop then left nothing behind (the user's reported bug). Each detector
-        // overwrites its own entry as it recomputes, so at worst a stop leaves a
-        // mix of prior + freshly-recomputed results, never an empty set.
-        const previousResults = { ...get().resultsByKey };
-
+        // Flip the UI to "scanning" immediately; the authoritative state (incl. the
+        // post-index runSignature) is set inside execute() a moment later.
         set({
           phase: "scanning",
           progress: 0,
@@ -311,58 +281,114 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
           analyzed: 0,
           analyzeTotal: 0,
           error: undefined,
-          resultsByKey: previousResults,
-          restoredCompact: null,
-          runSignature: signature
+          restoredCompact: null
         });
 
-        const acc: Record<string, SmartCleanResult> = { ...previousResults };
-
-        // Run one detector within its progress band. Seeded detectors (resume) are
-        // skipped. Keeps the per-detector checkpoint + token/abort discipline.
-        const runDetector = async (
-          detector: (typeof SMART_CLEAN_SCAN_ORDER)[number],
-          bandStart: number,
-          bandEnd: number,
-          displayIndex: number
-        ) => {
-          if (token !== runToken) return;
-          if (seeded[detector.key]) {
-            set({ progress: bandEnd });
-            return;
-          }
-          set({ activeIndex: displayIndex, activeDetectorKey: detector.key });
-          updateScanNotification(bandStart);
-          if (!canUse(detector.featureKey)) {
-            acc[detector.key] = notAvailable(detector.key);
-            set({ resultsByKey: { ...acc }, progress: bandEnd, lastCheckpointAt: Date.now() });
-            return;
-          }
-          try {
-            const result = await detector.detect({
-              assets,
-              accessLevel,
-              signal,
-              cache: featureCacheApi,
-              onProgress: (fraction) => {
-                if (token !== runToken) return;
-                const p = bandStart + (bandEnd - bandStart) * fraction;
-                set({ progress: p });
-                throttledNotify(p);
-              }
-            });
+        // Everything below runs INSIDE the Android foreground service (when free), so
+        // its notification is up from the very first moment — INCLUDING the cold-cache
+        // media-index build, which previously ran in the screen BEFORE the scan with
+        // no notification at all and looked like a 30–60 s "nothing happening" gap.
+        const execute = async () => {
+          // Cold cache: build the media index UNDER the service/notification.
+          // (A resume implies a prior completed scan, so the index already exists.)
+          if (!resume && !useMediaIndexStore.getState().lastFullScanCompletedAt) {
+            updateScanNotification(0); // "Scanning…" — visible during the index build
+            await useMediaIndexStore.getState().startFullScan();
             if (token !== runToken) return;
-            acc[detector.key] = result;
-          } catch {
-            if (signal.aborted || token !== runToken) return;
-            acc[detector.key] = notAvailable(detector.key);
           }
-          // Per-detector checkpoint (persist is debounced).
-          set({ resultsByKey: { ...acc }, progress: bandEnd, lastCheckpointAt: Date.now() });
-          await sleep(SCAN_YIELD_MS);
-        };
 
-        const scanBody = async () => {
+          const assets = selectIndexedMediaAssets(useMediaIndexStore.getState());
+          const accessLevel = liveAccessLevel();
+          const canUse = imperativeCanUse;
+          const currentSignature = computeSignature();
+
+          // Seed from the persisted checkpoint when resuming an unchanged library.
+          let seeded: Record<string, SmartCleanResult> = {};
+          let signature = currentSignature;
+          if (resume && get().runSignature === currentSignature) {
+            seeded = { ...get().resultsByKey };
+            signature = currentSignature;
+          }
+          const total = SMART_CLEAN_SCAN_ORDER.length;
+          // Pixel detectors depend on the concurrent photo pre-pass; the rest are
+          // cheap metadata/MD5 passes that surface first. (duplicateVideos hashes
+          // video thumbnails itself — videos are few — so it runs in the pixel phase.)
+          const PIXEL_KEYS = new Set<SmartCleanDetectorKey>(["duplicateVideos", "similarPhotos", "blurryPhotos"]);
+          const cheapDetectors = SMART_CLEAN_SCAN_ORDER.filter((detector) => !PIXEL_KEYS.has(detector.key));
+          const pixelDetectors = SMART_CLEAN_SCAN_ORDER.filter((detector) => PIXEL_KEYS.has(detector.key));
+          // Progress bands: cheap [0, 0.10] → pre-pass [0.10, 0.85] → pixel [0.85, 1].
+          const CHEAP_END = 0.1;
+          const PREPASS_END = 0.85;
+
+          // Keep the previously-computed results visible while a NEW (non-resume)
+          // scan runs, instead of blanking them. `seeded` (the resume skip-set) is
+          // empty for a fresh rescan, so blanking here used to drop the whole
+          // recommendation set the instant "Scan again" was tapped — and a manual
+          // Stop then left nothing behind (the user's reported bug). Each detector
+          // overwrites its own entry as it recomputes, so at worst a stop leaves a
+          // mix of prior + freshly-recomputed results, never an empty set.
+          const previousResults = { ...get().resultsByKey };
+
+          set({
+            phase: "scanning",
+            progress: 0,
+            activeIndex: 1,
+            activeDetectorKey: undefined,
+            stage: "metadata",
+            analyzed: 0,
+            analyzeTotal: 0,
+            error: undefined,
+            resultsByKey: previousResults,
+            restoredCompact: null,
+            runSignature: signature
+          });
+
+          const acc: Record<string, SmartCleanResult> = { ...previousResults };
+
+          // Run one detector within its progress band. Seeded detectors (resume) are
+          // skipped. Keeps the per-detector checkpoint + token/abort discipline.
+          const runDetector = async (
+            detector: (typeof SMART_CLEAN_SCAN_ORDER)[number],
+            bandStart: number,
+            bandEnd: number,
+            displayIndex: number
+          ) => {
+            if (token !== runToken) return;
+            if (seeded[detector.key]) {
+              set({ progress: bandEnd });
+              return;
+            }
+            set({ activeIndex: displayIndex, activeDetectorKey: detector.key });
+            updateScanNotification(bandStart);
+            if (!canUse(detector.featureKey)) {
+              acc[detector.key] = notAvailable(detector.key);
+              set({ resultsByKey: { ...acc }, progress: bandEnd, lastCheckpointAt: Date.now() });
+              return;
+            }
+            try {
+              const result = await detector.detect({
+                assets,
+                accessLevel,
+                signal,
+                cache: featureCacheApi,
+                onProgress: (fraction) => {
+                  if (token !== runToken) return;
+                  const p = bandStart + (bandEnd - bandStart) * fraction;
+                  set({ progress: p });
+                  throttledNotify(p);
+                }
+              });
+              if (token !== runToken) return;
+              acc[detector.key] = result;
+            } catch {
+              if (signal.aborted || token !== runToken) return;
+              acc[detector.key] = notAvailable(detector.key);
+            }
+            // Per-detector checkpoint (persist is debounced).
+            set({ resultsByKey: { ...acc }, progress: bandEnd, lastCheckpointAt: Date.now() });
+            await sleep(SCAN_YIELD_MS);
+          };
+
           // Phase A — cheap metadata/MD5 detectors surface in seconds.
           set({ stage: "metadata" });
           for (let i = 0; i < cheapDetectors.length; i++) {
@@ -414,7 +440,7 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
           if (useService) {
             serviceHeld = true;
             try {
-              await BackgroundSmartCleanScanWorker.run(i18n.t("smartClean.title"), scanBody);
+              await BackgroundSmartCleanScanWorker.run(i18n.t("smartClean.title"), execute);
             } finally {
               // Stop ONLY if the scan still owns the service. If compression took it
               // mid-scan (releaseForegroundService cleared serviceHeld), an
@@ -426,7 +452,7 @@ export const useSmartCleanStore = create<SmartCleanStore>()(
               }
             }
           } else {
-            await scanBody();
+            await execute();
           }
         })()
           .catch((error) => {

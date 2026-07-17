@@ -7,6 +7,7 @@ import { AdBanner } from "@/components/ad-banner";
 import { AppHeader } from "@/components/app-header";
 import { EmptyState } from "@/components/empty-state";
 import { SmartCleanCard } from "@/features/smart-clean/components/smart-clean-card";
+import { SmartCleanScanNotifications } from "@/features/smart-clean/smart-clean-notifications";
 import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-review-store";
 import { CATEGORY_ICON, SMART_CLEAN_DETECTORS, scanStatusText } from "@/features/smart-clean/smart-clean.service";
 import { useSmartCleanStore } from "@/features/smart-clean/smart-clean-store";
@@ -109,11 +110,15 @@ export function SmartCleanScreen({ showHeader = true }: { showHeader?: boolean }
   }, [resultsByKey]);
 
   const handleScan = async () => {
+    // Ask for notification permission BEFORE the scan starts. Android 13+ silently
+    // SUPPRESSES the foreground-service notification without POST_NOTIFICATIONS (the
+    // service still runs — you just see nothing); iOS needs authorization to present
+    // anything. Cross-platform; the scan proceeds either way.
+    await SmartCleanScanNotifications.ensurePermission();
     // Runs under limited ("selected photos") access too — the scan operates on
-    // whatever the media index holds, which is exactly the accessible set.
-    if (!useMediaIndexStore.getState().lastFullScanCompletedAt) {
-      await useMediaIndexStore.getState().startFullScan();
-    }
+    // whatever the media index holds, which is exactly the accessible set. The
+    // cold-cache media-index build now runs INSIDE runScan's foreground service (so
+    // its notification covers indexing) instead of silently before it.
     // Continue a cut-off scan from its checkpoint; otherwise start fresh.
     void runScan({ resume: phase === "interrupted" });
   };

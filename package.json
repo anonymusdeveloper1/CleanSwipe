@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "i18n:check": "node scripts/check-i18n.mjs",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/config-plugins": "^56.0.8",
@@ -63,6 +64,7 @@
     "babel-preset-expo": "~54.0.10",
     "eslint": "^9.39.4",
     "eslint-config-expo": "^56.0.4",
+    "patch-package": "^8.0.1",
     "typescript": "~5.9.2",
     "vitest": "^4.1.8"
   }
