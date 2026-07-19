@@ -104,7 +104,8 @@
     "redeemCode": "Resgatar código",
     "redeemFailedTitle": "Não foi possível abrir o resgate",
     "redeemFailedMessage": "Não foi possível abrir a tela de resgate de código. Tente novamente.",
-    "billingDisclaimer": "O pagamento e processado pela loja de apps. As assinaturas renovam automaticamente, a menos que sejam canceladas na sua conta da loja."
+    "billingDisclaimer": "O pagamento e processado pela loja de apps. As assinaturas renovam automaticamente, a menos que sejam canceladas na sua conta da loja.",
+    "termsOfUse": "Termos de uso"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "Ative o bloqueio do app e defina uma senha antes de ativar o desbloqueio biométrico.",
     "noBiometricTitle": "Nenhuma biometria encontrada",
     "noBiometricMessage": "Configure o Face ID ou o Touch ID nos ajustes do seu dispositivo para usar o desbloqueio biométrico.",
-    "tooManyAttempts": "Muitas tentativas. Aguarde e tente novamente."
+    "tooManyAttempts": "Muitas tentativas. Aguarde e tente novamente.",
+    "useFaceUnlock": "Usar desbloqueio facial"
   },
   "reminders": {
     "cleanupTitle": "Hora de uma limpeza rápida",

@@ -1,9 +1,12 @@
 import { router } from "expo-router";
 import { Sparkles } from "lucide-react-native";
-import { Modal, Pressable, Text, View } from "react-native";
+import { Linking, Modal, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePaywallStore } from "@/store/paywall-store";
+import { PRIVACY_POLICY_URL } from "@/screens/settings-screen";
+
+const TERMS_OF_USE_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
 
 /**
  * Global paywall / upgrade prompt. Mounted once in the root layout; opened from
@@ -30,6 +33,10 @@ export function ProUpgradeSheet() {
   const handleUpgrade = () => {
     close();
     router.navigate("/premium");
+  };
+
+  const openLegalUrl = (url: string) => {
+    void Linking.openURL(url).catch(() => undefined);
   };
 
   return (
@@ -67,6 +74,24 @@ export function ProUpgradeSheet() {
             >
               <Text style={{ color: theme.muted, fontSize: 16, fontWeight: "800" }}>{t("paywall.maybeLater")}</Text>
             </Pressable>
+          </View>
+          <View style={{ gap: 8, alignItems: "center" }}>
+            <Text selectable style={{ color: theme.muted, fontSize: 11, lineHeight: 16, textAlign: "center" }}>
+              {t("subscription.billingDisclaimer")}
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+              <Pressable accessibilityRole="link" accessibilityLabel={t("subscription.termsOfUse")} onPress={() => openLegalUrl(TERMS_OF_USE_URL)} hitSlop={8}>
+                <Text style={{ color: theme.muted, fontSize: 12, fontWeight: "700", textDecorationLine: "underline" }}>
+                  {t("subscription.termsOfUse")}
+                </Text>
+              </Pressable>
+              <Text style={{ color: theme.muted, fontSize: 12, marginHorizontal: 8 }}>·</Text>
+              <Pressable accessibilityRole="link" accessibilityLabel={t("settings.privacyPolicy")} onPress={() => openLegalUrl(PRIVACY_POLICY_URL)} hitSlop={8}>
+                <Text style={{ color: theme.muted, fontSize: 12, fontWeight: "700", textDecorationLine: "underline" }}>
+                  {t("settings.privacyPolicy")}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </Pressable>
       </Pressable>

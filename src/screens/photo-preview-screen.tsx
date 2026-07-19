@@ -3,7 +3,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Check, Pause, Play, RotateCcw, Share2, Trash2 } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, Share, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import * as Sharing from "expo-sharing";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -56,7 +57,14 @@ export function PhotoPreviewScreen() {
   const title = media.filename ?? (isVideo ? t("common.video") : t("common.photo"));
 
   const handleShare = () => {
-    void Share.share({ message: media.uri, url: media.uri }).catch(() => undefined);
+    void (async () => {
+      try {
+        if (!(await Sharing.isAvailableAsync())) return;
+        await Sharing.shareAsync(media.uri, { dialogTitle: title });
+      } catch {
+        // User dismissed the sheet or it failed — nothing to recover.
+      }
+    })();
   };
 
   const handleKeep = () => {

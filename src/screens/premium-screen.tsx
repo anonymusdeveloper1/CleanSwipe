@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BarChart3, Check, Crown, FileImage, FileVideo, Gift, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,9 @@ import { StudioScreen } from "@/screens/studio-screen";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useSubscriptionStore } from "@/store/subscription-store";
+import { PRIVACY_POLICY_URL } from "@/screens/settings-screen";
+
+const TERMS_OF_USE_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
 
 type PaidPlan = "monthly" | "yearly";
 
@@ -259,6 +262,16 @@ function UpgradeView() {
       <Text selectable style={{ color: theme.faint, fontSize: 12, lineHeight: 17, textAlign: "center" }}>
         {t("subscription.billingDisclaimer")}
       </Text>
+
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+        <Pressable accessibilityRole="link" accessibilityLabel={t("subscription.termsOfUse")} onPress={() => { void Linking.openURL(TERMS_OF_USE_URL).catch(() => undefined); }} hitSlop={8}>
+          <Text style={{ color: theme.accent, fontSize: 12, fontWeight: "800", textDecorationLine: "underline" }}>{t("subscription.termsOfUse")}</Text>
+        </Pressable>
+        <Text style={{ color: theme.faint, fontSize: 12, marginHorizontal: 8 }}>·</Text>
+        <Pressable accessibilityRole="link" accessibilityLabel={t("settings.privacyPolicy")} onPress={() => { void Linking.openURL(PRIVACY_POLICY_URL).catch(() => undefined); }} hitSlop={8}>
+          <Text style={{ color: theme.accent, fontSize: 12, fontWeight: "800", textDecorationLine: "underline" }}>{t("settings.privacyPolicy")}</Text>
+        </Pressable>
+      </View>
 
       <AppDialog
         visible={dialog !== null}

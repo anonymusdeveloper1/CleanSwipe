@@ -104,7 +104,8 @@
     "redeemCode": "Utiliser un code",
     "redeemFailedTitle": "Impossible d'ouvrir l'échange",
     "redeemFailedMessage": "Nous n'avons pas pu ouvrir l'écran d'échange de code. Veuillez réessayer.",
-    "billingDisclaimer": "Le paiement est gere par la boutique d'apps. Les abonnements se renouvellent automatiquement sauf annulation dans votre compte de boutique."
+    "billingDisclaimer": "Le paiement est gere par la boutique d'apps. Les abonnements se renouvellent automatiquement sauf annulation dans votre compte de boutique.",
+    "termsOfUse": "Conditions d'utilisation"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "Activez le verrouillage de l'app et définissez un code avant d'activer le déverrouillage biométrique.",
     "noBiometricTitle": "Aucune biométrie trouvée",
     "noBiometricMessage": "Configurez Face ID ou Touch ID dans les réglages de votre appareil pour utiliser le déverrouillage biométrique.",
-    "tooManyAttempts": "Trop de tentatives. Veuillez patienter et réessayer."
+    "tooManyAttempts": "Trop de tentatives. Veuillez patienter et réessayer.",
+    "useFaceUnlock": "Utiliser le déverrouillage facial"
   },
   "reminders": {
     "cleanupTitle": "C'est l'heure d'un petit nettoyage",

@@ -2,7 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowDown, ArrowLeft, Pause, Play } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Platform, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { Extrapolation, interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
@@ -33,10 +33,12 @@ export function CompressionMediaViewerScreen() {
   const comparisonOriginal = asset?.uri ?? (custom === "1" && customTarget != null && customTarget.id === id ? customTarget.uri : undefined);
   const isVideo = (compressed?.mediaType ?? asset?.mediaType ?? customTarget?.mediaType ?? media) === "video";
   const isComparisonMode = compare === "1";
-  // Android single-item result mode: the viewer also shows the post-compression
-  // result sheet (data + original-file actions), the media drag-to-dismiss is
-  // disabled (the sheet owns the bottom gesture), and Close returns to the origin.
-  const isResultMode = !isComparisonMode && Platform.OS === "android" && (result === "1" || Boolean(compressed));
+  // Single-item result mode (both platforms): the viewer also shows the post-
+  // compression result sheet (data + original-file actions), the media drag-to-
+  // dismiss is disabled (the sheet owns the bottom gesture), and Close returns to
+  // the origin. Gated on the explicit result=1 param — a plain preview tap (id
+  // only, no result) stays in normal drag-to-dismiss view mode on both platforms.
+  const isResultMode = !isComparisonMode && result === "1";
   const translateY = useSharedValue(0);
   const [playing, setPlaying] = useState(true);
 

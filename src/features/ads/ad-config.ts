@@ -9,21 +9,21 @@ import { TestIds } from "react-native-google-mobile-ads";
  * AdMob account banned, so the real IDs are only used in production builds.
  *
  * The App ID lives in app.json (react-native-google-mobile-ads plugin), not here.
- * iOS has no native project yet; iOS unit IDs are placeholders for later.
+ * Android + iOS unit IDs are real and release-gated; __DEV__ always serves TestIds.
+ * PENDING before an iOS release: the real iOS AdMob App ID — app.json `iosAppId`
+ * (and Info.plist GADApplicationIdentifier) is still Google's sample ~1458002511.
  */
 
 const ANDROID_BANNER = "ca-app-pub-5256708773143000/3772562348";
 const ANDROID_INTERSTITIAL = "ca-app-pub-5256708773143000/2274476985";
 
-// TODO: replace with real iOS ad unit IDs once an iOS app/build exists.
-const IOS_BANNER = TestIds.BANNER;
-const IOS_INTERSTITIAL = TestIds.INTERSTITIAL;
+// Real iOS ad units (wired 2026-07-17; __DEV__ still serves TestIds).
+const IOS_BANNER = "ca-app-pub-5256708773143000/3231384714";
+const IOS_INTERSTITIAL = "ca-app-pub-5256708773143000/1238957839";
 
-// Real Android rewarded unit (used in release; __DEV__ still serves test ads).
-// iOS is out of v1 scope, so it stays on Google's test rewarded unit until an
-// iOS AdMob app + unit exist.
+// Real rewarded units (used in release; __DEV__ still serves test ads).
 const ANDROID_REWARDED = "ca-app-pub-5256708773143000/4491543800";
-const IOS_REWARDED = TestIds.REWARDED;
+const IOS_REWARDED = "ca-app-pub-5256708773143000/7964836642";
 
 export const BANNER_AD_UNIT_ID = __DEV__
   ? TestIds.BANNER

@@ -104,7 +104,8 @@
     "redeemCode": "Tukarkan kode",
     "redeemFailedTitle": "Tidak dapat membuka penukaran",
     "redeemFailedMessage": "Kami tidak dapat membuka layar penukaran kode. Silakan coba lagi.",
-    "billingDisclaimer": "Pembayaran ditangani oleh toko aplikasi. Langganan diperpanjang otomatis kecuali dibatalkan di akun toko Anda."
+    "billingDisclaimer": "Pembayaran ditangani oleh toko aplikasi. Langganan diperpanjang otomatis kecuali dibatalkan di akun toko Anda.",
+    "termsOfUse": "Ketentuan Penggunaan"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "Aktifkan Kunci Aplikasi dan atur sandi sebelum mengaktifkan buka kunci biometrik.",
     "noBiometricTitle": "Tidak ada biometrik ditemukan",
     "noBiometricMessage": "Atur Face ID atau Touch ID di pengaturan perangkat Anda untuk menggunakan buka kunci biometrik.",
-    "tooManyAttempts": "Terlalu banyak percobaan. Harap tunggu dan coba lagi."
+    "tooManyAttempts": "Terlalu banyak percobaan. Harap tunggu dan coba lagi.",
+    "useFaceUnlock": "Gunakan buka kunci wajah"
   },
   "reminders": {
     "cleanupTitle": "Waktunya bersih-bersih singkat",

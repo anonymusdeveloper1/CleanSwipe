@@ -104,7 +104,8 @@
     "redeemCode": "コードを利用",
     "redeemFailedTitle": "コード利用を開けませんでした",
     "redeemFailedMessage": "コード利用画面を開けませんでした。もう一度お試しください。",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
+    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
+    "termsOfUse": "利用規約"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "生体認証によるロック解除を有効にする前に、アプリロックをオンにしてパスコードを設定してください。",
     "noBiometricTitle": "生体認証が見つかりません",
     "noBiometricMessage": "生体認証によるロック解除を使用するには、デバイスの設定でFace IDまたはTouch IDを設定してください。",
-    "tooManyAttempts": "試行回数が多すぎます。しばらく待ってからもう一度お試しください。"
+    "tooManyAttempts": "試行回数が多すぎます。しばらく待ってからもう一度お試しください。",
+    "useFaceUnlock": "顔認証で解除"
   },
   "reminders": {
     "cleanupTitle": "さっとお片付けの時間です",

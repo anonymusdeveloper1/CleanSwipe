@@ -28,7 +28,7 @@ type BioCapability = { moduleAvailable: boolean; available: boolean; kind: Biome
 const SUPPORT_EMAIL = "info.cognitix@gmail.com";
 // The published policy URL will be supplied in a follow-up. Keeping it here
 // makes enabling the row a one-line update.
-const PRIVACY_POLICY_URL = "https://effervescent-douhua-6f5c1d.netlify.app";
+export const PRIVACY_POLICY_URL = "https://effervescent-douhua-6f5c1d.netlify.app";
 
 export function SettingsScreen() {
   const theme = useAppTheme();

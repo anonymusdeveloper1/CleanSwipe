@@ -104,7 +104,8 @@
     "redeemCode": "Code einlösen",
     "redeemFailedTitle": "Einlösung nicht möglich",
     "redeemFailedMessage": "Der Code-Einlösebildschirm konnte nicht geöffnet werden. Bitte versuche es erneut.",
-    "billingDisclaimer": "Die Zahlung wird vom App Store abgewickelt. Abonnements verlangern sich automatisch, sofern sie nicht im Store-Konto gekundigt werden."
+    "billingDisclaimer": "Die Zahlung wird vom App Store abgewickelt. Abonnements verlangern sich automatisch, sofern sie nicht im Store-Konto gekundigt werden.",
+    "termsOfUse": "Nutzungsbedingungen"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "Aktiviere die App-Sperre und lege einen Code fest, bevor du die biometrische Entsperrung aktivierst.",
     "noBiometricTitle": "Keine Biometrie gefunden",
     "noBiometricMessage": "Richte Face ID oder Touch ID in den Geräteeinstellungen ein, um die biometrische Entsperrung zu nutzen.",
-    "tooManyAttempts": "Zu viele Versuche. Bitte warte und versuche es erneut."
+    "tooManyAttempts": "Zu viele Versuche. Bitte warte und versuche es erneut.",
+    "useFaceUnlock": "Gesichtsentsperrung verwenden"
   },
   "reminders": {
     "cleanupTitle": "Zeit für ein schnelles Aufräumen",

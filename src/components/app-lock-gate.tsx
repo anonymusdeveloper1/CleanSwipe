@@ -239,7 +239,7 @@ export function AppLockGate() {
 
   const BiometricIcon: LucideIcon = biometricKind === "face" ? ScanFace : Fingerprint;
   const biometricActionLabel = useMemo(() => {
-    if (biometricKind === "face") return t("lock.useFaceId");
+    if (biometricKind === "face") return Platform.OS === "ios" ? t("lock.useFaceId") : t("lock.useFaceUnlock");
     if (biometricKind === "fingerprint") return Platform.OS === "ios" ? t("lock.useTouchId") : t("lock.useFingerprint");
     return t("lock.useBiometrics");
   }, [biometricKind, t]);

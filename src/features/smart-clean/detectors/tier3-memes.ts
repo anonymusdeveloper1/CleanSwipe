@@ -2,7 +2,8 @@ import * as MediaLibrary from "expo-media-library";
 import { IndexedMediaAsset } from "@/store/media-index-store";
 import { SmartCleanDetector, SmartCleanGroup } from "@/features/smart-clean/smart-clean.types";
 import { finalizeResult, forEachYielding, sizeOf, throwIfAborted, toItem } from "@/features/smart-clean/detectors/shared";
-import { MEME_CLASSIFY_THRESHOLD, MEME_MAX_BYTES, MEME_MAX_LONG_EDGE } from "@/features/smart-clean/detectors/thresholds";
+import { MEME_CLASSIFY_THRESHOLD } from "@/features/smart-clean/detectors/thresholds";
+import { MEME_ALBUM_RE, memeNeedsExifCheck, memeScore } from "@/features/smart-clean/detectors/meme-classifier";
 
 /**
  * Tier 3 — memes. Real meme recognition needs on-device ML (image labeling /
@@ -25,22 +26,15 @@ export interface MemeClassifier {
   classify(asset: IndexedMediaAsset, ctx: MemeClassifierContext): Promise<number>;
 }
 
-const MEME_FILENAME_RE = /(meme|whatsapp|telegram|download|fb_img|received|reddit|9gag|screenshot)/i;
-const WHATSAPP_NAME_RE = /img-\d{8}-wa\d+/i;
-const MEME_ALBUM_RE = /(download|whatsapp|telegram|saved|memes)/i;
-
-/** Default heuristic classifier. Swap for an ML implementation later. */
+/** Default heuristic classifier. Swap for an ML implementation later. Scoring
+ *  logic lives in the pure, unit-tested `meme-classifier` module. */
 export const HeuristicMemeClassifier: MemeClassifier = {
   async classify(asset, ctx) {
-    let score = 0;
-    if (ctx.inMemeAlbum) score += 2;
-    const name = asset.filename ?? "";
-    if (MEME_FILENAME_RE.test(name) || WHATSAPP_NAME_RE.test(name)) score += 1;
+    const filename = asset.filename ?? "";
     const longEdge = Math.max(asset.width ?? 0, asset.height ?? 0);
-    if (sizeOf(asset) < MEME_MAX_BYTES && longEdge > 0 && longEdge <= MEME_MAX_LONG_EDGE) score += 1;
-    // EXIF only when already borderline and not already album-confirmed.
-    if (score >= 1 && !ctx.inMemeAlbum && (await ctx.lacksCameraExif())) score += 1;
-    return Math.min(score / 4, 1);
+    // Only pay for the (expensive) camera-EXIF lookup when it can change the outcome.
+    const lacksCameraExif = memeNeedsExifCheck(filename, ctx.inMemeAlbum) ? await ctx.lacksCameraExif() : false;
+    return memeScore({ filename, longEdge, sizeBytes: sizeOf(asset), inMemeAlbum: ctx.inMemeAlbum, lacksCameraExif });
   }
 };
 

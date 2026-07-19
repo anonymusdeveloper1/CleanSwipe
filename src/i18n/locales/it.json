@@ -104,7 +104,8 @@
     "redeemCode": "Riscatta codice",
     "redeemFailedTitle": "Impossibile aprire il riscatto",
     "redeemFailedMessage": "Non è stato possibile aprire la schermata di riscatto del codice. Riprova.",
-    "billingDisclaimer": "Il pagamento e gestito dallo store. Gli abbonamenti si rinnovano automaticamente salvo annullamento nell account dello store."
+    "billingDisclaimer": "Il pagamento e gestito dallo store. Gli abbonamenti si rinnovano automaticamente salvo annullamento nell account dello store.",
+    "termsOfUse": "Termini di utilizzo"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "Attiva il Blocco app e imposta un codice prima di abilitare lo sblocco biometrico.",
     "noBiometricTitle": "Nessun dato biometrico trovato",
     "noBiometricMessage": "Configura Face ID o Touch ID nelle impostazioni del dispositivo per usare lo sblocco biometrico.",
-    "tooManyAttempts": "Troppi tentativi. Attendi e riprova."
+    "tooManyAttempts": "Troppi tentativi. Attendi e riprova.",
+    "useFaceUnlock": "Usa sblocco col viso"
   },
   "reminders": {
     "cleanupTitle": "È ora di una pulizia veloce",

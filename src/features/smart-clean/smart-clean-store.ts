@@ -197,7 +197,9 @@ function updateScanNotification(progress: number) {
 
 /** Throttled intra-detector update so a long detector's bar doesn't look frozen. */
 function throttledNotify(progress: number) {
-  if (Platform.OS !== "android" || !serviceHeld) return; // expo body updates per-detector only
+  // Throttle intra-detector updates on ALL platforms. updateScanNotification()
+  // routes to the Android RNBA foreground service only when serviceHeld; on iOS
+  // (and degraded Android) it updates the quiet expo scan notification in place.
   if (Date.now() - lastNotifyAt < NOTIFY_THROTTLE_MS) return;
   updateScanNotification(progress);
 }

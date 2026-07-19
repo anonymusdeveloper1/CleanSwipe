@@ -4,11 +4,12 @@ import { ConvertEngineInput, ConvertEngineOutput, ConvertOptions } from "@/featu
 
 /**
  * Animated GIF engine (`SwipeCleanGif`): video → animated GIF.
- *   - Android: sample frames (MediaMetadataRetriever) → palettize → GIF encode.
- *   - iOS: ImageIO CGImageDestination + UTType.gif (ships later).
- * Capability-probed — the GIF chip on a video stays hidden until it ships. (A GIF
- * SOURCE converts to a still image via the image engine; animated GIF→MP4 is not
- * offered yet.)
+ *   - iOS: native `SwipeCleanGif.videoToGif` (ImageIO CGImageDestination + UTType.gif).
+ *   - Android: not implemented — the native module is absent, so `isGifAvailable()`
+ *     is false and the GIF chip stays hidden.
+ * Capability-probed — the GIF chip on a video stays hidden until the module ships on
+ * a platform. (A GIF SOURCE converts to a still image via the image engine; animated
+ * GIF→MP4 is not offered yet.)
  */
 type GifModule = {
   videoToGif(inputUri: string, outputPath: string): Promise<string>;

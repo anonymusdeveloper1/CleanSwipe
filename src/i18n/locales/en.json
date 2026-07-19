@@ -104,7 +104,8 @@
     "redeemCode": "Redeem Code",
     "redeemFailedTitle": "Couldn't open redemption",
     "redeemFailedMessage": "We couldn't open the code redemption screen. Please try again.",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
+    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
+    "termsOfUse": "Terms of Use"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -254,6 +255,7 @@
     "useFaceId": "Use Face ID",
     "useTouchId": "Use Touch ID",
     "useFingerprint": "Use fingerprint",
+    "useFaceUnlock": "Use face unlock",
     "useBiometrics": "Use biometrics",
     "usePasscode": "Use Passcode",
     "biometricTitle": "Welcome back",

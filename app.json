@@ -4,6 +4,7 @@
     "slug": "swipeclean-free",
     "scheme": "swipeclean",
     "version": "1.0.0",
+    "icon": "./assets/icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -48,7 +49,7 @@
       [
         "expo-video",
         {
-          "supportsPictureInPicture": true
+          "supportsPictureInPicture": false
         }
       ],
       "expo-localization",
@@ -63,14 +64,15 @@
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-5256708773143000~5412947073",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+          "iosAppId": "ca-app-pub-5256708773143000~9054968752"
         }
       ],
       [
         "expo-image-picker",
         {
           "photosPermission": "SwipeClean needs media access so you can pick a photo or video to compress.",
-          "cameraPermission": false
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ]
     ],

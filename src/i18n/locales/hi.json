@@ -104,7 +104,8 @@
     "redeemCode": "कोड रिडीम करें",
     "redeemFailedTitle": "रिडेम्पशन नहीं खुल सका",
     "redeemFailedMessage": "हम कोड रिडेम्पशन स्क्रीन नहीं खोल सके। कृपया पुनः प्रयास करें।",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
+    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
+    "termsOfUse": "उपयोग की शर्तें"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "बायोमेट्रिक अनलॉक सक्षम करने से पहले ऐप लॉक चालू करें और एक पासकोड सेट करें।",
     "noBiometricTitle": "कोई बायोमेट्रिक्स नहीं मिला",
     "noBiometricMessage": "बायोमेट्रिक अनलॉक का उपयोग करने के लिए अपने डिवाइस की सेटिंग्स में Face ID या Touch ID सेट करें।",
-    "tooManyAttempts": "बहुत अधिक प्रयास। कृपया प्रतीक्षा करें और पुनः प्रयास करें।"
+    "tooManyAttempts": "बहुत अधिक प्रयास। कृपया प्रतीक्षा करें और पुनः प्रयास करें।",
+    "useFaceUnlock": "फ़ेस अनलॉक इस्तेमाल करें"
   },
   "reminders": {
     "cleanupTitle": "एक त्वरित सफ़ाई का समय",

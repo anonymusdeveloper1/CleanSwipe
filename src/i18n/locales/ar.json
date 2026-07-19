@@ -104,7 +104,8 @@
     "redeemCode": "استخدام رمز",
     "redeemFailedTitle": "تعذّر فتح الاستخدام",
     "redeemFailedMessage": "تعذّر علينا فتح شاشة استخدام الرمز. يرجى المحاولة مرة أخرى.",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account."
+    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
+    "termsOfUse": "شروط الاستخدام"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "فعّل قفل التطبيق وعيّن رمز مرور قبل تفعيل الفتح البيومتري.",
     "noBiometricTitle": "لم يتم العثور على بيانات بيومترية",
     "noBiometricMessage": "أعدّ Face ID أو Touch ID في إعدادات جهازك لاستخدام الفتح البيومتري.",
-    "tooManyAttempts": "محاولات كثيرة جدًا. يرجى الانتظار والمحاولة مرة أخرى."
+    "tooManyAttempts": "محاولات كثيرة جدًا. يرجى الانتظار والمحاولة مرة أخرى.",
+    "useFaceUnlock": "استخدام فتح القفل بالوجه"
   },
   "reminders": {
     "cleanupTitle": "حان وقت تنظيف سريع",

@@ -93,16 +93,26 @@ export function CompressionDetailScreen() {
   useEffect(() => {
     const prev = prevStatusRef.current;
     prevStatusRef.current = job?.status;
-    if (Platform.OS !== "android") return;
     if (!job || job.status !== "completed" || prev === "completed") return;
     if (!focusedRef.current) return;
     const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : "";
-    // REPLACE (not push) so this detail screen is removed from the back stack.
-    // Otherwise, after the user deletes the original (its asset leaves the media
-    // index), pressing Android back from the viewer would reveal this now-stale
-    // detail screen showing "Media not found". With replace, Close and system
-    // back both return to the origin (e.g. the Compress grid).
-    router.replace(`/compression-media-viewer?id=${encodeURIComponent(job.mediaId)}&result=1${originParam}` as never);
+    const target = `/compression-media-viewer?id=${encodeURIComponent(job.mediaId)}&result=1${originParam}`;
+    if (Platform.OS === "android") {
+      // Android: REPLACE so this detail screen leaves the back stack — after the
+      // user deletes the original (its asset leaves the media index), Android back
+      // from the viewer would otherwise reveal this stale detail screen showing
+      // "Media not found". With replace, Close and system back return to origin.
+      router.replace(target as never);
+    } else {
+      // iOS: PUSH the viewer (transparentModal) over the detail card. Do NOT
+      // replace across the card->transparentModal boundary on iOS — that can leave
+      // the modal composited over a detached card and make the viewer's
+      // dismissTo(origin) unwind ambiguously. Push keeps the detail card in the
+      // stack; the viewer's isResultMode close() calls dismissTo(origin), popping
+      // straight back to origin. The detail focus-effect above already redirects
+      // the compressed-and-deleted case to origin as a safety net.
+      router.push(target as never);
+    }
   }, [job, origin]);
 
   const startCompression = () => {

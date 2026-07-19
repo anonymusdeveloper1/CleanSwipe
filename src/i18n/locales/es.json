@@ -104,7 +104,8 @@
     "redeemCode": "Canjear código",
     "redeemFailedTitle": "No se pudo abrir el canje",
     "redeemFailedMessage": "No pudimos abrir la pantalla de canje de códigos. Inténtalo de nuevo.",
-    "billingDisclaimer": "El pago lo gestiona la tienda de apps. Las suscripciones se renuevan automaticamente salvo que las canceles en tu cuenta de la tienda."
+    "billingDisclaimer": "El pago lo gestiona la tienda de apps. Las suscripciones se renuevan automaticamente salvo que las canceles en tu cuenta de la tienda.",
+    "termsOfUse": "Términos de uso"
   },
   "smartClean": {
     "title": "Smart Clean",
@@ -273,7 +274,8 @@
     "needAppLockMessage": "Activa el bloqueo de la app y establece un código antes de habilitar el desbloqueo biométrico.",
     "noBiometricTitle": "No se encontró biometría",
     "noBiometricMessage": "Configura Face ID o Touch ID en los ajustes de tu dispositivo para usar el desbloqueo biométrico.",
-    "tooManyAttempts": "Demasiados intentos. Espera e inténtalo de nuevo."
+    "tooManyAttempts": "Demasiados intentos. Espera e inténtalo de nuevo.",
+    "useFaceUnlock": "Usar desbloqueo facial"
   },
   "reminders": {
     "cleanupTitle": "Hora de una limpieza rápida",
