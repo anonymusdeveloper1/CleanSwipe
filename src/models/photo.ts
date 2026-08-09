@@ -14,8 +14,6 @@ export type PhotoAsset = {
 
 export type CompressionQuality = "low" | "medium" | "high";
 
-export type AfterCompressionOriginalPolicy = "ask_every_time" | "keep_original" | "delete_original_after_success";
-
 export type CompressedMediaItem = {
   id: string;
   sourceId: string;
@@ -93,7 +91,6 @@ export type AppSettings = {
   cleanupRemindersEnabled: boolean;
   compressionRemindersEnabled: boolean;
   proNotificationsEnabled: boolean;
-  afterCompressionOriginalPolicy: AfterCompressionOriginalPolicy;
   // Global default compression quality; the per-item picker on the detail screen
   // pre-selects this but can override it for a single compression.
   defaultCompressionQuality: CompressionQuality;

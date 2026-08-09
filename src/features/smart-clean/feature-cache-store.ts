@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { FeatureEntry, FeaturePatch, SmartCleanFeatureCacheApi } from "@/features/smart-clean/smart-clean.types";
-import { createDebouncedStorage } from "@/utils/debounced-storage";
+import { createDebouncedObjectStorage } from "@/utils/debounced-storage";
 
 /**
  * Persisted, capped per-asset computed-feature cache (md5 / perceptual hashes /
@@ -20,6 +20,12 @@ import { createDebouncedStorage } from "@/utils/debounced-storage";
  * subscribe to the primitive `order.length`.
  */
 const FEATURE_CACHE_CAP = 8000;
+
+/** Exactly what `partialize` writes — the shape the debounced storage holds. */
+type PersistedFeatureCache = {
+  entries: Record<string, FeatureEntry>;
+  order: string[];
+};
 
 type FeatureCacheStore = {
   entries: Record<string, FeatureEntry>;
@@ -92,24 +98,29 @@ export const useSmartCleanFeatureCache = create<FeatureCacheStore>()(
     }),
     {
       name: "swipeclean-smart-clean-feature-cache",
-      // Debounced: the cache upserts on EVERY asset during a scan (thousands of
-      // writes on a large library). Periodic durability is fine — a hard kill
-      // loses <1s of hashes, which recompute cheaply on resume.
-      storage: createJSONStorage(() => createDebouncedStorage(800)),
+      // Debounced OBJECT storage: the cache upserts on EVERY asset during a scan
+      // (thousands of writes on a large library). A string-based storage would
+      // still stringify the whole cache per upsert — O(cache) per asset, i.e.
+      // O(n^2) per scan. This holds the raw object and stringifies once per
+      // trailing flush. Periodic durability is fine — a hard kill loses <1s of
+      // hashes, which recompute cheaply on resume.
+      storage: createDebouncedObjectStorage<PersistedFeatureCache>(800),
       // v1: photo dHash derivation changed from a direct 9x8 resize to a 64x64→9x8
       // average-pool (single-decode pipeline). Old dHashes would compare wrong
       // against new ones (false negatives), so drop them — they recompute on the
       // next scan. blurVar (still 64x64), md5, and vHash (video, unchanged) are kept.
       version: 1,
-      migrate: (persisted, fromVersion) => {
-        const state = (persisted ?? {}) as { entries?: Record<string, FeatureEntry>; order?: string[] };
+      migrate: (persisted, fromVersion): PersistedFeatureCache => {
+        const state = (persisted ?? {}) as Partial<PersistedFeatureCache>;
         if (fromVersion < 1 && state.entries) {
           for (const id of Object.keys(state.entries)) {
             const entry = state.entries[id];
             if (entry && entry.dHash !== undefined) delete entry.dHash;
           }
         }
-        return state;
+        // Normalize: a truncated/legacy blob missing either field must not
+        // rehydrate `entries`/`order` as undefined (every reader assumes both).
+        return { entries: state.entries ?? {}, order: state.order ?? [] };
       },
       onRehydrateStorage: () => (state, error) => {
         if (error) {

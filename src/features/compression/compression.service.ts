@@ -3,12 +3,21 @@ import { PhotoAsset } from "@/models/photo";
 import { CompressionService } from "@/services/compression-service";
 import { getFileSize } from "react-native-compressor";
 
+/**
+ * CANCELLATION: react-native-compressor cannot be aborted mid-encode from here,
+ * so a cancelled job runs to completion in the background. `isCancelled()` is
+ * re-checked before the library write so a cancelled compression never leaves an
+ * orphan copy in the gallery (which would also exclude the source from every
+ * future cleanup scan), and the temp output is removed.
+ */
 export async function compressMediaJob(
   job: CompressionJob,
   callbacks: {
     onProgress: (progress: number) => void;
     onCompleted: (result: CompressionResult) => void;
     onError: (error: Error) => void;
+    /** True once the user cancelled this job. Re-read, never cached. */
+    isCancelled?: () => boolean;
   }
 ) {
   try {
@@ -28,6 +37,15 @@ export async function compressMediaJob(
     });
     if (!verification.isValid) {
       throw new Error(verification.reason ?? "The compressed file could not be verified. Your original file was not changed.");
+    }
+
+    // Cancelled while the native encode was running: discard the output instead
+    // of saving it. The store's markCompleted() already early-returns for a
+    // cancelled job, but that runs AFTER saveToLibrary — so without this check
+    // the gallery still gets a copy the user explicitly cancelled.
+    if (callbacks.isCancelled?.()) {
+      await deleteTempOutput(compressed.outputUri);
+      return;
     }
 
     // Only now save to the device library. If the save fails (no asset id), the
@@ -124,6 +142,16 @@ export async function verifyCompressedOutput({
     finalSizeBytes,
     savedBytes: knownOriginalSize - finalSizeBytes
   };
+}
+
+/** Best-effort removal of a compression temp artifact after a cancel. */
+async function deleteTempOutput(uri: string): Promise<void> {
+  try {
+    const FS: typeof import("expo-file-system/legacy") = await import("expo-file-system/legacy");
+    await FS.deleteAsync(uri, { idempotent: true });
+  } catch {
+    // Already gone or unreadable — nothing actionable.
+  }
 }
 
 async function readKnownFileSize(uri: string) {

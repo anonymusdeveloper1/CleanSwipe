@@ -49,15 +49,13 @@ export async function deleteCompressedMediaCopy(libraryAssetId?: string) {
     throw new Error("The saved compressed copy could not be found.");
   }
 
-  let deleted: boolean;
-  try {
-    deleted = await MediaLibrary.deleteAssetsAsync([libraryAssetId]);
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : "Could not delete the compressed copy.");
-  }
-  // deleteAssetsAsync resolves `false` when the deletion did not happen (e.g. the
-  // user denied the system dialog); don't report success in that case.
-  if (!deleted) {
-    throw new Error("Could not delete the compressed copy.");
+  // Goes through PhotoLibraryService like every other library deletion in the
+  // app rather than calling MediaLibrary directly. That service centralises the
+  // `deleteAssetsAsync === false` handling (user denied the system delete-consent
+  // dialog ⇒ FAILURE, never a silent success) and the demo-id guard; duplicating
+  // that logic here is how the two paths drift apart.
+  const result = await PhotoLibraryService.deletePhotos([libraryAssetId]);
+  if (!result.success) {
+    throw new Error(result.message ?? "Could not delete the compressed copy.");
   }
 }

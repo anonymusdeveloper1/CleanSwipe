@@ -23,6 +23,14 @@ import { normalizeLanguagePreference } from "@/i18n/languages";
 import { createDebouncedStorage } from "@/utils/debounced-storage";
 import { filterMarkedItemsByScope, filterPhotosByScope } from "@/utils/months";
 
+/**
+ * Newest-first cap on the persisted deletion history. The history is purely a
+ * user-facing "what did I delete" log — nothing derives state from old entries —
+ * so trimming the tail is lossless for behaviour and bounds the persisted blob.
+ * Matches EVENT_CAP in cleanup-events-store.
+ */
+const HISTORY_CAP = 2000;
+
 type LastSwipe = {
   photo: PhotoAsset;
   action: SwipeAction;
@@ -444,7 +452,11 @@ export const useAppStore = create<AppStore>()(
         set((current) => ({
           markedForDeletion: current.markedForDeletion.filter((item) => !idSet.has(item.photoId)),
           reviewedPhotoIds: current.reviewedPhotoIds.filter((id) => !idSet.has(id)),
-          history: [...HistoryService.fromMarkedItems(items), ...current.history],
+          // Newest-first, capped. Deletion history is an append-only log that
+          // grows with every clean-up for the life of the install; uncapped it
+          // becomes the largest slice of the persisted blob and slows every
+          // rehydrate. HISTORY_CAP mirrors the cleanup-events ledger's EVENT_CAP.
+          history: [...HistoryService.fromMarkedItems(items), ...current.history].slice(0, HISTORY_CAP),
           stats: StatsService.withPermanentDelete(current.stats, items),
           photos: [],
           error: undefined
@@ -542,7 +554,10 @@ export const useAppStore = create<AppStore>()(
           hasHydrated: currentState.hasHydrated,
           selectedMediaType: persisted.selectedMediaType ?? currentState.selectedMediaType,
           reviewedPhotoIds: dedupeIds(persisted.reviewedPhotoIds ?? currentState.reviewedPhotoIds),
-          markedForDeletion: dedupeMarkedItems(persisted.markedForDeletion ?? currentState.markedForDeletion)
+          markedForDeletion: dedupeMarkedItems(persisted.markedForDeletion ?? currentState.markedForDeletion),
+          // Retro-trim: installs that predate HISTORY_CAP can carry an unbounded
+          // history, so cap on rehydrate too — not only on write.
+          history: (persisted.history ?? currentState.history).slice(0, HISTORY_CAP)
         };
       },
       onRehydrateStorage: () => (state, error) => {

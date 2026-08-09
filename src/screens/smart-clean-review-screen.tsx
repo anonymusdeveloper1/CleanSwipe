@@ -11,6 +11,7 @@ import { Thumbnail } from "@/components/thumbnail";
 import { isVideoUri } from "@/components/video-thumb-placeholder";
 import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-review-store";
 import { SmartCleanItem } from "@/features/smart-clean/smart-clean.types";
+import { useRequireProFeature } from "@/features/subscription/use-require-pro-feature";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { formatBytes } from "@/utils/format";
 
@@ -42,6 +43,9 @@ export function SmartCleanReviewScreen() {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  // Smart Clean is Pro, and this is a top-level route — assert entitlement here
+  // rather than trusting the screen that normally pushes it.
+  const allowedPro = useRequireProFeature("smartClean");
 
   const visible = useSmartCleanReviewStore((state) => state.visible);
   const title = useSmartCleanReviewStore((state) => state.title);
@@ -154,6 +158,9 @@ export function SmartCleanReviewScreen() {
     ),
     [cell, theme, keeperIds, selected, keepLabel, toggle, openPreview]
   );
+
+  // Blank frame while the entitlement guard redirects (see useRequireProFeature).
+  if (!allowedPro) return <View style={{ flex: 1, backgroundColor: theme.background }} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>

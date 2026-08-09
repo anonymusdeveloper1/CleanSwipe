@@ -156,13 +156,12 @@ export function SwipeScreen() {
           <Trash2 size={22} color={visibleMarkedCount > 0 ? theme.accent : theme.muted} />
         </ControlIconButton>
       </View>
-      <IndexingIndicator />
       <View style={{ flex: 1, minHeight: 0, paddingHorizontal: 22, paddingTop: 18, paddingBottom: 12, gap: 12 }}>
         {loadingPhotos ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14 }}>
             <ActivityIndicator color={theme.accent} size="large" />
             <Text selectable style={{ color: theme.muted, fontSize: 16, fontWeight: "800", textAlign: "center" }}>
-              Loading your media library...
+              {t("common.loadingMediaLibrary")}
             </Text>
           </View>
         ) : photo ? (
@@ -194,6 +193,9 @@ export function SwipeScreen() {
         ) : (
           <EmptyState icon={BrushCleaning} title={t("swipe.noMediaTitle", { noun: getMediaTypeNoun(selectedMediaType) })} message={t("swipe.noMediaMessage", { noun: getMediaTypeNoun(selectedMediaType) })} />
         )}
+        {/* Last child + absolutely positioned: floats over the card without
+            shifting it. See IndexingIndicator. */}
+        <IndexingIndicator />
       </View>
       <RestartBlockedDialog
         visible={restartBlockedCount !== undefined}

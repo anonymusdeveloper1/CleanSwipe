@@ -14,4 +14,4 @@ tags:
 - assertVisible:
     text: "^Stats$"
 - assertVisible:
-    text: "^Premium$"
+    text: "^Pro$"

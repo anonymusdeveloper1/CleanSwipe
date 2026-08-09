@@ -40,7 +40,12 @@ export function toItem(asset: PhotoAsset): SmartCleanItem {
 export async function resolveReadableUri(asset: PhotoAsset): Promise<string> {
   if (!asset.id || asset.id.startsWith("demo-")) return asset.uri;
   try {
-    const info = await MediaLibrary.getAssetInfoAsync(asset.id);
+    // shouldDownloadFromNetwork:false — same reason as photo-library-service's
+    // mapAsset. The pre-pass calls this for EVERY photo, so leaving the default
+    // (true) would make a cold Smart Clean scan download an entire iCloud-
+    // optimized library over the network. A non-local asset simply yields no
+    // localUri and the detector falls back / degrades, which is correct.
+    const info = await MediaLibrary.getAssetInfoAsync(asset.id, { shouldDownloadFromNetwork: false });
     return info?.localUri ?? asset.uri;
   } catch {
     return asset.uri;

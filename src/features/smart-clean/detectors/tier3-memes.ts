@@ -60,7 +60,10 @@ async function loadMemeAlbumIds(signal?: AbortSignal): Promise<Set<string>> {
 
 async function lacksCameraExif(assetId: string): Promise<boolean> {
   try {
-    const info = await MediaLibrary.getAssetInfoAsync(assetId);
+    // shouldDownloadFromNetwork:false — see tier1-screenshots. Reading EXIF must
+    // never trigger an iCloud download; the lazy-EXIF gate already limits how
+    // often this runs, but on a large library "often" is still thousands of calls.
+    const info = await MediaLibrary.getAssetInfoAsync(assetId, { shouldDownloadFromNetwork: false });
     const exif = (info?.exif ?? {}) as Record<string, unknown>;
     return !(exif.Make ?? exif["{TIFF}"]) && !(exif.Model ?? exif.LensModel ?? exif.FNumber);
   } catch {

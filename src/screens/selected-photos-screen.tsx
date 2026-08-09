@@ -459,8 +459,6 @@ export function SelectedPhotosScreen() {
         </View>
       )}
 
-      <IndexingIndicator />
-
       {total === 0 ? (
         <EmptyState
           icon={BrushCleaning}
@@ -501,6 +499,8 @@ export function SelectedPhotosScreen() {
               onScrubTo={scrubTo}
             />
           ) : null}
+          {/* Floats over the grid instead of pushing it down — see IndexingIndicator. */}
+          <IndexingIndicator />
         </View>
       )}
     </View>

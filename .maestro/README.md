@@ -8,9 +8,9 @@ They run against the built Android app on a connected device or emulator.
 | File | What it covers |
 | --- | --- |
 | `01_smoke.yaml` | App boots; brand header + all four bottom tabs render. |
-| `02_navigation.yaml` | Navigates Compress / Stats / Premium / Swipe; asserts a screen-unique element on each. |
+| `02_navigation.yaml` | Navigates Compress / Stats / Pro / Swipe; asserts a screen-unique element on each. |
 | `03_settings.yaml` | Opens Settings; asserts Account & Security / Appearance / Language / Permissions; toggles Dark Mode (and back). |
-| `04_premium.yaml` | Free-user Premium upsell: Pro feature list, plan selection (no checkout), Restore. |
+| `04_premium.yaml` | Free-user Pro upsell: Pro feature list, plan selection (no checkout), Restore. |
 | `05_swipe.yaml` | Swipe scope label + month-selector sheet (media-type tabs + month list). Pill opened conditionally (needs media access). |
 | `06_compress.yaml` | Compress Filter sheet (Both/Photos/Videos + months) and the Estimated-savings control. No compression is started. |
 | `07_stats.yaml` | Stats cards + Swipe Distribution chart + Free Advanced Stats locked card → paywall sheet → dismiss. |

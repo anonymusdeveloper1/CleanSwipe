@@ -8,6 +8,7 @@ import { ImageCacheService } from "@/services/image-cache-service";
 import { PermissionService } from "@/services/permission-service";
 import { PhotoLibraryService } from "@/services/photo-library-service";
 import { resolveMediaDate } from "@/utils/date";
+import { registerDebouncedFlusher } from "@/utils/debounced-storage";
 
 export type MediaIndexStatus = "idle" | "refreshing" | "scanning" | "complete" | "error";
 
@@ -104,6 +105,28 @@ function createDebouncedIndexStorage(): PersistStorage<PersistedMediaIndexState>
   // no-op refreshes, so a cheap shallow compare lets idle polls skip the
   // multi-megabyte stringify entirely.
   let lastWritten: PersistedMediaIndexState | undefined;
+  let pendingName: string | undefined;
+
+  // Force the queued write out NOW. Registered globally so backgrounding the app
+  // flushes the index too — without this, this store's private debounce meant up
+  // to PERSIST_DEBOUNCE_MS of index writes were silently dropped on suspend,
+  // even though app-store.ts documents flushAllDebouncedStorages() as covering
+  // every debounced store.
+  const flush = async () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    const write = pending;
+    const name = pendingName;
+    pending = undefined;
+    pendingName = undefined;
+    if (!write || !name) return;
+    lastWritten = write.state;
+    await AsyncStorage.setItem(name, JSON.stringify(write)).catch(() => undefined);
+  };
+  registerDebouncedFlusher(flush);
+
   return {
     async getItem(name) {
       const raw = await AsyncStorage.getItem(name);
@@ -122,20 +145,17 @@ function createDebouncedIndexStorage(): PersistStorage<PersistedMediaIndexState>
       // last-call-wins holds.
       if (!pending && lastWritten && isSamePersistedState(lastWritten, value.state)) return;
       pending = value;
+      pendingName = name;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
-        timer = undefined;
-        const write = pending;
-        pending = undefined;
-        if (!write) return;
-        lastWritten = write.state;
-        void AsyncStorage.setItem(name, JSON.stringify(write)).catch(() => undefined);
+        void flush();
       }, PERSIST_DEBOUNCE_MS);
     },
     removeItem(name) {
       if (timer) clearTimeout(timer);
       timer = undefined;
       pending = undefined;
+      pendingName = undefined;
       lastWritten = undefined;
       return AsyncStorage.removeItem(name);
     }
@@ -182,10 +202,36 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
           }
 
           set((state) => ({ status: state.status === "scanning" ? "scanning" : "refreshing", error: undefined }));
-          const page = await PhotoLibraryService.getPhotosPage({ first: QUICK_PAGE_SIZE });
+
+          // TWO orderings, merged — one is not enough to see everything new:
+          //  - by creationTime (DATE_TAKEN): newly TAKEN photos. Camera captures
+          //    carry EXIF, so this is the right key for them.
+          //  - by modificationTime (DATE_MODIFIED): newly ARRIVED files —
+          //    downloads, shares, transfers, edits. These usually have NO
+          //    DATE_TAKEN, so by creationTime they sort to the very END of the
+          //    library and a first-page fetch can never reach them. That was the
+          //    bug: the change was detected and "Finding media…" appeared, but
+          //    the fetched page could not contain the new asset.
+          // Both pages feed the same merge; the index re-sorts by resolveMediaDate
+          // (creationTime ?? modificationTime), so a download lands at the top by
+          // its modification date rather than at the bottom as an undated asset.
+          const [newestByCreation, newestByModification] = await Promise.all([
+            PhotoLibraryService.getPhotosPage({ first: QUICK_PAGE_SIZE, sortBy: "creationTime" }),
+            PhotoLibraryService.getPhotosPage({ first: QUICK_PAGE_SIZE, sortBy: "modificationTime" })
+          ]);
+          // Pagination continues to follow the creationTime ordering so the
+          // cursor semantics of loadMore/full-scan are unchanged.
+          const page = newestByCreation;
+          const seenIds = new Set<string>();
+          const freshPhotos = [...newestByCreation.photos, ...newestByModification.photos].filter((photo) => {
+            if (seenIds.has(photo.id)) return false;
+            seenIds.add(photo.id);
+            return true;
+          });
+
           let mergeUnchanged = false;
           set((state) => {
-            const indexed = page.photos.map(toIndexedMediaAsset);
+            const indexed = freshPhotos.map(toIndexedMediaAsset);
             const merged = mergeIndexedAssets(state, indexed);
             // An unchanged merge keeps the same assetsById/orderedIds references,
             // so subscribed screens skip their derive/re-render work entirely.
@@ -209,7 +255,7 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
           // refreshNewestPage runs on every reconcile (launch, foreground, and the
           // 45s poll); prefetching 36 full-resolution assets on every idle poll is
           // wasted decode/network work (especially for iOS ph:// URIs).
-          if (!mergeUnchanged) ImageCacheService.prefetchPhotos(page.photos);
+          if (!mergeUnchanged) ImageCacheService.prefetchPhotos(freshPhotos);
         })().finally(() => {
           quickRefreshPromise = undefined;
         });

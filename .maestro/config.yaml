@@ -12,7 +12,7 @@ executionOrder:
     - Smoke - app launches and shell renders
     - Bottom-tab navigation
     - Settings screen
-    - Premium upsell (Free user)
+    - Pro upsell (Free user)
     - Swipe scope and month selector
     - Compress filter and estimate
     - Stats and Advanced Stats paywall

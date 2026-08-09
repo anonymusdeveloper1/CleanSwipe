@@ -9,7 +9,16 @@ export type SubscriptionStatus = "free" | "active" | "expired" | "cancelled";
 
 export type SubscriptionPlan = "none" | "monthly" | "yearly";
 
-export type SubscriptionSource = "none" | "play_store" | "app_store";
+/**
+ * Where the entitlement came from.
+ *
+ * `test_store` and `promotional` are carried through DELIBERATELY rather than
+ * being collapsed into `none`. Cancellation behaviour differs per source and
+ * used to be inferred from "not a known store", which silently lumped a
+ * dashboard-granted (PROMOTIONAL) entitlement in with a Test Store one — see
+ * `cancelSubscription`. Anything genuinely unknown/other still maps to `none`.
+ */
+export type SubscriptionSource = "none" | "play_store" | "app_store" | "test_store" | "promotional";
 
 /**
  * A read-only snapshot of the user's subscription, including the derived

@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import mobileAds from "react-native-google-mobile-ads";
 import { AppLockGate } from "@/components/app-lock-gate";
 import { ProUpgradeSheet } from "@/components/pro-upgrade-sheet";
+import { assertAdConfigIsProductionSafe } from "@/features/ads/ad-config";
 import { AdsConsentService } from "@/features/ads/consent.service";
 import { useAdsConsentStore } from "@/features/ads/ads-consent-store";
 import { InterstitialAdService } from "@/features/ads/interstitial.service";
@@ -35,6 +36,10 @@ export default function RootLayout() {
     // the initial navigation/animations settle so it never competes with the cold
     // launch. GDPR/UMP: gather consent BEFORE initializing the Mobile Ads SDK.
     const task = InteractionManager.runAfterInteractions(() => {
+      // Shout if this release build was bundled with forced test ads (see
+      // ad-config). Cheap, and it is the only runtime evidence that an installed
+      // APK/AAB is a closed-testing artifact rather than a production one.
+      assertAdConfigIsProductionSafe();
       void AdsConsentService.gather().then((canRequestAds) => {
         // Publish the consent outcome so every ad surface (incl. the banner via
         // useAdsVisibility) can honor it, not just the preloads below.
@@ -109,7 +114,6 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="settings" options={{ presentation: "card" }} />
-        <Stack.Screen name="licenses" options={{ presentation: "card" }} />
         <Stack.Screen
           name="month-selector"
           options={{

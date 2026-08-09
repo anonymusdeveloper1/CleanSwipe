@@ -1,0 +1,55 @@
+# Quality gates — typecheck, unit tests, i18n parity, lint.
+name: gates
+
+# Every gate here is Node-only: no Android SDK, no Xcode, no device, no secrets.
+# The device-dependent suites (Maestro E2E, native builds) stay local by design.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Vitest 4 requires >= 20.19.
+          node-version: 22
+          cache: npm
+
+      # `npm ci` runs the postinstall patch-package step, which is required —
+      # the react-native-background-actions patch is load-bearing for the
+      # foreground-service notification latency.
+      - name: Install dependencies
+        run: npm ci
+
+      # Each gate runs even if an earlier one failed, so a red build reports
+      # every problem at once instead of one per push.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        if: ${{ !cancelled() }}
+        run: npm test
+
+      # Reports orphan keys as a warning. Flip to `-- --strict-orphans` to make
+      # dead translation strings fail the build.
+      - name: i18n parity
+        if: ${{ !cancelled() }}
+        run: npm run i18n:check
+
+      # Expected: 0 errors, N advisory warnings (React-Compiler rules are
+      # deliberately set to "warn" in eslint.config.js).
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: npm run lint

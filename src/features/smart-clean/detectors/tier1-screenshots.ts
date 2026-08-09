@@ -49,7 +49,10 @@ function dimensionsMatchScreen(asset: IndexedMediaAsset): boolean {
 
 async function lacksCameraExif(assetId: string): Promise<boolean> {
   try {
-    const info = await MediaLibrary.getAssetInfoAsync(assetId);
+    // shouldDownloadFromNetwork:false — never pull an asset down from iCloud just
+    // to read EXIF. A non-local asset returns no exif, which the score treats as
+    // "no camera signal"; that is the same conservative answer as an error.
+    const info = await MediaLibrary.getAssetInfoAsync(assetId, { shouldDownloadFromNetwork: false });
     const exif = (info?.exif ?? {}) as Record<string, unknown>;
     const make = exif.Make ?? exif["{TIFF}"];
     const model = exif.Model ?? exif.LensModel ?? exif.FNumber;

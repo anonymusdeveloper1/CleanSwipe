@@ -17,9 +17,9 @@ tags:
 - assertVisible: "Storage Stats"
 - assertVisible: "Total Used"
 - assertVisible: "Space Cleared"
-# Premium tab (Free user → upsell)
+# Pro tab (Free user → upsell). Labelled "Pro" for Free, "Studio" for Pro users.
 - tapOn:
-    text: "^Premium$"
+    text: "^Pro$"
 - assertVisible: "SwipeClean Pro"
 # Back to Swipe
 - tapOn:

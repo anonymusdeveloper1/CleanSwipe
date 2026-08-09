@@ -4,9 +4,7 @@ import { Linking, Modal, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePaywallStore } from "@/store/paywall-store";
-import { PRIVACY_POLICY_URL } from "@/screens/settings-screen";
-
-const TERMS_OF_USE_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+import { PRIVACY_POLICY_URL, TERMS_OF_USE_URL } from "@/config/contact";
 
 /**
  * Global paywall / upgrade prompt. Mounted once in the root layout; opened from

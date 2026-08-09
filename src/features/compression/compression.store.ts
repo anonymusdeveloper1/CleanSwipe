@@ -519,7 +519,8 @@ async function runCompressionJob(jobId: string) {
       },
       onError: (error) => {
         useCompressionStore.getState().markFailed(jobId, error);
-      }
+      },
+      isCancelled: () => useCompressionStore.getState().jobs[jobId]?.status === "cancelled"
     });
   } catch (error) {
     const currentJob = useCompressionStore.getState().jobs[jobId];

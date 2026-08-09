@@ -116,25 +116,25 @@ export const RevenueCatSubscriptionService = {
   },
 
   /**
-   * Open the platform's promo / offer-code redemption flow. iOS exposes Apple's
-   * native offer-code sheet through RevenueCat; Android has no equivalent SDK API,
-   * so we open the Google Play redeem page via Linking instead. After an iOS
-   * redemption the customerInfo listener unlocks Pro automatically — there is no
-   * manual entitlement flip here.
+   * The RevenueCat App User ID for this install (anonymous — the app never signs
+   * users in, so RevenueCat generates a `$RCAnonymousID:…`).
    *
-   * Returns `{ completedInApp }`: true on iOS, where the promise resolves once the
-   * redemption sheet has been dismissed (so the caller can refresh entitlement
-   * immediately); false on Android, where redemption happens on the Play page in a
-   * browser and the refresh must wait for the app to return to the foreground.
+   * Surfaced ONLY so support emails can carry it: it is the single identifier
+   * that maps a person who wrote in to their entry in the RevenueCat dashboard,
+   * which is what a complimentary/promotional Pro grant has to be applied to.
+   * Without it an anonymous user and an email address cannot be connected.
+   *
+   * Returns undefined rather than throwing when billing is not configured (no
+   * usable API key) — a support email must never be blocked by billing state.
    */
-  async presentCodeRedemption(): Promise<{ completedInApp: boolean }> {
-    if (Platform.OS === "ios") {
-      await ensureConfigured();
-      await Purchases.presentCodeRedemptionSheet();
-      return { completedInApp: true };
+  async getAppUserId(): Promise<string | undefined> {
+    try {
+      if (!(await RevenueCatSubscriptionService.configure())) return undefined;
+      const id = await Purchases.getAppUserID();
+      return id?.trim() ? id : undefined;
+    } catch {
+      return undefined;
     }
-    await Linking.openURL("https://play.google.com/redeem");
-    return { completedInApp: false };
   },
 
   isPurchaseCancelled(error: unknown) {
@@ -260,5 +260,13 @@ function inferPlan(productIdentifier?: string, productPlanIdentifier?: string | 
 function mapSource(store?: string): SubscriptionSource {
   if (store === "PLAY_STORE") return "play_store";
   if (store === "APP_STORE" || store === "MAC_APP_STORE") return "app_store";
+  // Carried through, not collapsed into "none": cancellation behaviour depends on
+  // telling these two apart. TEST_STORE is the only source the local-cancel
+  // workaround may ever apply to; PROMOTIONAL is a dashboard-granted
+  // (complimentary) entitlement that the user cannot cancel at all.
+  if (store === "TEST_STORE") return "test_store";
+  if (store === "PROMOTIONAL") return "promotional";
+  // STRIPE / AMAZON / RC_BILLING / EXTERNAL / PADDLE / GALAXY / UNKNOWN_STORE.
+  // Not cancellable from inside the app either — treated like promotional below.
   return "none";
 }

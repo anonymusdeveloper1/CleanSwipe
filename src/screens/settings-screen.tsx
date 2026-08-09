@@ -1,5 +1,6 @@
+import Constants from "expo-constants";
 import { router } from "expo-router";
-import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Gauge, Gift, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, ScrollText, ShieldCheck, Star, ToggleLeft, XCircle } from "lucide-react-native";
+import { Archive, ArrowLeft, Bell, Bug, Check, ChevronRight, Fingerprint, Gauge, Images, KeyRound, Languages, Layers, Lock, Moon, Palette, ShieldCheck, Star, ToggleLeft, XCircle } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AppState, Linking, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,8 @@ import { AdBanner } from "@/components/ad-banner";
 import { PasscodePad } from "@/components/passcode-pad";
 import { SettingsRow } from "@/components/settings-row";
 import { SettingsSection } from "@/components/settings-section";
+import { PRIVACY_POLICY_URL, SUPPORT_EMAIL } from "@/config/contact";
+import { RevenueCatSubscriptionService } from "@/features/subscription/revenuecat.service";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { accentColors } from "@/theme/colors";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -25,11 +28,33 @@ type PasscodePurpose = "enable" | "disable" | "change";
 type PasscodeFlow = { mode: "setup" | "verify"; purpose: PasscodePurpose };
 type BioCapability = { moduleAvailable: boolean; available: boolean; kind: BiometricKind };
 
-const SUPPORT_EMAIL = "info.cognitix@gmail.com";
-// The published policy URL will be supplied in a follow-up. Keeping it here
-// makes enabling the row a one-line update.
-export const PRIVACY_POLICY_URL = "https://effervescent-douhua-6f5c1d.netlify.app";
-
+/**
+ * Diagnostics footer appended to BOTH support emails (feedback and bug report).
+ *
+ * The Support ID is the RevenueCat App User ID. The app never signs users in, so
+ * RevenueCat identifies this install with an anonymous `$RCAnonymousID:…` — which
+ * means an incoming support email is otherwise IMPOSSIBLE to match to a
+ * RevenueCat customer. Including it here is what makes it possible to grant a
+ * complimentary/promotional Pro entitlement to the specific person who wrote in
+ * (RevenueCat dashboard → Customers → paste the ID → grant entitlement).
+ *
+ * Everything here is device/app metadata plus that opaque ID — no media, no
+ * filenames, no personal data. Kept in English deliberately: the surrounding
+ * email template is English too, and support is handled in English.
+ */
+async function buildSupportDiagnostics(): Promise<string> {
+  const supportId = (await RevenueCatSubscriptionService.getAppUserId()) ?? "unavailable";
+  const status = useSubscriptionStore.getState().subscriptionStatus;
+  const version = Constants.expoConfig?.version ?? "unknown";
+  return [
+    "----------------------------------------",
+    "Please keep the lines below — they let us find your account.",
+    `Support ID: ${supportId}`,
+    `App: SwipeClean ${version}`,
+    `Platform: ${Platform.OS} ${String(Platform.Version)}`,
+    `Plan: ${status}`
+  ].join("\n");
+}
 export function SettingsScreen() {
   const theme = useAppTheme();
   const { t } = useTranslation();
@@ -47,7 +72,14 @@ export function SettingsScreen() {
   const refreshPermissionStatus = useAppStore((state) => state.refreshPermissionStatus);
   const subscriptionStatus = useSubscriptionStore((state) => state.subscriptionStatus);
   const cancelSubscription = useSubscriptionStore((state) => state.cancelSubscription);
-  const redeemCode = useSubscriptionStore((state) => state.redeemCode);
+  const subscriptionSource = useSubscriptionStore((state) => state.source);
+  // Only a real store subscription can be cancelled by the user. A complimentary
+  // (PROMOTIONAL) grant or a Stripe/Amazon/other entitlement has no cancel path
+  // from inside the app — showing the row there is a button that cannot do what
+  // it says, and it used to silently revoke the grant client-side. Test Store
+  // keeps its dev-only fake cancel.
+  const isCancellableSource =
+    subscriptionSource === "play_store" || subscriptionSource === "app_store" || (__DEV__ && subscriptionSource === "test_store");
   const { isPro } = useFeatureAccess();
   const selectedLanguage = languageOptions.find((option) => option.value === settings.language) ?? languageOptions[0];
 
@@ -198,29 +230,22 @@ export function SettingsScreen() {
 
   const openSupportEmail = async (kind: "feedback" | "bug") => {
     const subject = kind === "feedback" ? "SwipeClean Feedback" : "SwipeClean Bug Report";
-    const body =
+    const intro =
       kind === "feedback"
-        ? "Hi Cognitix,\n\nI would like to share the following feedback:\n\n"
-        : `Hi Cognitix,\n\nI found a bug in SwipeClean:\n\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected result:\n\nActual result:\n\nDevice: ${Platform.OS} ${String(Platform.Version)}`;
+        ? "Hi Cognitix,\n\nI would like to share the following feedback:\n\n\n"
+        : "Hi Cognitix,\n\nI found a bug in SwipeClean:\n\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected result:\n\nActual result:\n\n";
+    // Both support mails carry the same diagnostics block. The Support ID is the
+    // RevenueCat App User ID — it is what identifies this install in the
+    // RevenueCat dashboard, so a promotional/complimentary Pro grant can be
+    // applied to the exact user who wrote in. Without it there is no way to map
+    // an email address to an anonymous RevenueCat user.
+    const body = `${intro}${await buildSupportDiagnostics()}`;
     const mailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     try {
       await Linking.openURL(mailto);
     } catch {
       Alert.alert(t("settings.supportEmailUnavailableTitle"), t("settings.supportEmailUnavailableMessage"));
     }
-  };
-
-  // Reuses the shared subscription store action (same one the paywall button
-  // uses): opens the native store code-redemption flow. Pro unlock arrives via
-  // the RevenueCat customerInfo listener, so only surface a friendly error here.
-  const handleRedeem = () => {
-    void (async () => {
-      try {
-        await redeemCode();
-      } catch {
-        Alert.alert(t("subscription.redeemFailedTitle"), t("subscription.redeemFailedMessage"));
-      }
-    })();
   };
 
   const openPrivacyPolicy = async () => {
@@ -323,7 +348,7 @@ export function SettingsScreen() {
         {!isPro ? (
           <SettingsRow icon={Star} title={t("settings.upgradePremium")} subtitle={t("settings.upgradePremiumSubtitle")} onPress={() => router.push("/premium") as never} trailing={chevron} />
         ) : null}
-        {subscriptionStatus === "active" ? (
+        {subscriptionStatus === "active" && isCancellableSource ? (
           <SettingsRow
             icon={XCircle}
             title={t("settings.cancelSubscription")}
@@ -332,11 +357,9 @@ export function SettingsScreen() {
             trailing={chevron}
           />
         ) : null}
-        <SettingsRow icon={Gift} title={t("subscription.redeemCode")} onPress={handleRedeem} trailing={chevron} />
         <SettingsRow icon={ToggleLeft} title={t("settings.leaveFeedback")} onPress={() => void openSupportEmail("feedback")} trailing={chevron} />
         <SettingsRow icon={Bug} title={t("settings.reportBug")} onPress={() => void openSupportEmail("bug")} trailing={chevron} />
         <SettingsRow icon={ShieldCheck} title={t("settings.privacyPolicy")} onPress={() => void openPrivacyPolicy()} trailing={chevron} />
-        <SettingsRow icon={ScrollText} title={t("settings.openSourceLicenses")} onPress={() => router.push("/licenses" as never)} trailing={chevron} />
       </SettingsSection>
 
       <AdBanner />

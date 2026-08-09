@@ -13,6 +13,7 @@ import { ConvertTarget } from "@/features/convert/convert.types";
 import { useConvertStore } from "@/features/convert/convert.store";
 import { createConversionJobInput } from "@/features/convert/convert.utils";
 import { useCustomConvertStore } from "@/features/convert/custom-convert.store";
+import { useRequireProFeature } from "@/features/subscription/use-require-pro-feature";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { selectIndexedMediaAsset, useMediaIndexStore } from "@/store/media-index-store";
 import { formatBytes } from "@/utils/format";
@@ -30,6 +31,10 @@ export function ConvertRunScreen() {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  // Convert is Pro. This is a top-level route, so it must assert its own
+  // entitlement — reaching it via swipeclean://convert-run would otherwise skip
+  // the Studio-screen gate entirely.
+  const allowedPro = useRequireProFeature("mediaFormatConvert");
   const { id, target, origin, custom } = useLocalSearchParams<{ id: string; target?: string; origin?: string; custom?: string }>();
 
   const isCustom = custom === "1";
@@ -118,6 +123,10 @@ export function ConvertRunScreen() {
   const originalLabel = fileExtLabel(job?.fileName ?? asset?.filename, isVideoSource ? "VIDEO" : "PHOTO");
   const targetUpper = targetLabel(convertTarget);
   const errorCode = job?.errorMessage ?? "generic";
+
+  // Render nothing while useRequireProFeature redirects, so a Free user who deep
+  // linked here never sees a frame of the Pro flow.
+  if (!allowedPro) return <View style={{ flex: 1, backgroundColor: theme.background }} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>

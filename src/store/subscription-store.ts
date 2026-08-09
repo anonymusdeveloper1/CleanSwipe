@@ -25,9 +25,10 @@ type SubscriptionStore = {
   expiresAt?: string;
   source: SubscriptionSource;
   managementUrl?: string;
-  // Test-only: set when the user "cancels" a Test Store subscription (which the
-  // client SDK cannot truly cancel). Persisted + honored on every refresh so the
-  // cancel sticks until the user buys again. Never set for real store subs.
+  // DEV + TEST STORE ONLY: set when the user "cancels" a Test Store subscription
+  // (which the client SDK cannot truly cancel). Persisted + honored on every
+  // refresh so the cancel sticks until the user buys again. Can never be set in
+  // a release build, and any stale `true` is cleared on rehydrate there.
   localCancelled: boolean;
   hasHydrated: boolean;
   billingInitialized: boolean;
@@ -36,10 +37,6 @@ type SubscriptionStore = {
   purchaseInProgress: boolean;
   billingError?: string;
   plans: BillingPlans;
-  // Transient (never persisted): set while a code redemption is in flight so the
-  // entitlement gets refreshed once the redemption resolves / the app returns to
-  // the foreground. Consumed by refreshSubscriptionStatus.
-  pendingRedeemRefresh: boolean;
 
   setHasHydrated: (hasHydrated: boolean) => void;
   initializeBilling: () => Promise<SubscriptionSnapshot>;
@@ -47,7 +44,6 @@ type SubscriptionStore = {
   purchasePlan: (plan: Exclude<SubscriptionPlan, "none">) => Promise<SubscriptionSnapshot>;
   restorePurchases: () => Promise<SubscriptionSnapshot>;
   cancelSubscription: () => Promise<void>;
-  redeemCode: () => Promise<void>;
   getCurrentSubscription: () => SubscriptionSnapshot;
   isProUser: () => boolean;
 };
@@ -69,7 +65,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       offeringsLoading: false,
       purchaseInProgress: false,
       billingError: undefined,
-      pendingRedeemRefresh: false,
       plans: {},
 
       setHasHydrated(hasHydrated) {
@@ -127,10 +122,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       async refreshSubscriptionStatus() {
-        // A refresh is now servicing any in-flight redeem, so consume the marker.
-        // This is why returning from the Android Play redeem page needs no extra
-        // work: the existing SubscriptionSync foreground refresh runs this.
-        if (get().pendingRedeemRefresh) set({ pendingRedeemRefresh: false });
         try {
           const configured = await RevenueCatSubscriptionService.configure(handleCustomerInfoUpdate);
           if (!configured) {
@@ -215,43 +206,31 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           await RevenueCatSubscriptionService.openManageSubscriptions(managementUrl);
           return;
         }
-        // RevenueCat Test Store: the client SDK cannot cancel a test subscription
-        // and there is no store page to open. Mark it cancelled locally and
-        // downgrade; `localCancelled` is persisted and honored by
-        // reconcileEntitlement on every refresh, so the cancel STICKS (no flip
-        // back to Pro) until the user purchases again. This path runs only for
-        // non-store subscriptions, so it never affects a real paying customer.
-        set({ localCancelled: true, subscriptionStatus: "free", plan: "none", source: "none", expiresAt: undefined, managementUrl: undefined });
-      },
 
-      // Trigger the native store code-redemption flow (Apple offer-code sheet on
-      // iOS, Play redeem page on Android) and make sure the entitlement refreshes
-      // so Pro appears without a manual Restore. No entitlement is set manually
-      // here — the refreshed customerInfo drives it (as does the live listener).
-      async redeemCode() {
-        // Mark a redemption in flight; refreshSubscriptionStatus clears it.
-        set({ pendingRedeemRefresh: true });
-        let completedInApp = false;
-        try {
-          ({ completedInApp } = await RevenueCatSubscriptionService.presentCodeRedemption());
-        } catch (error) {
-          // Nothing was redeemed (sheet / redeem page failed to open) — drop the
-          // marker and let the caller surface the friendly message.
-          set({ pendingRedeemRefresh: false });
-          throw error;
+        // DEV ONLY, TEST STORE ONLY. The client SDK cannot cancel a RevenueCat
+        // Test Store subscription and there is no store page to open, so the
+        // cancel is faked locally: `localCancelled` is persisted and honored by
+        // reconcileEntitlement on every refresh so it STICKS instead of being
+        // flipped back to Pro by the next customer-info push.
+        //
+        // Both guards are load-bearing:
+        //  - `__DEV__`  — the Test Store is itself unreachable outside __DEV__
+        //    (see getApiKey), so this workaround can never legitimately be needed
+        //    in a release build.
+        //  - `source === "test_store"` — this used to be the fallback for ANY
+        //    source that wasn't Play/App Store, which silently caught
+        //    PROMOTIONAL. A user granted complimentary Pro from the RevenueCat
+        //    dashboard who tapped Cancel would permanently suppress their own
+        //    grant client-side, while the dashboard still showed it as active.
+        if (__DEV__ && source === "test_store") {
+          set({ localCancelled: true, subscriptionStatus: "free", plan: "none", source: "none", expiresAt: undefined, managementUrl: undefined });
+          return;
         }
-        if (completedInApp) {
-          // iOS: the redemption sheet has been dismissed, so refresh entitlement
-          // now (belt-and-suspenders on top of the customerInfo listener).
-          try {
-            await get().refreshSubscriptionStatus();
-          } catch {
-            // Silent background refresh; refreshSubscriptionStatus owns its errors.
-          }
-        }
-        // Android: redemption completes on the Play page after we return to the
-        // foreground, where the existing SubscriptionSync AppState refresh runs
-        // (and consumes pendingRedeemRefresh). No second listener → no double refresh.
+
+        // Promotional / Stripe / Amazon / other: nothing the app may cancel, and
+        // nothing to open. Do NOT revoke entitlement locally — the grant is
+        // server-side truth. The Settings row is hidden for these sources, so
+        // this is a defensive no-op for a stale UI or a direct caller.
       },
 
       getCurrentSubscription() {
@@ -265,16 +244,28 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
     {
       name: "swipeclean-subscription-store",
       storage: createJSONStorage(() => AsyncStorage),
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        ...((persistedState ?? {}) as Partial<SubscriptionStore>),
-        billingInitialized: false,
-        billingConfigured: false,
-        offeringsLoading: false,
-        purchaseInProgress: false,
-        billingError: undefined,
-        plans: {}
-      }),
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState ?? {}) as Partial<SubscriptionStore>;
+        return {
+          ...currentState,
+          ...persisted,
+          // SELF-HEAL. `localCancelled` is a DEV-only Test Store workaround, but
+          // an earlier build could set it in production for any non-Play/App
+          // source — including a PROMOTIONAL (complimentary) grant. Once set it
+          // suppressed the entitlement on every refresh forever, with no
+          // dashboard-side fix. Clearing it outside __DEV__ on rehydrate repairs
+          // anyone already stuck, on their next launch, with no action needed.
+          // Safe: in a release build nothing may set this flag any more, so the
+          // only values here are leftovers from the bug.
+          localCancelled: __DEV__ ? (persisted.localCancelled ?? false) : false,
+          billingInitialized: false,
+          billingConfigured: false,
+          offeringsLoading: false,
+          purchaseInProgress: false,
+          billingError: undefined,
+          plans: {}
+        };
+      },
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.warn("Failed to rehydrate subscription store", error);
@@ -333,8 +324,13 @@ function handleCustomerInfoUpdate(customerInfo: Parameters<typeof RevenueCatSubs
  * Honor a local Test Store "cancel": while `localCancelled` is set, a still-active
  * test entitlement is suppressed (kept Free) so the cancel sticks across refreshes
  * and the RevenueCat customer-info listener can't flip it back to Pro. Once the
- * real entitlement is no longer active, the override self-clears. Real store
- * subscriptions never set `localCancelled`, so this is a no-op in production.
+ * real entitlement is no longer active, the override self-clears.
+ *
+ * This is now GUARANTEED inert in production: `localCancelled` can only be set
+ * under `__DEV__` with `source === "test_store"` (see cancelSubscription), and
+ * any leftover `true` from the earlier build is cleared on rehydrate outside
+ * `__DEV__` (see the persist `merge`). Nothing here may suppress a real store
+ * subscription or a dashboard-granted PROMOTIONAL entitlement.
  */
 function reconcileEntitlement(
   entitlement: RevenueCatEntitlementState,

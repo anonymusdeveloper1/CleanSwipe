@@ -1,10 +1,30 @@
 import * as MediaLibrary from "expo-media-library";
 import { PhotoAsset } from "@/models/photo";
 import { resolveMediaDate } from "@/utils/date";
+import { LibrarySignature } from "@/utils/library-signature";
+
+/**
+ * Which timestamp the native query sorts by, newest first.
+ *
+ * This distinction is load-bearing, not cosmetic:
+ *  - `creationTime` maps to `MediaStore.Images.Media.DATE_TAKEN` on Android
+ *    (and the PhotoKit creation date on iOS). It is an EXIF-derived value that
+ *    CAMERAS set. A file that arrives by download, share, or transfer usually
+ *    has no DATE_TAKEN at all, so it sorts to the very END of the library.
+ *  - `modificationTime` maps to `MediaStore.Images.Media.DATE_MODIFIED`, which
+ *    the filesystem always sets. Anything that just landed on the device sorts
+ *    to the FRONT by this key.
+ *
+ * Fetching only by `creationTime` is why a freshly downloaded photo never
+ * appeared: the change WAS detected and a refresh ran, but the newest-page query
+ * could not reach the new asset — it was ordered behind thousands of older ones.
+ */
+export type MediaSortKey = "creationTime" | "modificationTime";
 
 export type GetPhotosOptions = {
   first?: number;
   after?: string;
+  sortBy?: MediaSortKey;
 };
 
 export type GetPhotosPageResult = {
@@ -32,11 +52,50 @@ export interface IPhotoLibraryService {
   getPhotosPage(options?: GetPhotosOptions): Promise<GetPhotosPageResult>;
   getPhotos(options?: GetPhotosOptions): Promise<PhotoAsset[]>;
   deletePhotos(photoIds: string[]): Promise<DeletePhotosResult>;
+  getLibrarySignature(): Promise<LibrarySignature | undefined>;
 }
 
 export const PhotoLibraryService: IPhotoLibraryService = {
   async requestPermissions() {
     return MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
+  },
+
+  /**
+   * CHEAP change probe — deliberately NOT `getPhotosPage`.
+   *
+   * `getPhotosPage` maps every asset through `mapAsset`, which calls
+   * `getAssetInfoAsync` PER ASSET (80 native round-trips for the newest page).
+   * That cost is why the library poll had to run at 45 s, which is what made new
+   * downloads take up to 45 s to appear.
+   *
+   * This asks for exactly ONE asset and reads `totalCount` off the same result,
+   * with no per-asset info calls — cheap enough to run every few seconds so the
+   * expensive reconcile only happens when something actually changed.
+   *
+   * Returns undefined on any failure (permission revoked mid-probe, native
+   * error); the caller then simply doesn't escalate. Same query shape on both
+   * platforms — no branching.
+   */
+  async getLibrarySignature() {
+    try {
+      const page = await MediaLibrary.getAssetsAsync({
+        first: 1,
+        mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
+        // modificationTime (DATE_MODIFIED), NOT creationTime (DATE_TAKEN): a
+        // downloaded file has no DATE_TAKEN, so by creationTime it is the OLDEST
+        // asset in the library and `newestId` would never change when one
+        // arrives. By DATE_MODIFIED anything that just landed is first.
+        sortBy: [MediaLibrary.SortBy.modificationTime]
+      });
+      const newest = page.assets[0];
+      return {
+        totalCount: page.totalCount,
+        newestId: newest?.id,
+        newestModificationTime: newest?.modificationTime
+      };
+    } catch {
+      return undefined;
+    }
   },
 
   async getPhotosPage(options = {}) {
@@ -50,7 +109,7 @@ export const PhotoLibraryService: IPhotoLibraryService = {
         first: options.first ?? 250,
         after: options.after,
         mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
-        sortBy: [MediaLibrary.SortBy.creationTime]
+        sortBy: [options.sortBy === "modificationTime" ? MediaLibrary.SortBy.modificationTime : MediaLibrary.SortBy.creationTime]
       });
 
       const pagePhotos = await Promise.all(result.assets.map(mapAsset));

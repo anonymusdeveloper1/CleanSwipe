@@ -2,14 +2,44 @@
 // Validates that every locale in src/i18n/locales matches en.json:
 //  - identical set of keys (no missing / no extra)
 //  - identical interpolation placeholders ({{var}}) per key
+//  - (advisory) no ORPHAN keys: en.json keys that no source file references
 // Exits non-zero if any locale is out of parity. Run with: npm run i18n:check
-import { readFileSync, readdirSync } from "node:fs";
+//
+// Orphan detection exists because parity alone is structurally blind to dead
+// strings: a key deleted from the UI but left in en.json stays "in parity"
+// forever and is re-translated into every locale on the next translation pass.
+// Pass --strict-orphans (or set I18N_STRICT_ORPHANS=1) to make orphans fail the
+// gate; by default they are reported and the exit code is unaffected, so a
+// legitimately-dynamic key added tomorrow can't break the build before someone
+// adds it to DYNAMIC_KEY_PREFIXES.
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, extname } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const localesDir = join(here, "..", "src", "i18n", "locales");
 const REFERENCE = "en";
+
+// Source roots scanned for `t("…")` usage.
+const SOURCE_ROOTS = [join(here, "..", "src"), join(here, "..", "app")];
+const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
+
+/**
+ * Key namespaces built at RUNTIME from a variable, so a literal-string scan can
+ * never see them. Anything under these prefixes is exempt from orphan reporting.
+ * Add a prefix here (with the call site) when you introduce a new dynamic key.
+ */
+const DYNAMIC_KEY_PREFIXES = [
+  "paywall.", // pro-upgrade-sheet.tsx      → t(`paywall.${featureKey}`)
+  "convert.errors.", // convert-run-screen.tsx     → t(`convert.errors.${code}`)
+  "stats.convert.", // convert-stats-section.tsx  → t(`stats.convert.${kind}`)
+  "smartClean.cards.", // smart-clean-screen.tsx     → t(`smartClean.cards.${key}…`)
+  "distribution.", // swipe-distribution-chart   → t(`distribution.${slice}`)
+  "months.", // utils/date.ts              → t(`months.${index}`)
+  "languages.", // settings-screen.tsx        → t(`languages.${code}`)
+  "convert.note.", // convert-format-sheet.tsx   → t(`convert.note.${target}`)
+  "convert.group." // convert-format-sheet.tsx   → t(`convert.group.${group.kind}`)
+];
 
 function flatten(obj, prefix = "", acc = {}) {
   for (const [key, value] of Object.entries(obj)) {
@@ -30,6 +60,35 @@ function placeholders(value) {
 
 function load(code) {
   return JSON.parse(readFileSync(join(localesDir, `${code}.json`), "utf8"));
+}
+
+/** Every .ts/.tsx file under the source roots, concatenated. */
+function readAllSources() {
+  const chunks = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) {
+        walk(full);
+      } else if (SOURCE_EXTENSIONS.has(extname(entry))) {
+        chunks.push(readFileSync(full, "utf8"));
+      }
+    }
+  };
+  for (const root of SOURCE_ROOTS) walk(root);
+  return chunks.join("\n");
+}
+
+/**
+ * en.json keys with no literal reference anywhere in the source, excluding
+ * runtime-composed namespaces. Matches the key as a quoted/backticked string so
+ * `t("a.b")`, `i18nKey="a.b"` and a key passed through a variable all count.
+ */
+function findOrphanKeys(keys, source) {
+  return keys.filter((key) => {
+    if (DYNAMIC_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) return false;
+    return !source.includes(`"${key}"`) && !source.includes(`'${key}'`) && !source.includes(`\`${key}\``);
+  });
 }
 
 const reference = flatten(load(REFERENCE));
@@ -75,6 +134,20 @@ for (const s of summary) {
   if (s.missing.length) console.log(`   missing (${s.missing.length}): ${s.missing.slice(0, 10).join(", ")}${s.missing.length > 10 ? " …" : ""}`);
   if (s.extra.length) console.log(`   extra (${s.extra.length}): ${s.extra.slice(0, 10).join(", ")}${s.extra.length > 10 ? " …" : ""}`);
   for (const m of s.placeholderMismatches.slice(0, 10)) console.log(`   placeholder: ${m}`);
+}
+
+const strictOrphans = process.argv.includes("--strict-orphans") || process.env.I18N_STRICT_ORPHANS === "1";
+const orphans = findOrphanKeys(referenceKeys, readAllSources());
+if (orphans.length) {
+  console.log(`\n${strictOrphans ? "[FAIL]" : "[WARN]"} ${orphans.length} orphan key(s) in ${REFERENCE}.json — no source reference:`);
+  for (const key of orphans) console.log(`   ${key}`);
+  console.log(
+    `   Each orphan costs ${localeFiles.length + 1} translations. Delete it, or add its prefix to\n` +
+      "   DYNAMIC_KEY_PREFIXES in this script if the key is composed at runtime."
+  );
+  if (strictOrphans) totalProblems += orphans.length;
+} else {
+  console.log(`\n✓ No orphan keys in ${REFERENCE}.json.`);
 }
 
 if (totalProblems > 0) {

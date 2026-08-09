@@ -12,6 +12,7 @@ import { openMediaExternally } from "@/features/convert/open-media-file";
 import { isActiveConversionJob, selectBatchProgress, selectJobsByBatch } from "@/features/convert/convert.selectors";
 import { useConvertStore } from "@/features/convert/convert.store";
 import { ConversionJob } from "@/features/convert/convert.types";
+import { useRequireProFeature } from "@/features/subscription/use-require-pro-feature";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 /**
@@ -28,6 +29,8 @@ export function ConvertBatchRunScreen() {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  // Pro-only, and reachable directly as a route (swipeclean://convert-batch).
+  const allowedPro = useRequireProFeature("mediaFormatConvert");
   const { batchId, origin } = useLocalSearchParams<{ batchId?: string; origin?: string }>();
 
   const jobs = useConvertStore((state) => state.jobs);
@@ -88,6 +91,9 @@ export function ConvertBatchRunScreen() {
     }
     router.push({ pathname: "/compression-media-viewer", params: { uri: job.outputUri, media: job.outputKind === "video" ? "video" : "photo" } } as never);
   };
+
+  // Blank frame while the entitlement guard redirects (see useRequireProFeature).
+  if (!allowedPro) return <View style={{ flex: 1, backgroundColor: theme.background }} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>

@@ -23,6 +23,10 @@ android/app/build/
 # otherwise app.json `icon` + the iOS AppIcon.appiconset build with no icon.
 !assets/icon.png
 !ios/SwipeClean/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png
+# Play/App Store listing assets are release DELIVERABLES, not build output — a
+# fresh clone previously got LISTING.md with none of the screenshots it
+# describes. Same blanket-*.png override as the icons above.
+!store-listing-generated/*.png
 .codex-remote-attachments/
 
 # Local tooling / run artifacts (Maestro CLI binary, logs, test media, helper

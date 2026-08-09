@@ -6,11 +6,35 @@ import { useSmartCleanReviewStore } from "@/features/smart-clean/smart-clean-rev
 import { useSmartCleanStore } from "@/features/smart-clean/smart-clean-store";
 import { PermissionStatus } from "@/models/photo";
 import { PermissionService } from "@/services/permission-service";
+import { PhotoLibraryService } from "@/services/photo-library-service";
 import { useAppStore } from "@/store/app-store";
 import { useMediaIndexStore } from "@/store/media-index-store";
 import { useSubscriptionStore } from "@/store/subscription-store";
+import { librarySignatureChanged, LibrarySignature } from "@/utils/library-signature";
 
+/**
+ * How often the CHEAP library-change probe runs while the app is foregrounded.
+ * One `getAssetsAsync({ first: 1 })` per tick — no per-asset info calls — so a
+ * few seconds is affordable and makes newly downloaded/captured media appear
+ * about as fast as the system gallery shows it.
+ */
+const CHANGE_PROBE_INTERVAL_MS = 3_000;
+
+/**
+ * Safety-net FULL reconcile. The probe catches asset changes; this still runs
+ * periodically to catch things the probe cannot see (permission/scope drift).
+ */
 const POLL_INTERVAL_MS = 45_000;
+
+// Last observed library fingerprint. Module-level so it survives the effect
+// re-attaching (permission status changes) without re-triggering a refresh.
+let lastLibrarySignature: LibrarySignature | undefined;
+
+/** Drop the cached fingerprint so the next probe re-seeds instead of comparing
+ *  against a library state from a different permission scope. */
+function resetLibrarySignature() {
+  lastLibrarySignature = undefined;
+}
 
 // Permission, AppState, and media-library events often arrive together. Never
 // drop a later event while a reconcile is running: queue one more pass so a
@@ -174,18 +198,50 @@ export function usePhotoLibrarySync() {
   // permission status, this effect re-runs and attaches/detaches accordingly.
   useEffect(() => {
     if (status !== "granted" && status !== "limited") {
+      // Scope no longer readable — the cached fingerprint describes a library we
+      // can't see any more, so don't compare against it when access returns.
+      resetLibrarySignature();
       return undefined;
     }
 
+    // Kept even though it is unreliable on Android (the native observer only
+    // emits when a media type's TOTAL COUNT changes): when it does fire it is
+    // the fastest possible signal, and it costs nothing to listen.
     const mediaSubscription = MediaLibrary.addListener(() => {
       void refresh();
     });
+
+    // Cheap change detection. Runs often; escalates to the expensive reconcile
+    // ONLY when the library actually changed. This is what makes a newly
+    // downloaded photo/video appear promptly instead of waiting for the 45 s
+    // full poll — and it behaves identically on Android and iOS.
+    let probing = false;
+    const probe = async () => {
+      // Never probe in the background: nothing is visible, and the AppState
+      // "active" listener already forces a full refresh on return.
+      if (probing || AppState.currentState !== "active") return;
+      probing = true;
+      try {
+        const signature = await PhotoLibraryService.getLibrarySignature();
+        if (!signature) return;
+        const changed = librarySignatureChanged(lastLibrarySignature, signature);
+        lastLibrarySignature = signature;
+        if (changed) await refreshPhotoLibraryAccess();
+      } finally {
+        probing = false;
+      }
+    };
+
+    const probeInterval = setInterval(() => {
+      void probe();
+    }, CHANGE_PROBE_INTERVAL_MS);
     const interval = setInterval(() => {
       void refresh();
     }, POLL_INTERVAL_MS);
 
     return () => {
       mediaSubscription.remove();
+      clearInterval(probeInterval);
       clearInterval(interval);
     };
   }, [status, refresh]);

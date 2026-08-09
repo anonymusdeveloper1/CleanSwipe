@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { BarChart3, HardDrive, Images, Sparkles, Trash2, type LucideIcon } from "lucide-react-native";
+import { HardDrive, Images, Sparkles, Trash2, type LucideIcon } from "lucide-react-native";
 import { ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeInDown } from "react-native-reanimated";

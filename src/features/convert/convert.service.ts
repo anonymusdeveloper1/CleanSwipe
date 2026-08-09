@@ -15,6 +15,12 @@ import { convertMedia } from "@/features/convert/engine/conversion-engine";
  *
  * Unlike compression there is no "did it shrink?" rejection — a format change can
  * legitimately produce a larger file; we only require a non-empty artifact.
+ *
+ * CANCELLATION: the engines cannot abort a native transcode mid-flight, so a
+ * cancelled job keeps running to completion in the background. What we CAN
+ * guarantee is that it leaves nothing behind: `isCancelled()` is re-checked
+ * after the encode and BEFORE any library write, so a cancelled conversion never
+ * deposits an artifact in the user's gallery, and the temp output is deleted.
  */
 export async function convertMediaJob(
   job: ConversionJob,
@@ -22,6 +28,8 @@ export async function convertMediaJob(
     onProgress: (progress: number) => void;
     onCompleted: (result: ConversionResult) => void;
     onError: (error: Error) => void;
+    /** True once the user cancelled this job. Re-read, never cached. */
+    isCancelled?: () => boolean;
   }
 ) {
   try {
@@ -35,6 +43,14 @@ export async function convertMediaJob(
     const outputSizeBytes = output.outputSizeBytes > 0 ? output.outputSizeBytes : await readFileSize(output.outputUri);
     if (!output.outputUri || outputSizeBytes <= 0) {
       throw new Error("convert-output-invalid");
+    }
+
+    // Cancelled while the native encode was running: discard the artifact rather
+    // than saving it. Without this the user cancels, sees "cancelled", and still
+    // finds the converted file in their gallery a moment later.
+    if (callbacks.isCancelled?.()) {
+      await deleteTempOutput(output.outputUri);
+      return;
     }
 
     let result: ConversionResult;
@@ -92,6 +108,20 @@ async function saveToLibrary(uri: string): Promise<{ id: string; uri: string } |
     }
   } catch {
     return undefined;
+  }
+}
+
+/**
+ * Best-effort removal of an engine temp artifact. Used when a job is cancelled
+ * after the encode finished — the audio engine writes into documentDirectory,
+ * which is NOT evictable, so an un-deleted orphan would live forever.
+ */
+async function deleteTempOutput(uri: string): Promise<void> {
+  try {
+    const FS: typeof import("expo-file-system/legacy") = await import("expo-file-system/legacy");
+    await FS.deleteAsync(uri, { idempotent: true });
+  } catch {
+    // Nothing actionable — the file is either already gone or unreadable.
   }
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BarChart3, Check, Crown, FileImage, FileVideo, Gift, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
+import { BarChart3, Check, Crown, FileImage, FileVideo, RotateCcw, ShieldOff, Video, Wand2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import Animated, { Easing, FadeInDown, FadeInRight, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { AdBanner } from "@/components/ad-banner";
@@ -11,9 +11,7 @@ import { StudioScreen } from "@/screens/studio-screen";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useSubscriptionStore } from "@/store/subscription-store";
-import { PRIVACY_POLICY_URL } from "@/screens/settings-screen";
-
-const TERMS_OF_USE_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+import { PRIVACY_POLICY_URL, TERMS_OF_USE_URL } from "@/config/contact";
 
 type PaidPlan = "monthly" | "yearly";
 
@@ -63,7 +61,6 @@ function UpgradeView() {
   const initializeBilling = useSubscriptionStore((state) => state.initializeBilling);
   const purchasePlan = useSubscriptionStore((state) => state.purchasePlan);
   const restorePurchases = useSubscriptionStore((state) => state.restorePurchases);
-  const redeemCode = useSubscriptionStore((state) => state.redeemCode);
   const plans = useSubscriptionStore((state) => state.plans);
   const offeringsLoading = useSubscriptionStore((state) => state.offeringsLoading);
   const purchaseInProgress = useSubscriptionStore((state) => state.purchaseInProgress);
@@ -122,19 +119,6 @@ function UpgradeView() {
         }
       } catch (error) {
         setDialog({ title: t("subscription.restoreFailedTitle"), message: formatBillingError(error instanceof Error ? error.message : billingError), tone: "error" });
-      }
-    })();
-  };
-
-  // Opens the native store redemption flow. Pro unlock (iOS) arrives via the
-  // RevenueCat customerInfo listener, so there's nothing to do on success —
-  // only surface a friendly message if the sheet / redeem page can't open.
-  const handleRedeem = () => {
-    void (async () => {
-      try {
-        await redeemCode();
-      } catch {
-        setDialog({ title: t("subscription.redeemFailedTitle"), message: t("subscription.redeemFailedMessage"), tone: "error" });
       }
     })();
   };
@@ -246,17 +230,6 @@ function UpgradeView() {
       >
         <RotateCcw size={17} color={theme.accent} />
         <Text style={{ color: theme.accent, fontSize: 15, fontWeight: "900" }}>{t("subscription.restore")}</Text>
-      </Pressable>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t("subscription.redeemCode")}
-        disabled={purchaseInProgress}
-        onPress={handleRedeem}
-        style={{ minHeight: 44, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, opacity: purchaseInProgress ? 0.55 : 1 }}
-      >
-        <Gift size={17} color={theme.accent} />
-        <Text style={{ color: theme.accent, fontSize: 15, fontWeight: "900" }}>{t("subscription.redeemCode")}</Text>
       </Pressable>
 
       <Text selectable style={{ color: theme.faint, fontSize: 12, lineHeight: 17, textAlign: "center" }}>

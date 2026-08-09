@@ -352,7 +352,8 @@ async function runConversionJob(jobId: string) {
       },
       onError: (error) => {
         useConvertStore.getState().markFailed(jobId, error);
-      }
+      },
+      isCancelled: () => useConvertStore.getState().jobs[jobId]?.status === "cancelled"
     });
   } catch (error) {
     const currentJob = useConvertStore.getState().jobs[jobId];

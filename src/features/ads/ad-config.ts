@@ -10,8 +10,7 @@ import { TestIds } from "react-native-google-mobile-ads";
  *
  * The App ID lives in app.json (react-native-google-mobile-ads plugin), not here.
  * Android + iOS unit IDs are real and release-gated; __DEV__ always serves TestIds.
- * PENDING before an iOS release: the real iOS AdMob App ID — app.json `iosAppId`
- * (and Info.plist GADApplicationIdentifier) is still Google's sample ~1458002511.
+ * Both platforms' App IDs are real (app.json `androidAppId`/`iosAppId`).
  */
 
 const ANDROID_BANNER = "ca-app-pub-5256708773143000/3772562348";
@@ -31,7 +30,34 @@ const IOS_REWARDED = "ca-app-pub-5256708773143000/7964836642";
 // of AdMob account bans). Production builds leave the flag unset, so real units
 // serve. A closed-testing AAB built with this flag must NOT be promoted to
 // production — build production separately (flag unset, higher versionCode).
-const USE_TEST_ADS = __DEV__ || process.env.EXPO_PUBLIC_ADS_USE_TEST === "1";
+const FORCED_TEST_ADS = process.env.EXPO_PUBLIC_ADS_USE_TEST === "1";
+const USE_TEST_ADS = __DEV__ || FORCED_TEST_ADS;
+
+/**
+ * TRUE when a RELEASE build is serving test ads because EXPO_PUBLIC_ADS_USE_TEST
+ * was set at bundle time. Such a build earns $0 and must never be promoted to
+ * production. Metro inlines EXPO_PUBLIC_* at BUILD time, so this cannot be
+ * checked from outside the bundle — the value is baked in.
+ *
+ * Exported so `assertAdConfigIsProductionSafe()` can shout about it at startup,
+ * and so a release-checklist test could assert it is false.
+ */
+export const IS_RELEASE_BUILD_WITH_TEST_ADS = !__DEV__ && FORCED_TEST_ADS;
+
+/**
+ * Log a loud, greppable banner when a release build was bundled with forced test
+ * ads. This is the ONLY in-app signal that an AAB is a closed-testing artifact —
+ * the repo has already produced one such bundle (versionCode 5) whose sole guard
+ * was a source comment. Call once during ad initialisation.
+ */
+export function assertAdConfigIsProductionSafe(): void {
+  if (!IS_RELEASE_BUILD_WITH_TEST_ADS) return;
+  console.warn(
+    "[ads] RELEASE BUILD IS SERVING TEST ADS — EXPO_PUBLIC_ADS_USE_TEST=1 was set at bundle time. " +
+      "This build earns no revenue and MUST NOT be promoted to production. " +
+      "Rebuild with the flag unset (and a higher versionCode) for a production release."
+  );
+}
 
 export const BANNER_AD_UNIT_ID = USE_TEST_ADS
   ? TestIds.BANNER
