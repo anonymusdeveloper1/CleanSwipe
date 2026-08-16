@@ -8,6 +8,7 @@ import Purchases, {
   PurchasesError,
   PURCHASES_ERROR_CODE
 } from "react-native-purchases";
+import { resolveRevenueCatSupportIdentity } from "@/features/subscription/revenuecat-support-identity";
 import { BillingPlan, BillingPlans, SubscriptionPlan, SubscriptionSource, SubscriptionStatus } from "@/features/subscription/subscription.types";
 
 // Must match the entitlement Identifier in the RevenueCat dashboard exactly.
@@ -116,22 +117,25 @@ export const RevenueCatSubscriptionService = {
   },
 
   /**
-   * The RevenueCat App User ID for this install (anonymous — the app never signs
-   * users in, so RevenueCat generates a `$RCAnonymousID:…`).
+   * Fresh identifiers for matching a support email to a RevenueCat customer.
    *
-   * Surfaced ONLY so support emails can carry it: it is the single identifier
-   * that maps a person who wrote in to their entry in the RevenueCat dashboard,
-   * which is what a complimentary/promotional Pro grant has to be applied to.
-   * Without it an anonymous user and an email address cannot be connected.
+   * `Purchases.getAppUserID()` is only this installation's SDK identity. After a
+   * restore or customer merge it can remain an alias while the dashboard uses a
+   * different primary ID. Refresh CustomerInfo so its `originalAppUserId` is the
+   * primary Support ID, then retain the local ID as a device alias when different.
    *
-   * Returns undefined rather than throwing when billing is not configured (no
-   * usable API key) — a support email must never be blocked by billing state.
+   * Every operation is best-effort: billing/network trouble must never prevent a
+   * user from opening their email app, and the local ID remains a useful fallback.
    */
-  async getAppUserId(): Promise<string | undefined> {
+  async getSupportIdentity() {
     try {
       if (!(await RevenueCatSubscriptionService.configure())) return undefined;
-      const id = await Purchases.getAppUserID();
-      return id?.trim() ? id : undefined;
+
+      const deviceAppUserId = await Purchases.getAppUserID().catch(() => undefined);
+      await Purchases.invalidateCustomerInfoCache().catch(() => undefined);
+      const customerInfo = await Purchases.getCustomerInfo().catch(() => undefined);
+
+      return resolveRevenueCatSupportIdentity(customerInfo?.originalAppUserId, deviceAppUserId);
     } catch {
       return undefined;
     }

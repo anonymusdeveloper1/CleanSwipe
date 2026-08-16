@@ -9,6 +9,7 @@ import { PermissionService } from "@/services/permission-service";
 import { PhotoLibraryService } from "@/services/photo-library-service";
 import { resolveMediaDate } from "@/utils/date";
 import { registerDebouncedFlusher } from "@/utils/debounced-storage";
+import { findMissingMediaIds } from "@/utils/media-library-reconcile";
 
 export type MediaIndexStatus = "idle" | "refreshing" | "scanning" | "complete" | "error";
 
@@ -49,6 +50,7 @@ type MediaIndexStore = {
   refreshNewestPage: () => Promise<void>;
   startFullScan: (options?: { force?: boolean; restart?: boolean; ignoredSourceIds?: string[] }) => Promise<void>;
   removeMediaIds: (ids: string[]) => void;
+  removeMissingMediaIds: (existingIds: Iterable<string>) => string[];
   resetIndex: () => void;
 };
 
@@ -437,6 +439,12 @@ export const useMediaIndexStore = create<MediaIndexStore>()(
             summary: summarizeIndexedAssets(orderedIds.map((id) => assetsById[id]).filter(Boolean), state.ignoredSourceKey)
           };
         });
+      },
+
+      removeMissingMediaIds(existingIds) {
+        const missingIds = findMissingMediaIds(get().orderedIds, existingIds);
+        if (missingIds.length > 0) get().removeMediaIds(missingIds);
+        return missingIds;
       },
 
       resetIndex() {

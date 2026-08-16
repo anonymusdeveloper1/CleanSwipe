@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "खरीदारी पुनर्स्थापित करें",
     "restoredMessage": "No active subscription was found for this store account.",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
-    "termsOfUse": "उपयोग की शर्तें"
+    "billingDisclaimerAndroid": "भुगतान आपके Google Play खाते से लिया जाता है। मासिक और वार्षिक सदस्यताएँ चुनी गई बिलिंग अवधि के अनुसार अपने-आप नवीनीकृत होती हैं, जब तक कि नवीनीकरण से पहले रद्द न की जाएँ। Google Play की सदस्यताओं में प्रबंधित या रद्द करें।",
+    "billingDisclaimerIos": "भुगतान आपके Apple ID से लिया जाता है। मासिक और वार्षिक सदस्यताएँ अपने-आप नवीनीकृत होती हैं, जब तक कि मौजूदा अवधि समाप्त होने से कम से कम 24 घंटे पहले रद्द न की जाएँ। नवीनीकरण से पहले के 24 घंटों में खाते से शुल्क लिया जाता है। App Store सेटिंग में प्रबंधित या रद्द करें।",
+    "termsOfUseAndroid": "Google Play की शर्तें",
+    "termsOfUseIos": "उपयोग की शर्तें (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

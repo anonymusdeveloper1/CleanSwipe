@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "Restore Purchases",
     "restoredMessage": "No active subscription was found for this store account.",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
-    "termsOfUse": "Terms of Use"
+    "billingDisclaimerAndroid": "Payment is charged to your Google Play account. Monthly and yearly subscriptions renew automatically at the selected billing period unless canceled before renewal. Manage or cancel in Google Play subscriptions.",
+    "billingDisclaimerIos": "Payment is charged to your Apple ID. Monthly and yearly subscriptions renew automatically unless canceled at least 24 hours before the current period ends. Your account is charged within 24 hours before renewal. Manage or cancel in App Store settings.",
+    "termsOfUseAndroid": "Google Play Terms",
+    "termsOfUseIos": "Terms of Use (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

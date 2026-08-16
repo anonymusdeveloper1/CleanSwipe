@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Echec de la restauration",
     "restoredTitle": "Restaurer les achats",
     "restoredMessage": "Aucun abonnement actif n'a ete trouve pour ce compte de boutique.",
-    "billingDisclaimer": "Le paiement est gere par la boutique d'apps. Les abonnements se renouvellent automatiquement sauf annulation dans votre compte de boutique.",
-    "termsOfUse": "Conditions d'utilisation"
+    "billingDisclaimerAndroid": "Le paiement est débité de votre compte Google Play. Les abonnements mensuels et annuels se renouvellent automatiquement selon la période de facturation choisie, sauf annulation avant le renouvellement. Gérez ou annulez dans Abonnements Google Play.",
+    "billingDisclaimerIos": "Le paiement est débité de votre identifiant Apple. Les abonnements mensuels et annuels se renouvellent automatiquement, sauf annulation au moins 24 heures avant la fin de la période en cours. Votre compte est débité dans les 24 heures précédant le renouvellement. Gérez ou annulez dans les réglages de l’App Store.",
+    "termsOfUseAndroid": "Conditions de Google Play",
+    "termsOfUseIos": "Conditions d’utilisation (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

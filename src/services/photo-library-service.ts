@@ -47,13 +47,21 @@ export type DeletePhotosResult = {
   message?: string;
 };
 
+export type LibraryAssetIdSnapshot = {
+  assetIds: string[];
+  signature: LibrarySignature;
+};
+
 export interface IPhotoLibraryService {
   requestPermissions(): Promise<unknown>;
   getPhotosPage(options?: GetPhotosOptions): Promise<GetPhotosPageResult>;
   getPhotos(options?: GetPhotosOptions): Promise<PhotoAsset[]>;
   deletePhotos(photoIds: string[]): Promise<DeletePhotosResult>;
   getLibrarySignature(): Promise<LibrarySignature | undefined>;
+  getLibraryAssetIdSnapshot(): Promise<LibraryAssetIdSnapshot | undefined>;
 }
+
+const ASSET_ID_PAGE_SIZE = 500;
 
 export const PhotoLibraryService: IPhotoLibraryService = {
   async requestPermissions() {
@@ -93,6 +101,69 @@ export const PhotoLibraryService: IPhotoLibraryService = {
         newestId: newest?.id,
         newestModificationTime: newest?.modificationTime
       };
+    } catch {
+      return undefined;
+    }
+  },
+
+  /**
+   * Reads an authoritative, ID-only snapshot of the accessible device library.
+   *
+   * This is intentionally separate from `getPhotosPage`: detecting which
+   * indexed assets disappeared does not need dimensions, file sizes, or one
+   * `getAssetInfoAsync` native call per item. Pagination therefore remains fast
+   * even for a large library.
+   *
+   * The library can change while pages are being read. We compare every page's
+   * count and then re-read the cheap signature at the end; an unstable or
+   * incomplete snapshot returns undefined so callers keep the existing index
+   * and retry later instead of pruning a valid asset.
+   */
+  async getLibraryAssetIdSnapshot() {
+    try {
+      const permission = await MediaLibrary.getPermissionsAsync(false, ["photo", "video"]);
+      if (!permission.granted && permission.status !== "granted") return undefined;
+
+      let after: string | undefined;
+      let hasNextPage = true;
+      let initialSignature: LibrarySignature | undefined;
+      const assetIds = new Set<string>();
+
+      while (hasNextPage) {
+        const page = await MediaLibrary.getAssetsAsync({
+          first: ASSET_ID_PAGE_SIZE,
+          after,
+          mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
+          sortBy: [MediaLibrary.SortBy.modificationTime]
+        });
+        const newest = page.assets[0];
+        const pageSignature: LibrarySignature = {
+          totalCount: page.totalCount,
+          newestId: initialSignature?.newestId ?? newest?.id,
+          newestModificationTime: initialSignature?.newestModificationTime ?? newest?.modificationTime
+        };
+
+        if (!initialSignature) {
+          initialSignature = pageSignature;
+        } else if (page.totalCount !== initialSignature.totalCount) {
+          return undefined;
+        }
+
+        for (const asset of page.assets) assetIds.add(asset.id);
+
+        const nextCursor = page.endCursor;
+        hasNextPage = page.hasNextPage;
+        if (hasNextPage && (!nextCursor || nextCursor === after || page.assets.length === 0)) {
+          return undefined;
+        }
+        after = nextCursor;
+      }
+
+      if (!initialSignature || assetIds.size !== initialSignature.totalCount) return undefined;
+      const finalSignature = await this.getLibrarySignature();
+      if (!finalSignature || !librarySignaturesEqual(initialSignature, finalSignature)) return undefined;
+
+      return { assetIds: [...assetIds], signature: finalSignature };
     } catch {
       return undefined;
     }
@@ -228,4 +299,12 @@ function estimateSizeBytes(width?: number, height?: number, mediaType?: MediaLib
     return Math.round(width * height * Math.max(duration ?? 1, 1) * 0.18);
   }
   return Math.round(width * height * 0.55);
+}
+
+function librarySignaturesEqual(left: LibrarySignature, right: LibrarySignature) {
+  return (
+    left.totalCount === right.totalCount &&
+    left.newestId === right.newestId &&
+    left.newestModificationTime === right.newestModificationTime
+  );
 }

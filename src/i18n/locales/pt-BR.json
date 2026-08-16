@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Falha ao restaurar",
     "restoredTitle": "Restaurar compras",
     "restoredMessage": "Nenhuma assinatura ativa foi encontrada para esta conta da loja.",
-    "billingDisclaimer": "O pagamento e processado pela loja de apps. As assinaturas renovam automaticamente, a menos que sejam canceladas na sua conta da loja.",
-    "termsOfUse": "Termos de uso"
+    "billingDisclaimerAndroid": "O pagamento é cobrado na sua conta do Google Play. As assinaturas mensais e anuais são renovadas automaticamente no período de cobrança escolhido, a menos que sejam canceladas antes da renovação. Gerencie ou cancele em Assinaturas do Google Play.",
+    "billingDisclaimerIos": "O pagamento é cobrado no seu ID Apple. As assinaturas mensais e anuais são renovadas automaticamente, a menos que sejam canceladas pelo menos 24 horas antes do fim do período atual. A conta é cobrada nas 24 horas anteriores à renovação. Gerencie ou cancele nos ajustes da App Store.",
+    "termsOfUseAndroid": "Termos do Google Play",
+    "termsOfUseIos": "Termos de uso (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

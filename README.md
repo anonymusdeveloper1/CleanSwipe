@@ -82,10 +82,10 @@ npm run typecheck && npm test && npm run i18n:check && npm run lint
 ```
 
 - `typecheck` — `tsc --noEmit`, expected clean.
-- `test` — Vitest. **Pure modules only**: `vitest.config.ts` scopes to
-  `src/**/*.test.ts` in a `node` environment, so anything importing React,
-  React Native, Expo, or `@/i18n` is out of scope by design. Stores, screens, and
-  services are covered by the Maestro suite, not unit tests.
+- `test` — Vitest. `vitest.config.ts` scopes to `src/**/*.test.ts` in a `node`
+  environment. Most tests cover pure modules; a native-bound service may be
+  tested only when its Expo/native and i18n dependencies are fully mocked.
+  Stores and screens remain covered by the Maestro suite, not unit tests.
 - `i18n:check` — key + `{{placeholder}}` parity of all 10 locales against
   `en.json`, plus advisory **orphan-key** detection. Add runtime-composed key
   prefixes to `DYNAMIC_KEY_PREFIXES` in `scripts/check-i18n.mjs`.
@@ -146,11 +146,25 @@ cd android && ./gradlew :app:bundleRelease
   to production** — cut production separately with the flag unset and a higher
   `versionCode`.
 
+If a tablet already has the Play-signed app, the upload-key APK cannot replace
+it directly. Build an opt-in side-by-side QA release instead; this keeps the Play
+app and its data intact and installs as `com.cognitix.swipeclean.tabletqa`:
+
+```bash
+cd android && ./gradlew :app:assembleRelease -PswipecleanTabletQa=true
+```
+
+The flag affects only that invocation. A normal `assembleRelease` or
+`bundleRelease` still uses the production application id.
+
 ## Where to look next
 
 - [`AGENTS.md`](AGENTS.md) — working rules for AI agents on this repo.
 - [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) — the real documentation: §3 file
   map, §5 architecture and data flow, §7 business rules, §10 known issues, §11
   dated Feature History.
+- [`PLAY_RELEASE.md`](PLAY_RELEASE.md) — the current Android build-6 artifact,
+  verification record, production-access steps, and Play Console rollout
+  handoff.
 - `SECURITY_SCAN.md`, `APP_ANALYSIS.md`, `DESIGN-BRIEF.md`, `CONVERT_PLAN.md` —
   dated one-shot snapshots. Check the date before trusting them.

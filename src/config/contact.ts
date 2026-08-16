@@ -23,8 +23,24 @@ export const SUPPORT_EMAIL = "info.cognitix@gmail.com";
 /** Published privacy policy. Linked from Settings, the paywall and the upgrade sheet. */
 export const PRIVACY_POLICY_URL = "https://effervescent-douhua-6f5c1d.netlify.app";
 
+const APPLE_STANDARD_EULA_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+const GOOGLE_PLAY_TERMS_URL = "https://play.google.com/about/play-terms/";
+
 /**
- * Terms of Use. Apple's standard EULA — required by App Store review when a
- * paywall is shown, and reused on Android for consistency.
+ * Store-specific legal copy and destination for subscription surfaces.
+ *
+ * Apple requires an accessible Terms of Use / EULA link for auto-renewing
+ * subscriptions. Android must not send users to Apple's EULA, so it links to
+ * Google Play's terms and uses Google Play-specific renewal/cancellation copy.
+ * `EXPO_OS` is replaced at bundle time, leaving each native build with only its
+ * own platform branch.
  */
-export const TERMS_OF_USE_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+const IS_ANDROID = process.env.EXPO_OS === "android";
+
+export const TERMS_OF_USE_URL = IS_ANDROID ? GOOGLE_PLAY_TERMS_URL : APPLE_STANDARD_EULA_URL;
+export const SUBSCRIPTION_BILLING_DISCLAIMER_KEY = IS_ANDROID
+  ? "subscription.billingDisclaimerAndroid"
+  : "subscription.billingDisclaimerIos";
+export const SUBSCRIPTION_TERMS_LABEL_KEY = IS_ANDROID
+  ? "subscription.termsOfUseAndroid"
+  : "subscription.termsOfUseIos";

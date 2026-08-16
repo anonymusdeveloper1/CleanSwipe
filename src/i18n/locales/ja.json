@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "購入を復元",
     "restoredMessage": "No active subscription was found for this store account.",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
-    "termsOfUse": "利用規約"
+    "billingDisclaimerAndroid": "お支払いは Google Play アカウントに請求されます。月間および年間サブスクリプションは、更新前に解約しない限り、選択した請求期間で自動更新されます。Google Play の定期購入で管理または解約できます。",
+    "billingDisclaimerIos": "お支払いは Apple ID に請求されます。月間および年間サブスクリプションは、現在の期間が終了する24時間以上前に解約しない限り、自動更新されます。更新前の24時間以内にアカウントへ請求されます。App Store の設定で管理または解約できます。",
+    "termsOfUseAndroid": "Google Play 利用規約",
+    "termsOfUseIos": "利用規約（EULA）"
   },
   "smartClean": {
     "title": "Smart Clean",

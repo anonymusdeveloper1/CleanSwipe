@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Ripristino non riuscito",
     "restoredTitle": "Ripristina acquisti",
     "restoredMessage": "Nessun abbonamento attivo trovato per questo account dello store.",
-    "billingDisclaimer": "Il pagamento e gestito dallo store. Gli abbonamenti si rinnovano automaticamente salvo annullamento nell account dello store.",
-    "termsOfUse": "Termini di utilizzo"
+    "billingDisclaimerAndroid": "Il pagamento viene addebitato sul tuo account Google Play. Gli abbonamenti mensili e annuali si rinnovano automaticamente con il periodo di fatturazione scelto, salvo annullamento prima del rinnovo. Gestisci o annulla in Abbonamenti Google Play.",
+    "billingDisclaimerIos": "Il pagamento viene addebitato sul tuo ID Apple. Gli abbonamenti mensili e annuali si rinnovano automaticamente, salvo annullamento almeno 24 ore prima della fine del periodo corrente. L’account viene addebitato nelle 24 ore precedenti il rinnovo. Gestisci o annulla nelle impostazioni dell’App Store.",
+    "termsOfUseAndroid": "Termini di Google Play",
+    "termsOfUseIos": "Termini di utilizzo (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

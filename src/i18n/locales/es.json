@@ -93,8 +93,10 @@
     "restoreFailedTitle": "La restauracion fallo",
     "restoredTitle": "Restaurar compras",
     "restoredMessage": "No se encontro ninguna suscripcion activa para esta cuenta de la tienda.",
-    "billingDisclaimer": "El pago lo gestiona la tienda de apps. Las suscripciones se renuevan automaticamente salvo que las canceles en tu cuenta de la tienda.",
-    "termsOfUse": "Términos de uso"
+    "billingDisclaimerAndroid": "El pago se carga a tu cuenta de Google Play. Las suscripciones mensuales y anuales se renuevan automáticamente con el periodo de facturación elegido, salvo que las canceles antes de la renovación. Puedes gestionarlas o cancelarlas en Suscripciones de Google Play.",
+    "billingDisclaimerIos": "El pago se carga a tu Apple ID. Las suscripciones mensuales y anuales se renuevan automáticamente, salvo que las canceles al menos 24 horas antes de que termine el periodo actual. La cuenta se carga dentro de las 24 horas anteriores a la renovación. Puedes gestionarlas o cancelarlas en los ajustes del App Store.",
+    "termsOfUseAndroid": "Términos de Google Play",
+    "termsOfUseIos": "Términos de uso (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

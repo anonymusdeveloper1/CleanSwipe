@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Restore failed",
     "restoredTitle": "استعادة المشتريات",
     "restoredMessage": "No active subscription was found for this store account.",
-    "billingDisclaimer": "Payment is handled by the app store. Subscriptions renew automatically unless canceled in your store account.",
-    "termsOfUse": "شروط الاستخدام"
+    "billingDisclaimerAndroid": "يتم تحصيل الدفع من حسابك على Google Play. تتجدد الاشتراكات الشهرية والسنوية تلقائيًا وفق دورة الفوترة المحددة ما لم يتم إلغاؤها قبل التجديد. يمكنك إدارتها أو إلغاؤها من اشتراكات Google Play.",
+    "billingDisclaimerIos": "يتم تحصيل الدفع من Apple ID الخاص بك. تتجدد الاشتراكات الشهرية والسنوية تلقائيًا ما لم يتم إلغاؤها قبل 24 ساعة على الأقل من نهاية الفترة الحالية. يتم تحصيل الرسوم خلال 24 ساعة قبل التجديد. يمكنك إدارتها أو إلغاؤها من إعدادات App Store.",
+    "termsOfUseAndroid": "شروط Google Play",
+    "termsOfUseIos": "شروط الاستخدام (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

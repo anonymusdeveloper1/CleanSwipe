@@ -11,7 +11,12 @@ import { StudioScreen } from "@/screens/studio-screen";
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useSubscriptionStore } from "@/store/subscription-store";
-import { PRIVACY_POLICY_URL, TERMS_OF_USE_URL } from "@/config/contact";
+import {
+  PRIVACY_POLICY_URL,
+  SUBSCRIPTION_BILLING_DISCLAIMER_KEY,
+  SUBSCRIPTION_TERMS_LABEL_KEY,
+  TERMS_OF_USE_URL
+} from "@/config/contact";
 
 type PaidPlan = "monthly" | "yearly";
 
@@ -233,12 +238,12 @@ function UpgradeView() {
       </Pressable>
 
       <Text selectable style={{ color: theme.faint, fontSize: 12, lineHeight: 17, textAlign: "center" }}>
-        {t("subscription.billingDisclaimer")}
+        {t(SUBSCRIPTION_BILLING_DISCLAIMER_KEY)}
       </Text>
 
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
-        <Pressable accessibilityRole="link" accessibilityLabel={t("subscription.termsOfUse")} onPress={() => { void Linking.openURL(TERMS_OF_USE_URL).catch(() => undefined); }} hitSlop={8}>
-          <Text style={{ color: theme.accent, fontSize: 12, fontWeight: "800", textDecorationLine: "underline" }}>{t("subscription.termsOfUse")}</Text>
+        <Pressable accessibilityRole="link" accessibilityLabel={t(SUBSCRIPTION_TERMS_LABEL_KEY)} onPress={() => { void Linking.openURL(TERMS_OF_USE_URL).catch(() => undefined); }} hitSlop={8}>
+          <Text style={{ color: theme.accent, fontSize: 12, fontWeight: "800", textDecorationLine: "underline" }}>{t(SUBSCRIPTION_TERMS_LABEL_KEY)}</Text>
         </Pressable>
         <Text style={{ color: theme.faint, fontSize: 12, marginHorizontal: 8 }}>·</Text>
         <Pressable accessibilityRole="link" accessibilityLabel={t("settings.privacyPolicy")} onPress={() => { void Linking.openURL(PRIVACY_POLICY_URL).catch(() => undefined); }} hitSlop={8}>

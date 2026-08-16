@@ -31,25 +31,24 @@ type BioCapability = { moduleAvailable: boolean; available: boolean; kind: Biome
 /**
  * Diagnostics footer appended to BOTH support emails (feedback and bug report).
  *
- * The Support ID is the RevenueCat App User ID. The app never signs users in, so
- * RevenueCat identifies this install with an anonymous `$RCAnonymousID:…` — which
- * means an incoming support email is otherwise IMPOSSIBLE to match to a
- * RevenueCat customer. Including it here is what makes it possible to grant a
- * complimentary/promotional Pro entitlement to the specific person who wrote in
- * (RevenueCat dashboard → Customers → paste the ID → grant entitlement).
+ * The Support ID is RevenueCat's freshly fetched server customer ID. The app never
+ * signs users in, so RevenueCat may merge several anonymous `$RCAnonymousID:…`
+ * values into one customer over time. When this installation's local ID is a
+ * different alias, include it too so support can search either exact identifier.
  *
  * Everything here is device/app metadata plus that opaque ID — no media, no
  * filenames, no personal data. Kept in English deliberately: the surrounding
  * email template is English too, and support is handled in English.
  */
 async function buildSupportDiagnostics(): Promise<string> {
-  const supportId = (await RevenueCatSubscriptionService.getAppUserId()) ?? "unavailable";
+  const identity = await RevenueCatSubscriptionService.getSupportIdentity();
   const status = useSubscriptionStore.getState().subscriptionStatus;
   const version = Constants.expoConfig?.version ?? "unknown";
   return [
     "----------------------------------------",
     "Please keep the lines below — they let us find your account.",
-    `Support ID: ${supportId}`,
+    `Support ID: ${identity?.supportId ?? "unavailable"}`,
+    ...(identity?.deviceAlias ? [`Device alias: ${identity.deviceAlias}`] : []),
     `App: SwipeClean ${version}`,
     `Platform: ${Platform.OS} ${String(Platform.Version)}`,
     `Plan: ${status}`
@@ -234,11 +233,9 @@ export function SettingsScreen() {
       kind === "feedback"
         ? "Hi Cognitix,\n\nI would like to share the following feedback:\n\n\n"
         : "Hi Cognitix,\n\nI found a bug in SwipeClean:\n\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected result:\n\nActual result:\n\n";
-    // Both support mails carry the same diagnostics block. The Support ID is the
-    // RevenueCat App User ID — it is what identifies this install in the
-    // RevenueCat dashboard, so a promotional/complimentary Pro grant can be
-    // applied to the exact user who wrote in. Without it there is no way to map
-    // an email address to an anonymous RevenueCat user.
+    // Both support mails carry the same freshly resolved RevenueCat customer ID,
+    // plus this installation's alias when the two differ. This avoids attaching a
+    // stale alias as the only lookup value after RevenueCat merges customers.
     const body = `${intro}${await buildSupportDiagnostics()}`;
     const mailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     try {

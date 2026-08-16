@@ -4,7 +4,12 @@ import { Linking, Modal, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePaywallStore } from "@/store/paywall-store";
-import { PRIVACY_POLICY_URL, TERMS_OF_USE_URL } from "@/config/contact";
+import {
+  PRIVACY_POLICY_URL,
+  SUBSCRIPTION_BILLING_DISCLAIMER_KEY,
+  SUBSCRIPTION_TERMS_LABEL_KEY,
+  TERMS_OF_USE_URL
+} from "@/config/contact";
 
 /**
  * Global paywall / upgrade prompt. Mounted once in the root layout; opened from
@@ -75,12 +80,12 @@ export function ProUpgradeSheet() {
           </View>
           <View style={{ gap: 8, alignItems: "center" }}>
             <Text selectable style={{ color: theme.muted, fontSize: 11, lineHeight: 16, textAlign: "center" }}>
-              {t("subscription.billingDisclaimer")}
+              {t(SUBSCRIPTION_BILLING_DISCLAIMER_KEY)}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
-              <Pressable accessibilityRole="link" accessibilityLabel={t("subscription.termsOfUse")} onPress={() => openLegalUrl(TERMS_OF_USE_URL)} hitSlop={8}>
+              <Pressable accessibilityRole="link" accessibilityLabel={t(SUBSCRIPTION_TERMS_LABEL_KEY)} onPress={() => openLegalUrl(TERMS_OF_USE_URL)} hitSlop={8}>
                 <Text style={{ color: theme.muted, fontSize: 12, fontWeight: "700", textDecorationLine: "underline" }}>
-                  {t("subscription.termsOfUse")}
+                  {t(SUBSCRIPTION_TERMS_LABEL_KEY)}
                 </Text>
               </Pressable>
               <Text style={{ color: theme.muted, fontSize: 12, marginHorizontal: 8 }}>·</Text>

@@ -22,6 +22,7 @@ import { MediaAccessLevel, selectIndexedMediaAssets, useMediaIndexStore } from "
 import { normalizeLanguagePreference } from "@/i18n/languages";
 import { createDebouncedStorage } from "@/utils/debounced-storage";
 import { filterMarkedItemsByScope, filterPhotosByScope } from "@/utils/months";
+import { useSmartCleanFeatureCache } from "@/features/smart-clean/feature-cache-store";
 
 /**
  * Newest-first cap on the persisted deletion history. The history is purely a
@@ -61,6 +62,7 @@ type AppStore = {
   setHasHydrated: (hasHydrated: boolean) => void;
   loadInitialData: () => Promise<void>;
   refreshPhotos: () => Promise<void>;
+  reconcileExternalLibraryDeletions: () => Promise<string[]>;
   loadMorePhotos: () => Promise<void>;
   requestPhotoPermission: () => Promise<void>;
   refreshPermissionStatus: () => Promise<void>;
@@ -83,6 +85,7 @@ type AppStore = {
 let initialLoadPromise: Promise<void> | undefined;
 let refreshPromise: Promise<void> | undefined;
 let loadMorePromise: Promise<void> | undefined;
+let externalLibraryReconcilePromise: Promise<string[]> | undefined;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -212,6 +215,65 @@ export const useAppStore = create<AppStore>()(
         });
 
         return refreshPromise;
+      },
+
+      async reconcileExternalLibraryDeletions() {
+        if (externalLibraryReconcilePromise) return externalLibraryReconcilePromise;
+
+        externalLibraryReconcilePromise = (async () => {
+          // Limited access already performs an awaited, pruning full scan in
+          // reconcileMediaIndex. An ID-only snapshot is authoritative for real
+          // deletion only under full access; under limited access, a missing ID
+          // may simply be outside the user's selected-photo grant.
+          const permission = await PermissionService.getMediaPermission();
+          if (permission.status !== "granted") return [];
+
+          const snapshot = await PhotoLibraryService.getLibraryAssetIdSnapshot();
+          if (!snapshot) return [];
+
+          const currentPhotoId = get().currentPhoto()?.id;
+          const validIds = new Set(snapshot.assetIds);
+          const removedIds = useMediaIndexStore.getState().removeMissingMediaIds(validIds);
+          if (removedIds.length === 0) return [];
+
+          // These are confirmed device-library deletions, not permission-hidden
+          // assets, so stale computed hashes can be discarded safely.
+          useSmartCleanFeatureCache.getState().pruneMissing(validIds);
+
+          set((state) => {
+            const markedForDeletion = state.markedForDeletion.filter((item) => validIds.has(item.photoId));
+            const reviewedPhotoIds = state.reviewedPhotoIds.filter((id) => validIds.has(id));
+            const indexedPhotos = selectIndexedMediaAssets(useMediaIndexStore.getState());
+            const visiblePhotos = getVisiblePhotos(indexedPhotos, {
+              ...state,
+              markedForDeletion,
+              reviewedPhotoIds
+            });
+            const matchingIndex = currentPhotoId
+              ? visiblePhotos.findIndex((photo) => photo.id === currentPhotoId)
+              : -1;
+
+            return {
+              markedForDeletion,
+              reviewedPhotoIds,
+              currentIndex:
+                matchingIndex >= 0
+                  ? matchingIndex
+                  : Math.min(state.currentIndex, Math.max(visiblePhotos.length - 1, 0)),
+              lastSwipe: state.lastSwipe && !validIds.has(state.lastSwipe.photo.id) ? undefined : state.lastSwipe,
+              photos: [],
+              photosHasNextPage: useMediaIndexStore.getState().hasNextPage,
+              photoLibrarySyncedAt: Date.now(),
+              error: undefined
+            };
+          });
+
+          return removedIds;
+        })().finally(() => {
+          externalLibraryReconcilePromise = undefined;
+        });
+
+        return externalLibraryReconcilePromise;
       },
 
       async loadMorePhotos() {

@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Wiederherstellung fehlgeschlagen",
     "restoredTitle": "Käufe wiederherstellen",
     "restoredMessage": "Fur dieses Store-Konto wurde kein aktives Abonnement gefunden.",
-    "billingDisclaimer": "Die Zahlung wird vom App Store abgewickelt. Abonnements verlangern sich automatisch, sofern sie nicht im Store-Konto gekundigt werden.",
-    "termsOfUse": "Nutzungsbedingungen"
+    "billingDisclaimerAndroid": "Die Zahlung wird Ihrem Google-Play-Konto belastet. Monats- und Jahresabonnements verlängern sich automatisch im gewählten Abrechnungszeitraum, sofern sie nicht vor der Verlängerung gekündigt werden. Verwaltung oder Kündigung unter Google Play-Abos.",
+    "billingDisclaimerIos": "Die Zahlung wird Ihrer Apple-ID belastet. Monats- und Jahresabonnements verlängern sich automatisch, sofern sie nicht mindestens 24 Stunden vor Ablauf des aktuellen Zeitraums gekündigt werden. Ihr Konto wird innerhalb von 24 Stunden vor der Verlängerung belastet. Verwaltung oder Kündigung in den App-Store-Einstellungen.",
+    "termsOfUseAndroid": "Google Play-Nutzungsbedingungen",
+    "termsOfUseIos": "Nutzungsbedingungen (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

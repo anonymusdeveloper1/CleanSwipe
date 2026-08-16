@@ -93,8 +93,10 @@
     "restoreFailedTitle": "Pemulihan gagal",
     "restoredTitle": "Pulihkan Pembelian",
     "restoredMessage": "Tidak ada langganan aktif yang ditemukan untuk akun toko ini.",
-    "billingDisclaimer": "Pembayaran ditangani oleh toko aplikasi. Langganan diperpanjang otomatis kecuali dibatalkan di akun toko Anda.",
-    "termsOfUse": "Ketentuan Penggunaan"
+    "billingDisclaimerAndroid": "Pembayaran dibebankan ke akun Google Play Anda. Langganan bulanan dan tahunan diperpanjang otomatis sesuai periode penagihan yang dipilih kecuali dibatalkan sebelum perpanjangan. Kelola atau batalkan di Langganan Google Play.",
+    "billingDisclaimerIos": "Pembayaran dibebankan ke ID Apple Anda. Langganan bulanan dan tahunan diperpanjang otomatis kecuali dibatalkan setidaknya 24 jam sebelum periode berjalan berakhir. Akun Anda ditagih dalam 24 jam sebelum perpanjangan. Kelola atau batalkan di pengaturan App Store.",
+    "termsOfUseAndroid": "Persyaratan Google Play",
+    "termsOfUseIos": "Ketentuan Penggunaan (EULA)"
   },
   "smartClean": {
     "title": "Smart Clean",

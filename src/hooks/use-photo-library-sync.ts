@@ -42,6 +42,7 @@ function resetLibrarySignature() {
 let refreshRunning = false;
 let refreshQueued = false;
 let forceSmartCleanRescanQueued = false;
+let reconcileExternalDeletionsQueued = false;
 let lastReconciledPermission: PermissionStatus | undefined;
 const smartCleanRescanIntent = createSmartCleanRescanIntent();
 
@@ -57,7 +58,7 @@ function invalidateSmartCleanMediaSnapshot() {
   useSmartCleanStore.getState().reset();
 }
 
-async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean) {
+async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean, reconcileExternalDeletions: boolean) {
   const previousPermission = lastReconciledPermission ?? useAppStore.getState().permission.status;
   const previousIndex = useMediaIndexStore.getState();
   const previousOrderedIds = previousIndex.orderedIds;
@@ -83,6 +84,14 @@ async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean) {
 
   await useAppStore.getState().refreshPhotos();
 
+  // The normal newest-page refresh is intentionally merge-only. Follow it with
+  // a stable, ID-only full-library snapshot when an OS/library signal requests
+  // deletion reconciliation, then remove only IDs proven absent from the device.
+  const externallyDeletedIds = reconcileExternalDeletions
+    ? await useAppStore.getState().reconcileExternalLibraryDeletions()
+    : [];
+  const externalLibraryDeletion = externallyDeletedIds.length > 0;
+
   const nextPermission = useAppStore.getState().permission.status;
   lastReconciledPermission = nextPermission;
   const nextIndex = useMediaIndexStore.getState();
@@ -95,7 +104,12 @@ async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean) {
   // reconciled IDs rather than relying on store reference identity.
   const limitedSelectionChanged =
     nextPermission === "limited" && orderedMediaIdsChanged(previousOrderedIds, nextIndex.orderedIds);
-  const mediaScopeChanged = forceSmartCleanRescan || permissionChanged || accessLevelChanged || limitedSelectionChanged;
+  const mediaScopeChanged =
+    forceSmartCleanRescan ||
+    externalLibraryDeletion ||
+    permissionChanged ||
+    accessLevelChanged ||
+    limitedSelectionChanged;
 
   if (!canRead) {
     if (!invalidated && (mediaScopeChanged || hadSmartCleanHistory)) {
@@ -146,8 +160,11 @@ async function reconcilePhotoLibraryAccess(forceSmartCleanRescan: boolean) {
  * selected-media picker. Concurrent calls coalesce, then perform one trailing
  * pass so no permission transition is lost.
  */
-export async function refreshPhotoLibraryAccess(options: { forceSmartCleanRescan?: boolean } = {}) {
+export async function refreshPhotoLibraryAccess(
+  options: { forceSmartCleanRescan?: boolean; reconcileExternalDeletions?: boolean } = {}
+) {
   if (options.forceSmartCleanRescan) forceSmartCleanRescanQueued = true;
+  if (options.reconcileExternalDeletions) reconcileExternalDeletionsQueued = true;
   if (refreshRunning) {
     refreshQueued = true;
     return;
@@ -157,8 +174,10 @@ export async function refreshPhotoLibraryAccess(options: { forceSmartCleanRescan
     do {
       refreshQueued = false;
       const forceSmartCleanRescan = forceSmartCleanRescanQueued;
+      const reconcileExternalDeletions = reconcileExternalDeletionsQueued;
       forceSmartCleanRescanQueued = false;
-      await reconcilePhotoLibraryAccess(forceSmartCleanRescan);
+      reconcileExternalDeletionsQueued = false;
+      await reconcilePhotoLibraryAccess(forceSmartCleanRescan, reconcileExternalDeletions);
     } while (refreshQueued);
   } finally {
     refreshRunning = false;
@@ -170,7 +189,10 @@ export function usePhotoLibrarySync() {
   const appHydrated = useAppStore((state) => state.hasHydrated);
   const smartCleanHydrated = useSmartCleanStore((state) => state.hasHydrated);
   const subscriptionHydrated = useSubscriptionStore((state) => state.hasHydrated);
-  const refresh = useCallback(() => refreshPhotoLibraryAccess(), []);
+  const refresh = useCallback(
+    () => refreshPhotoLibraryAccess({ reconcileExternalDeletions: true }),
+    []
+  );
 
   // Reconcile once on every JS/app launch after persisted state is ready.
   // AppState does not emit an active transition after Fast Refresh/reload, so
@@ -226,7 +248,7 @@ export function usePhotoLibrarySync() {
         if (!signature) return;
         const changed = librarySignatureChanged(lastLibrarySignature, signature);
         lastLibrarySignature = signature;
-        if (changed) await refreshPhotoLibraryAccess();
+        if (changed) await refreshPhotoLibraryAccess({ reconcileExternalDeletions: true });
       } finally {
         probing = false;
       }

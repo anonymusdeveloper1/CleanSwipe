@@ -110,7 +110,7 @@ android {
         applicationId 'com.cognitix.swipeclean'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
+        versionCode 6
         versionName "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
@@ -155,6 +155,15 @@ android {
                 }
             }
             signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            // A Play-installed build is re-signed by Play App Signing, so the
+            // local upload-key APK cannot update it in place. This opt-in suffix
+            // produces a side-by-side release APK for physical-device QA without
+            // uninstalling the Play app or wiping its local state. Normal release
+            // bundles are unchanged unless -PswipecleanTabletQa=true is passed.
+            if ((findProperty('swipecleanTabletQa') ?: 'false').toBoolean()) {
+                applicationIdSuffix '.tabletqa'
+                versionNameSuffix '-tabletqa'
+            }
             // R8: minify + resource-shrink the NATIVE/Java side of the release build.
             // (The JS bundle is minified separately by Metro/Hermes.) Keep rules that
             // protect JNI / reflection / native-referenced classes live in
