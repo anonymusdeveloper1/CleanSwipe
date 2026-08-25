@@ -392,14 +392,14 @@ Consolidated view of one working session. Each change has its own dated entry be
 - **Production AAB build 7** cut and verified. See 2026-08-22.
 
 **Release state (Android)**
-- **Build 7 is UPLOADED and is the live beta on Google Play** (user-confirmed). `dist-android/SwipeClean-v1.0.0-vc7-production.aab`, versionCode 7 / versionName 1.0.0, SHA-256 `381CE9F2C15150D4B6B81593575234777C98C9B5288A61612361878AB74DE1FA`. The next Play upload therefore needs **versionCode 8 or higher**.
+- **Build 7 is PUBLISHED on Google Play** (user-confirmed 2026-08-22) — live to the public, not in review and not a closed beta. `dist-android/SwipeClean-v1.0.0-vc7-production.aab`, versionCode 7 / versionName 1.0.0, SHA-256 `381CE9F2C15150D4B6B81593575234777C98C9B5288A61612361878AB74DE1FA`. The next Play upload therefore needs **versionCode 8 or higher**.
 - New store screenshots, the new green ring logo, and the updated listing were uploaded to Play Console by the user.
 
 **Stale / open items an agent should not trust**
 - `store-listing-generated/` now contains **only `LISTING.md`**. The 10 tracked PNGs (8 screenshots, feature graphic, logo) were DELETED this session: they showed the old blue card-stack logo and the pre-rename "Premium" tab, and the authoritative screenshots now live in Play Console. They remain recoverable from git history if a future regeneration wants them as a reference — do not re-upload them as-is.
-- LGPL attribution is still absent by explicit product decision while LAME ships twice in the binary (§10, and 2026-08-06 c). Relevant at production review.
-- The media-sync fix (2026-08-06 and 2026-08-06 b) has still **not been confirmed on-device** by a real download test.
-- The adaptive-icon safe-zone scale (0.62) has not been visually confirmed on a launcher.
+- **LGPL attribution is absent from a PUBLISHED app.** LAME ships TWICE in the live build-7 AAB, verified by `unzip -l` on the shipped artifact, in all four ABIs: `libswipecleanlame.so` (our vendored copy, for the hidden MP3 target) and `libandroidlame.so` (pulled in by react-native-compressor, which powers the Compress tab). Deleting our copy would NOT remove the obligation — the dependency's copy ships regardless, and dropping react-native-compressor would mean losing Compress. LGPL requires naming the library + offering its source; the removed Open-Source Licenses screen was the only place either happened. Google Play does not scan for this, so nothing will auto-flag it; the exposure is a rights-holder/enforcement complaint and a possible takedown request — low probability, non-zero, and permanent while shipping. The screen is one revert away and restoring it costs a Settings row plus a versionCode bump. Product decision, recorded so it stays a decision rather than becoming an accident (§10, and 2026-08-06 c).
+- ~~The media-sync fix needs on-device confirmation~~ — **VERIFIED ON DEVICE 2026-08-22** (user-confirmed). A newly downloaded photo/video now appears promptly in both the gallery and the swipe deck. Both halves are proven: the 3 s change probe (2026-08-06) and the dual creationTime+modificationTime fetch that makes DATE_TAKEN-less downloads reachable (2026-08-06 b).
+- ~~Adaptive-icon safe-zone scale needs a launcher check~~ — **VERIFIED ON DEVICE 2026-08-22** (user-confirmed): no clipping at scale 0.62. The stroke-inclusive span rule in the vector's comment is correct as written.
 
 **Verification at session end:** typecheck green; `npm test` green (14 files / 123 tests); `i18n:check` green (0 orphans); `npm run lint` green (0 errors, 92 warnings).
 

@@ -8,7 +8,7 @@ full implementation history remains in `PROJECT_CONTEXT.md` §11.
 
 ## CURRENT PRODUCTION ARTIFACT — build 7 (2026-08-22)
 
-**UPLOADED AND LIVE** as the Play beta (confirmed 2026-08-22). Build 6 below is superseded; it predates the green rebrand,
+**PUBLISHED ON GOOGLE PLAY** (confirmed 2026-08-22) — live to the public; not in review. Build 6 below is superseded; it predates the green rebrand,
 the new logo, and several fixes.
 
 | Purpose | Artifact | Version | SHA-256 |
@@ -219,7 +219,7 @@ What's new
 
 ## Next upload
 
-Build 7 is live on the Play beta track, so the **next upload must use
+Build 7 is PUBLISHED on Play, so the **next upload must use
 `versionCode` 8 or higher** — Play rejects a duplicate code. Bump it in
 `android/app/build.gradle` (the single source; `app.json` has no `versionCode`).
 
