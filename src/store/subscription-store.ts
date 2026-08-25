@@ -200,12 +200,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
       async cancelSubscription() {
         const { managementUrl, source } = get();
-        if (managementUrl?.trim() || source === "play_store" || source === "app_store") {
-          // Real Play/App Store subscription: open the store's manage/cancel page
-          // (the only compliant way to cancel a store subscription).
-          await RevenueCatSubscriptionService.openManageSubscriptions(managementUrl);
-          return;
-        }
 
         // DEV ONLY, TEST STORE ONLY. The client SDK cannot cancel a RevenueCat
         // Test Store subscription and there is no store page to open, so the
@@ -227,10 +221,19 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           return;
         }
 
-        // Promotional / Stripe / Amazon / other: nothing the app may cancel, and
-        // nothing to open. Do NOT revoke entitlement locally — the grant is
-        // server-side truth. The Settings row is hidden for these sources, so
-        // this is a defensive no-op for a stale UI or a direct caller.
+        // EVERYTHING ELSE opens the platform's subscription-management page.
+        // This is the DEFAULT, not a special case: real Play/App Store subs, and
+        // also promotional / Stripe / Amazon / unknown sources. It never revokes
+        // entitlement locally, so the promo-grant self-revoke bug stays fixed —
+        // that fix lives in the __DEV__ + test_store guard above, not in hiding
+        // the row.
+        //
+        // Safe with no managementUrl: openManageSubscriptions falls back to the
+        // store's generic subscriptions URL (Play on Android, Apple on iOS), so
+        // there is always a sensible destination. An earlier version made this
+        // branch a no-op AND hid the Settings row for these sources, which
+        // removed the only "manage your subscription" entry point in the app.
+        await RevenueCatSubscriptionService.openManageSubscriptions(managementUrl);
       },
 
       getCurrentSubscription() {

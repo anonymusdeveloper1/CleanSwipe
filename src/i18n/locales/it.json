@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "Rivedi elenco eliminazioni ({{count}})",
     "startOver": "Ricomincia",
     "nextMonth": "Mese successivo: {{month}}",
-    "chooseMonth": "Scegli mese"
+    "chooseMonth": "Scegli mese",
+    "newMediaAvailable_one": "{{count}} nuovo elemento",
+    "newMediaAvailable_other": "{{count}} nuovi elementi"
   },
   "cleanup": {
     "scrollToTop": "Torna su",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "Le tue foto contrassegnate sono ancora al sicuro.",
     "emptyStateTitle": "Nessun {{mediaType}} contrassegnato per l'eliminazione.",
     "emptyStateMessage": "Scorri verso sinistra sui {{mediaType}} per metterli in coda qui prima dell'eliminazione definitiva.",
-    "restorePhoto": "Ripristina foto"
+    "restorePhoto": "Ripristina foto",
+    "deletingTitle": "Eliminazione…",
+    "deletingMessage": "Rimozione di foto e video selezionati. Con lotti grandi può richiedere un momento."
   },
   "compressionDetail": {
     "watchAdBody": "Guarda un breve annuncio per comprimere questo video.",

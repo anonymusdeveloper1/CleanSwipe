@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "Review Delete List ({{count}})",
     "startOver": "Start Over",
     "nextMonth": "Next Month: {{month}}",
-    "chooseMonth": "Choose Month"
+    "chooseMonth": "Choose Month",
+    "newMediaAvailable_one": "{{count}} new item",
+    "newMediaAvailable_other": "{{count}} new items"
   },
   "cleanup": {
     "scrollToTop": "Scroll to top",
@@ -372,7 +374,9 @@
     "deletionFailedFallback": "Your marked photos are still safe.",
     "emptyStateTitle": "No {{mediaType}} marked for deletion.",
     "emptyStateMessage": "Swipe left on {{mediaType}} to queue them here before permanent deletion.",
-    "restorePhoto": "Restore photo"
+    "restorePhoto": "Restore photo",
+    "deletingTitle": "Deleting…",
+    "deletingMessage": "Removing your selected photos and videos. This can take a moment for large batches."
   },
   "compressionDetail": {
     "watchAdBody": "Watch a short ad to compress this video.",

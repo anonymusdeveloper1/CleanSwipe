@@ -80,14 +80,24 @@ function readAllSources() {
 }
 
 /**
- * en.json keys with no literal reference anywhere in the source, excluding
- * runtime-composed namespaces. Matches the key as a quoted/backticked string so
- * `t("a.b")`, `i18nKey="a.b"` and a key passed through a variable all count.
+ * i18next resolves a plural key by appending a CLDR category suffix to the base
+ * key at RUNTIME: `t("a.b", { count })` reads `a.b_one` / `a.b_other` (and
+ * _zero/_two/_few/_many in locales that have them). Source only ever mentions
+ * the BASE key, so the suffixed variants must be matched against that base or
+ * every correctly-pluralised string gets reported as dead.
  */
+const PLURAL_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
+
+function pluralBaseKey(key) {
+  const suffix = PLURAL_SUFFIXES.find((candidate) => key.endsWith(candidate));
+  return suffix ? key.slice(0, -suffix.length) : key;
+}
+
 function findOrphanKeys(keys, source) {
   return keys.filter((key) => {
     if (DYNAMIC_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) return false;
-    return !source.includes(`"${key}"`) && !source.includes(`'${key}'`) && !source.includes(`\`${key}\``);
+    const lookup = pluralBaseKey(key);
+    return !source.includes('"' + lookup + '"') && !source.includes("'" + lookup + "'") && !source.includes("`" + lookup + "`");
   });
 }
 

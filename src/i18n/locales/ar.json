@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "مراجعة قائمة الحذف ({{count}})",
     "startOver": "البدء من جديد",
     "nextMonth": "الشهر التالي: {{month}}",
-    "chooseMonth": "اختر الشهر"
+    "chooseMonth": "اختر الشهر",
+    "newMediaAvailable_one": "{{count}} عنصر جديد",
+    "newMediaAvailable_other": "{{count}} عناصر جديدة"
   },
   "cleanup": {
     "scrollToTop": "العودة إلى الأعلى",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "صورك المحددة لا تزال آمنة.",
     "emptyStateTitle": "لا يوجد {{mediaType}} محدد للحذف.",
     "emptyStateMessage": "مرّر إلى اليسار على {{mediaType}} لإضافتها هنا قبل الحذف النهائي.",
-    "restorePhoto": "استعادة الصورة"
+    "restorePhoto": "استعادة الصورة",
+    "deletingTitle": "جارٍ الحذف…",
+    "deletingMessage": "جارٍ إزالة الصور ومقاطع الفيديو المحددة. قد يستغرق ذلك لحظة للدفعات الكبيرة."
   },
   "compressionDetail": {
     "watchAdBody": "شاهد إعلانًا قصيرًا لضغط هذا الفيديو.",

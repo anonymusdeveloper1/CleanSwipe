@@ -1,10 +1,49 @@
 # SwipeClean Android release handoff
 
-Updated: 2026-08-17
+Updated: 2026-08-22
 
 This is the operational handoff for the first public Google Play release. The
 full implementation history remains in `PROJECT_CONTEXT.md` §11.
 
+
+## CURRENT PRODUCTION ARTIFACT — build 7 (2026-08-22)
+
+**UPLOADED AND LIVE** as the Play beta (confirmed 2026-08-22). Build 6 below is superseded; it predates the green rebrand,
+the new logo, and several fixes.
+
+| Purpose | Artifact | Version | SHA-256 |
+|---|---|---|---|
+| **Production upload to Google Play** | `dist-android/SwipeClean-v1.0.0-vc7-production.aab` | 1.0.0 (7) | `381CE9F2C15150D4B6B81593575234777C98C9B5288A61612361878AB74DE1FA` |
+
+Verified before handoff:
+- `jarsigner -verify` → **jar verified**; signer `CN=Cognitix, O=Cognitix, C=US`,
+  SHA-256 `B9:0F:F3:2A:…:8D:1F` (the upload key Play expects).
+- `versionCode` **7**, `versionName` 1.0.0 — read out of the AAB's protobuf
+  manifest and cross-checked against the vc6 artifact, which reads 6.
+- Embedded JS contains all three **production** AdMob unit IDs (banner
+  3772562348, interstitial 2274476985, rewarded 4491543800) — i.e. this is NOT a
+  forced-test-ads build.
+- Contains this cycle's changes: media-sync fix (`getLibrarySignature`), swipe
+  "new media" pill, delete progress. Confirms the removed surfaces stay removed:
+  no Open-Source Licenses, Redeem Code, or "Upgrade to Premium" strings.
+
+**Why 7 and not 6:** versionCode 6 was already prepared for upload and may have
+been submitted; Play rejects a duplicate code, and this build's contents differ
+from 6 regardless. versionCodes need not be contiguous — bumping is always safe.
+
+### Before submitting for production review
+- **Play listing icon is uploaded separately from the AAB.** The listing will
+  still show the old blue card-stack mark until the new green ring icon is
+  uploaded in Play Console (1024x1024 supplied; 512x512 also available).
+- **LGPL attribution is absent by explicit product decision.** The Open-Source
+  Licenses screen was removed while LAME still ships in the binary twice
+  (`libswipecleanlame.so` plus `libandroidlame.so` via react-native-compressor).
+  See PROJECT_CONTEXT §10 and §11 (2026-08-06 c). Production review is a higher
+  risk bar than closed testing; this is a conscious choice, not an oversight.
+
+---
+
+## Superseded artifacts (build 6, 2026-08-17)
 ## Release artifacts
 
 | Purpose | Artifact | Version | SHA-256 |
@@ -175,3 +214,16 @@ What's new
 - Confirm the `swipeclean_pro` monthly and yearly base plans are active in Play
   Console and still mapped to RevenueCat's `CleanSwipe Pro` entitlement and
   default offering.
+
+---
+
+## Next upload
+
+Build 7 is live on the Play beta track, so the **next upload must use
+`versionCode` 8 or higher** — Play rejects a duplicate code. Bump it in
+`android/app/build.gradle` (the single source; `app.json` has no `versionCode`).
+
+The store listing's screenshots and icon are uploaded in Play Console
+**separately from the AAB**. The stale in-repo copies under
+`store-listing-generated/` were deleted on 2026-08-22; only `LISTING.md`
+remains. Play Console holds the authoritative assets.

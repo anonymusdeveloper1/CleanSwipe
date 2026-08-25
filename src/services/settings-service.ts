@@ -6,7 +6,7 @@ export const defaultSettings: AppSettings = {
   biometricAuthEnabled: false,
   appLockEnabled: false,
   darkModeEnabled: false,
-  accentColor: "blue",
+  accentColor: "green",
   language: "system",
   notificationsEnabled: true,
   cleanupRemindersEnabled: true,

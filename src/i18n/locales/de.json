@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "Löschliste prüfen ({{count}})",
     "startOver": "Neu beginnen",
     "nextMonth": "Nächster Monat: {{month}}",
-    "chooseMonth": "Monat wählen"
+    "chooseMonth": "Monat wählen",
+    "newMediaAvailable_one": "{{count}} neues Element",
+    "newMediaAvailable_other": "{{count}} neue Elemente"
   },
   "cleanup": {
     "scrollToTop": "Nach oben",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "Deine markierten Fotos sind weiterhin sicher.",
     "emptyStateTitle": "Keine {{mediaType}} zum Löschen markiert.",
     "emptyStateMessage": "Wische {{mediaType}} nach links, um sie hier vor dem endgültigen Löschen einzureihen.",
-    "restorePhoto": "Foto wiederherstellen"
+    "restorePhoto": "Foto wiederherstellen",
+    "deletingTitle": "Wird gelöscht…",
+    "deletingMessage": "Ausgewählte Fotos und Videos werden entfernt. Bei großen Mengen kann das einen Moment dauern."
   },
   "compressionDetail": {
     "watchAdBody": "Sieh dir eine kurze Werbung an, um dieses Video zu komprimieren.",

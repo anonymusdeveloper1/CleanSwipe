@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "Tinjau Daftar Hapus ({{count}})",
     "startOver": "Mulai Ulang",
     "nextMonth": "Bulan Berikutnya: {{month}}",
-    "chooseMonth": "Pilih Bulan"
+    "chooseMonth": "Pilih Bulan",
+    "newMediaAvailable_one": "{{count}} item baru",
+    "newMediaAvailable_other": "{{count}} item baru"
   },
   "cleanup": {
     "scrollToTop": "Ke atas",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "Foto bertanda Anda masih aman.",
     "emptyStateTitle": "Tidak ada {{mediaType}} yang ditandai untuk dihapus.",
     "emptyStateMessage": "Geser kiri pada {{mediaType}} untuk mengantrekannya di sini sebelum dihapus permanen.",
-    "restorePhoto": "Pulihkan foto"
+    "restorePhoto": "Pulihkan foto",
+    "deletingTitle": "Menghapus…",
+    "deletingMessage": "Menghapus foto dan video yang dipilih. Ini bisa memakan waktu untuk jumlah besar."
   },
   "compressionDetail": {
     "watchAdBody": "Tonton iklan singkat untuk mengompres video ini.",

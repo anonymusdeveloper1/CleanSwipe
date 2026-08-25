@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "Examiner la liste de suppression ({{count}})",
     "startOver": "Recommencer",
     "nextMonth": "Mois suivant : {{month}}",
-    "chooseMonth": "Choisir un mois"
+    "chooseMonth": "Choisir un mois",
+    "newMediaAvailable_one": "{{count}} nouvel élément",
+    "newMediaAvailable_other": "{{count}} nouveaux éléments"
   },
   "cleanup": {
     "scrollToTop": "Revenir en haut",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "Vos photos marquées sont toujours en sécurité.",
     "emptyStateTitle": "Aucun {{mediaType}} marqué pour suppression.",
     "emptyStateMessage": "Balayez vers la gauche les {{mediaType}} pour les ajouter ici avant la suppression définitive.",
-    "restorePhoto": "Restaurer la photo"
+    "restorePhoto": "Restaurer la photo",
+    "deletingTitle": "Suppression…",
+    "deletingMessage": "Suppression des photos et vidéos sélectionnées. Cela peut prendre un moment pour de gros lots."
   },
   "compressionDetail": {
     "watchAdBody": "Regardez une courte pub pour compresser cette vidéo.",

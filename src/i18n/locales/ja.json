@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "削除リストを確認 ({{count}})",
     "startOver": "やり直す",
     "nextMonth": "次の月: {{month}}",
-    "chooseMonth": "月を選択"
+    "chooseMonth": "月を選択",
+    "newMediaAvailable_one": "新着 {{count}} 件",
+    "newMediaAvailable_other": "新着 {{count}} 件"
   },
   "cleanup": {
     "scrollToTop": "上へ移動",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "予定した写真は引き続き安全です。",
     "emptyStateTitle": "削除予定の{{mediaType}}はありません。",
     "emptyStateMessage": "完全に削除する前に、{{mediaType}}を左にスワイプしてここにキューします。",
-    "restorePhoto": "写真を復元"
+    "restorePhoto": "写真を復元",
+    "deletingTitle": "削除中…",
+    "deletingMessage": "選択した写真と動画を削除しています。件数が多い場合は少し時間がかかります。"
   },
   "compressionDetail": {
     "watchAdBody": "短い広告を見てこの動画を圧縮します。",

@@ -2,9 +2,10 @@ import { router } from "expo-router";
 import { ArrowLeft, Images, Trash2 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppDialog, AppDialogTone } from "@/components/app-dialog";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { InterstitialAdService } from "@/features/ads/interstitial.service";
@@ -39,6 +40,8 @@ export function ReviewDeleteListScreen() {
   const restore = useAppStore((state) => state.restoreMarkedPhoto);
   const deleteMarked = useAppStore((state) => state.permanentlyDeleteMarked);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [dialog, setDialog] = useState<{ tone: AppDialogTone; title: string; message: string; onDismiss?: () => void } | undefined>();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const marked = useMemo(
@@ -93,20 +96,35 @@ export function ReviewDeleteListScreen() {
 
   async function confirmDelete() {
     setConfirmVisible(false);
+    // Foreground progress: deleting a large marked queue is a single native call
+    // that can sit for many seconds behind the OS delete-consent dialog. Without
+    // this the screen looked frozen and users tapped again.
+    setDeleting(true);
     try {
       const result = await deleteMarked(marked.map((item) => item.photoId));
-      Alert.alert(
-        t("reviewDelete.cleanupCompleteTitle"),
-        t("reviewDelete.cleanupCompleteMessage", {
+      setDialog({
+        tone: "success",
+        title: t("reviewDelete.cleanupCompleteTitle"),
+        message: t("reviewDelete.cleanupCompleteMessage", {
           clearedBytes: formatBytes(result.clearedBytes),
           deletedCount: result.deletedCount,
           mediaType: getMediaTypeNoun(selectedMediaType, result.deletedCount)
         }),
-        // Show a capped interstitial at this natural task-end (Free users only).
-        [{ text: t("common.done"), onPress: () => InterstitialAdService.maybeShow() }]
-      );
+        // Capped interstitial at this natural task-end (Free users only).
+        onDismiss: () => InterstitialAdService.maybeShow()
+      });
     } catch (error) {
-      Alert.alert(t("reviewDelete.deletionFailedTitle"), error instanceof Error ? error.message : t("reviewDelete.deletionFailedFallback"));
+      // Reached when the user DENIES the OS delete-consent dialog: deletePhotos
+      // treats deleteAssetsAsync === false as a failure and throws. Previously a
+      // raw native Alert, which is why cancelling surfaced an OS-styled popup in
+      // the middle of an otherwise themed flow.
+      setDialog({
+        tone: "error",
+        title: t("reviewDelete.deletionFailedTitle"),
+        message: error instanceof Error ? error.message : t("reviewDelete.deletionFailedFallback")
+      });
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -226,6 +244,43 @@ export function ReviewDeleteListScreen() {
       />
       {bottomBar}
       <DeleteConfirmationDialog visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={confirmDelete} />
+      <AppDialog
+        visible={dialog !== undefined}
+        title={dialog?.title ?? ""}
+        message={dialog?.message}
+        tone={dialog?.tone}
+        onClose={() => {
+          const onDismiss = dialog?.onDismiss;
+          setDialog(undefined);
+          onDismiss?.();
+        }}
+      />
+      {deleting ? (
+        <View
+          accessibilityRole="progressbar"
+          accessibilityLabel={t("reviewDelete.deletingTitle")}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 100,
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 16,
+            backgroundColor: theme.background
+          }}
+        >
+          <ActivityIndicator size="large" color={theme.accent} />
+          <Text selectable style={{ color: theme.text, fontSize: 18, fontWeight: "900", textAlign: "center" }}>
+            {t("reviewDelete.deletingTitle")}
+          </Text>
+          <Text selectable style={{ color: theme.muted, fontSize: 14, textAlign: "center", paddingHorizontal: 32 }}>
+            {t("reviewDelete.deletingMessage")}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }

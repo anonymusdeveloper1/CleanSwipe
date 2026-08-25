@@ -71,14 +71,6 @@ export function SettingsScreen() {
   const refreshPermissionStatus = useAppStore((state) => state.refreshPermissionStatus);
   const subscriptionStatus = useSubscriptionStore((state) => state.subscriptionStatus);
   const cancelSubscription = useSubscriptionStore((state) => state.cancelSubscription);
-  const subscriptionSource = useSubscriptionStore((state) => state.source);
-  // Only a real store subscription can be cancelled by the user. A complimentary
-  // (PROMOTIONAL) grant or a Stripe/Amazon/other entitlement has no cancel path
-  // from inside the app — showing the row there is a button that cannot do what
-  // it says, and it used to silently revoke the grant client-side. Test Store
-  // keeps its dev-only fake cancel.
-  const isCancellableSource =
-    subscriptionSource === "play_store" || subscriptionSource === "app_store" || (__DEV__ && subscriptionSource === "test_store");
   const { isPro } = useFeatureAccess();
   const selectedLanguage = languageOptions.find((option) => option.value === settings.language) ?? languageOptions[0];
 
@@ -345,7 +337,12 @@ export function SettingsScreen() {
         {!isPro ? (
           <SettingsRow icon={Star} title={t("settings.upgradePremium")} subtitle={t("settings.upgradePremiumSubtitle")} onPress={() => router.push("/premium") as never} trailing={chevron} />
         ) : null}
-        {subscriptionStatus === "active" && isCancellableSource ? (
+        {/* Shown for EVERY active subscription. This row is the app's only route to
+            the store's subscription-management page (Play on Android, Apple on iOS),
+            so gating it by `source` removed the manage entry point entirely.
+            cancelSubscription() never revokes locally outside __DEV__ + test store,
+            so restoring it cannot resurrect the promo-grant self-revoke bug. */}
+        {subscriptionStatus === "active" ? (
           <SettingsRow
             icon={XCircle}
             title={t("settings.cancelSubscription")}

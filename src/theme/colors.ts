@@ -1,7 +1,12 @@
+/**
+ * Accent palette. GREEN LEADS: it is the brand accent and the default in
+ * settings-service `defaultSettings`, so it is listed first in the picker.
+ * Order here drives the swatch order in Settings -> Appearance.
+ */
 export const accentColors = {
+  green: "#10b981",
   blue: "#075ec8",
   purple: "#8b5cf6",
-  green: "#10b981",
   orange: "#f59e0b",
   pink: "#ec4899"
 } as const;

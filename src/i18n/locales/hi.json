@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "हटाने की सूची की समीक्षा करें ({{count}})",
     "startOver": "फिर से शुरू करें",
     "nextMonth": "अगला महीना: {{month}}",
-    "chooseMonth": "महीना चुनें"
+    "chooseMonth": "महीना चुनें",
+    "newMediaAvailable_one": "{{count}} नया आइटम",
+    "newMediaAvailable_other": "{{count}} नए आइटम"
   },
   "cleanup": {
     "scrollToTop": "ऊपर जाएँ",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "आपकी चिह्नित फ़ोटो अभी भी सुरक्षित हैं।",
     "emptyStateTitle": "हटाने के लिए कोई {{mediaType}} चिह्नित नहीं है।",
     "emptyStateMessage": "स्थायी रूप से हटाने से पहले {{mediaType}} को यहाँ कतार में जोड़ने के लिए बाएँ स्वाइप करें।",
-    "restorePhoto": "फ़ोटो पुनर्स्थापित करें"
+    "restorePhoto": "फ़ोटो पुनर्स्थापित करें",
+    "deletingTitle": "हटाया जा रहा है…",
+    "deletingMessage": "चयनित फ़ोटो और वीडियो हटाए जा रहे हैं। बड़े बैच में कुछ समय लग सकता है।"
   },
   "compressionDetail": {
     "watchAdBody": "इस वीडियो को कंप्रेस करने के लिए एक छोटा विज्ञापन देखें।",

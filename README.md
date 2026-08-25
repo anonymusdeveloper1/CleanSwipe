@@ -163,7 +163,7 @@ The flag affects only that invocation. A normal `assembleRelease` or
 - [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) — the real documentation: §3 file
   map, §5 architecture and data flow, §7 business rules, §10 known issues, §11
   dated Feature History.
-- [`PLAY_RELEASE.md`](PLAY_RELEASE.md) — the current Android build-6 artifact,
+- [`PLAY_RELEASE.md`](PLAY_RELEASE.md) — the current Android build-7 artifact,
   verification record, production-access steps, and Play Console rollout
   handoff.
 - `SECURITY_SCAN.md`, `APP_ANALYSIS.md`, `DESIGN-BRIEF.md`, `CONVERT_PLAN.md` —

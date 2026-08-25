@@ -288,7 +288,9 @@
     "reviewDeleteListCount": "Revisar lista de exclusão ({{count}})",
     "startOver": "Recomeçar",
     "nextMonth": "Próximo mês: {{month}}",
-    "chooseMonth": "Escolher mês"
+    "chooseMonth": "Escolher mês",
+    "newMediaAvailable_one": "{{count}} item novo",
+    "newMediaAvailable_other": "{{count}} itens novos"
   },
   "cleanup": {
     "scrollToTop": "Ir para o topo",
@@ -361,7 +363,9 @@
     "deletionFailedFallback": "Suas fotos marcadas continuam seguras.",
     "emptyStateTitle": "Nenhuma {{mediaType}} marcada para exclusão.",
     "emptyStateMessage": "Deslize para a esquerda em {{mediaType}} para enfileirá-las aqui antes da exclusão permanente.",
-    "restorePhoto": "Restaurar foto"
+    "restorePhoto": "Restaurar foto",
+    "deletingTitle": "Excluindo…",
+    "deletingMessage": "Removendo as fotos e vídeos selecionados. Pode levar um momento em lotes grandes."
   },
   "compressionDetail": {
     "watchAdBody": "Assista a um anúncio curto para comprimir este vídeo.",

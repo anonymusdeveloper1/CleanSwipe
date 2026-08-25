@@ -67,6 +67,7 @@ type AppStore = {
   requestPhotoPermission: () => Promise<void>;
   refreshPermissionStatus: () => Promise<void>;
   setSelectedMonth: (key: string) => void;
+  jumpToNewestMedia: () => void;
   setSelectedMediaType: (mediaType: MediaTypeFilter) => void;
   swipeCurrentPhoto: (action: SwipeAction, photoId?: string) => void;
   keepPhoto: (photoId: string) => void;
@@ -363,6 +364,25 @@ export const useAppStore = create<AppStore>()(
         set({ permission });
       },
 
+      /**
+       * Jump the swipe deck back to the newest card (index 0).
+       *
+       * Needed because refreshPhotos deliberately RE-ANCHORS currentIndex to the
+       * photo you were on: when new media is prepended to the newest-first deck,
+       * your index is bumped so you stay on the same card. That is correct for
+       * not losing your place, but it also means a freshly downloaded photo lands
+       * at index 0 BEHIND you and is never reached — the deck only ever moves
+       * forward. Restarting the app was the only way to see it (currentIndex is
+       * not persisted, so it resets to 0), which is exactly the "open and close
+       * the app 2-3 times" symptom.
+       *
+       * The Swipe screen surfaces a "N new" pill when anything sits ahead of the
+       * current card; this is what that pill calls.
+       */
+      jumpToNewestMedia() {
+        set({ currentIndex: 0 });
+      },
+
       setSelectedMonth(key) {
         set({ selectedMonthKey: key, currentIndex: 0 });
       },
@@ -590,6 +610,38 @@ export const useAppStore = create<AppStore>()(
       // non-destructive queue so losing <400ms of trailing writes on a hard kill
       // is harmless.
       storage: createJSONStorage(() => createDebouncedStorage(400)),
+      // FIRST versioned migration on this store. zustand treats a persisted blob
+      // with no `version` as 0, so this runs exactly once per existing install
+      // and never again.
+      version: 2,
+      migrate: (persisted, fromVersion) => {
+        const state = (persisted ?? {}) as Partial<AppStore>;
+        // v2 — GREEN REBRAND. Green is the BRAND accent now, not merely the new
+        // default. Changing `defaultSettings.accentColor` alone reaches nobody who
+        // already has the app: normalizeSettings backfills MISSING settings but
+        // never overrides an existing value, so every existing install kept
+        // whatever accent it had and the rebrand was invisible on-device.
+        //
+        // This deliberately re-points EVERY existing install at green, not just
+        // ones still on the old "blue" default. An earlier revision scoped it to
+        // blue-only to preserve deliberate choices, which meant a device that had
+        // been switched to another accent never showed the rebrand at all.
+        //
+        // Safe to be this broad because it is versioned: zustand treats a blob
+        // with no `version` as 0, so this runs ONCE per install and never again.
+        // Anyone who re-picks a different accent afterwards keeps it permanently.
+        //
+        // WHY v2 AND NOT v1: a build shipped with `version: 1` and a narrower
+        // (blue-only) rule. Devices that ran it recorded version 1 in their
+        // persisted blob, so broadening the v1 rule afterwards was a no-op for
+        // them — zustand only runs `migrate` when the STORED version is lower.
+        // Re-pointing an already-migrated install therefore requires a NEW
+        // version number, not an edit to the old one. Same applies next time.
+        if (fromVersion < 2 && state.settings) {
+          return { ...state, settings: { ...state.settings, accentColor: "green" } };
+        }
+        return state;
+      },
       merge: (persistedState, currentState) => {
         // persistedState is undefined on a fresh install (and can be malformed
         // after a failed write). Default it so property reads below never throw

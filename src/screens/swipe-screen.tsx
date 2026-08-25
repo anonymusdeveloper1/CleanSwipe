@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { ArrowRight, BrushCleaning, CheckCircle2, Images, RotateCcw, Trash2 } from "lucide-react-native";
+import { ArrowRight, ArrowUp, BrushCleaning, CheckCircle2, Images, RotateCcw, Trash2 } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -54,6 +54,14 @@ export function SwipeScreen() {
   const activeIndex = Math.min(currentIndex, Math.max(visiblePhotos.length - 1, 0));
   const photo = visiblePhotos[activeIndex];
   const swipeStackPhotos = useMemo(() => visiblePhotos.slice(activeIndex, activeIndex + 4), [activeIndex, visiblePhotos]);
+  const jumpToNewestMedia = useAppStore((state) => state.jumpToNewestMedia);
+  // Anything sitting AHEAD of the current card is media that arrived after we
+  // passed that position: swiped cards are filtered out of visiblePhotos, so the
+  // deck only ever shrinks in front of us. refreshPhotos re-anchors currentIndex
+  // to the card you were on, which preserves your place but strands a newly
+  // downloaded photo at index 0 behind you. activeIndex is therefore exactly the
+  // number of new arrivals waiting to be seen.
+  const newAheadCount = activeIndex;
   const clearedCount = useMemo(
     () => selectedPhotos.filter((item) => reviewedIds.has(item.id) || markedIds.has(item.id)).length,
     [markedIds, reviewedIds, selectedPhotos]
@@ -156,6 +164,30 @@ export function SwipeScreen() {
           <Trash2 size={22} color={visibleMarkedCount > 0 ? theme.accent : theme.muted} />
         </ControlIconButton>
       </View>
+      {newAheadCount > 0 && !loadingPhotos ? (
+        <View style={{ paddingHorizontal: 22, paddingTop: 10, alignItems: "center" }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("swipe.newMediaAvailable", { count: newAheadCount })}
+            onPress={jumpToNewestMedia}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              backgroundColor: theme.accent,
+              borderRadius: 22,
+              paddingLeft: 12,
+              paddingRight: 16,
+              paddingVertical: 8
+            }}
+          >
+            <ArrowUp size={16} color="#ffffff" />
+            <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "900" }}>
+              {t("swipe.newMediaAvailable", { count: newAheadCount })}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
       <View style={{ flex: 1, minHeight: 0, paddingHorizontal: 22, paddingTop: 18, paddingBottom: 12, gap: 12 }}>
         {loadingPhotos ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14 }}>
