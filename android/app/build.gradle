@@ -99,6 +99,26 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+/**
+ * Drop react-native-compressor's transitive LAME (TAndroidLame).
+ *
+ * react-native-compressor declares `com.github.kaushik-naik:TAndroidLame` for its
+ * AUDIO compression API, which packages `libandroidlame.so` into every ABI. This
+ * app never calls that API — it imports only Image, Video, createVideoThumbnail
+ * and getFileSize, and has zero Audio.compress call sites — so the library was
+ * pure dead weight AND the last remaining LGPL obligation after our own vendored
+ * LAME was removed (PROJECT_CONTEXT 2026-08-22 c).
+ *
+ * Kotlin resolves classes lazily, so excluding this is safe as long as
+ * `AudioCompressor` is never instantiated. If a future change starts using
+ * react-native-compressor's audio compression, this exclusion MUST be removed —
+ * the symptom would be a NoClassDefFoundError at the first audio compress call,
+ * and the LGPL attribution obligation would return with it.
+ */
+configurations.configureEach {
+    exclude group: "com.github.kaushik-naik", module: "TAndroidLame"
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 

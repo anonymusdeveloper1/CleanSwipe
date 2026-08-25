@@ -6,18 +6,15 @@ import { ConvertEngineInput, ConvertEngineOutput, ConvertOptions, ConvertTarget 
  * Video → audio extraction/encode. Three free, on-device targets:
  *   - m4a (AAC): OS frameworks — Android MediaMuxer/MediaExtractor remux, iOS
  *     AVAssetExportSession. Shipped by the legacy `SwipeCleanAudioExtract` module.
- *   - mp3: bundled LAME (LGPL) — decode the audio track to PCM, then LAME-encode.
  *   - wav: raw PCM + RIFF header — OS decoders only.
- * mp3 + wav (and a unified m4a path) live in the newer `SwipeCleanAudioEncode`
- * module. Both modules are capability-probed via `requireOptionalNativeModule`,
+ * wav (and a unified m4a path) live in the newer `SwipeCleanAudioEncode`
+ * module. MP3 was removed with the vendored LAME encoder (PROJECT_CONTEXT
+ * 2026-08-22 c) — both remaining targets are pure OS-framework code. Both modules are capability-probed via `requireOptionalNativeModule`,
  * so a target stays hidden until its native side is compiled into the build.
  */
 type LegacyExtract = { extractAudio(inputUri: string, outputPath: string): Promise<string> };
 type AudioEncode = {
   encodeAudio(inputUri: string, outputPath: string, format: string): Promise<string>;
-  // Reports whether the bundled LAME encoder is linked (false when the shared
-  // library failed to load on this device/ABI, or on an older binary).
-  supportsMp3?(): boolean;
 };
 
 let legacy: LegacyExtract | null | undefined;
@@ -34,18 +31,12 @@ function getEncoder(): AudioEncode | null {
 }
 
 /** Which audio targets the current build can produce. */
-export function audioCapabilities(): { m4a: boolean; mp3: boolean; wav: boolean } {
+export function audioCapabilities(): { m4a: boolean; wav: boolean } {
   const enc = getEncoder();
   const hasEncoder = enc != null;
-  // m4a + wav are pure-SDK in the encode module; mp3 needs LAME linked, which the
-  // native side reports via supportsMp3().
-  let mp3 = false;
-  try {
-    mp3 = hasEncoder && typeof enc?.supportsMp3 === "function" && enc.supportsMp3() === true;
-  } catch {
-    mp3 = false;
-  }
-  return { m4a: hasEncoder || getLegacy() != null, mp3, wav: hasEncoder };
+  // Both targets are pure OS-framework code inside the encode module, so their
+  // availability is simply "is the module compiled into this build".
+  return { m4a: hasEncoder || getLegacy() != null, wav: hasEncoder };
 }
 
 export async function convertAudio(input: ConvertEngineInput, target: ConvertTarget, options: ConvertOptions): Promise<ConvertEngineOutput> {
@@ -66,7 +57,7 @@ export async function convertAudio(input: ConvertEngineInput, target: ConvertTar
     outputUri = await getLegacy()!.extractAudio(input.uri, outputPath);
   } else {
     throw new Error(
-      target === "mp3" ? "audio-mp3-unavailable" : target === "wav" ? "audio-wav-unavailable" : "audio-extract-unavailable"
+      target === "wav" ? "audio-wav-unavailable" : "audio-extract-unavailable"
     );
   }
 

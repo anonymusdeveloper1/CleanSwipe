@@ -1,17 +1,12 @@
 import AVFoundation
 import ExpoModulesCore
 
-// Encode/extract a video's audio track to M4A, WAV, or MP3 — free, on-device.
+// Encode/extract a video’s audio track to M4A or WAV — free, on-device.
 //   - m4a: AVAssetExportSession (AppleM4A preset).
 //   - wav: AVAssetReader → 16-bit PCM → RIFF/WAVE header.
-//   - mp3: bundled LAME 3.100 (LGPL) — the C sources are vendored at ./lame and
-//     compiled directly into this pod; SCLameEncoder bridges AVAssetReader PCM
-//     into lame_encode_buffer_interleaved.
 public class AudioEncodeModule: Module {
   public func definition() -> ModuleDefinition {
     Name("SwipeCleanAudioEncode")
-
-    Function("supportsMp3") { LameBridge.available }
 
     AsyncFunction("encodeAudio") { (inputUri: String, outputPath: String, format: String, promise: Promise) in
       let inputURL = URL(string: inputUri) ?? URL(fileURLWithPath: inputUri.replacingOccurrences(of: "file://", with: ""))
@@ -27,13 +22,6 @@ public class AudioEncodeModule: Module {
           promise.resolve(outputURL.absoluteString)
         } catch {
           promise.reject("E_WAV", error.localizedDescription)
-        }
-      case "mp3":
-        do {
-          try SCLameEncoder.encodeVideo(atPath: inputURL.path, toMp3Path: outputURL.path, bitrate: 192)
-          promise.resolve(outputURL.absoluteString)
-        } catch {
-          promise.reject("E_MP3", error.localizedDescription)
         }
       default:
         promise.reject("E_FORMAT", "unsupported-format")
@@ -114,10 +102,4 @@ public class AudioEncodeModule: Module {
     append32(pcm.count)
     return header + pcm
   }
-}
-
-/// LAME 3.100 (LGPL) is compiled into the pod, so MP3 is always available on iOS.
-/// The JS capability probe reads this via `supportsMp3()`.
-enum LameBridge {
-  static let available = true
 }

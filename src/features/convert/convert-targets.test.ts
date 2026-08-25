@@ -17,8 +17,8 @@ const photo = (filename?: string, uri = "file:///x") => ({ mediaType: "photo" as
 const video = (filename?: string, uri = "file:///x") => ({ mediaType: "video" as const, filename, uri });
 const unknown = { mediaType: "unknown" as const, filename: undefined, uri: "file:///x" };
 
-const none: ConvertCapabilities = { audioM4a: false, audioMp3: false, audioWav: false, webm: false, gif: false };
-const all: ConvertCapabilities = { audioM4a: true, audioMp3: true, audioWav: true, webm: true, gif: true };
+const none: ConvertCapabilities = { audioM4a: false, audioWav: false, webm: false, gif: false };
+const all: ConvertCapabilities = { audioM4a: true, audioWav: true, webm: true, gif: true };
 
 describe("sourceFormat", () => {
   it("normalizes extensions and aliases", () => {
@@ -58,10 +58,10 @@ describe("getAvailableTargets — same-format exclusion", () => {
   it("gives a GIF source the still-image targets (gif→still via image engine)", () => {
     expect(getAvailableTargets(photo("loop.gif"))).toEqual(["jpg", "png", "webp"]);
   });
-  it("excludes mp4 for an mp4 video, keeping webm/gif + audio (mp3 intentionally not offered)", () => {
+  it("excludes mp4 for an mp4 video, keeping webm/gif + audio", () => {
     expect(getAvailableTargets(video("v.mp4"))).toEqual(["webm", "gif", "m4a", "wav"]);
   });
-  it("keeps mp4 for a mov video and drops nothing else (mp3 intentionally not offered)", () => {
+  it("keeps mp4 for a mov video and drops nothing else", () => {
     expect(getAvailableTargets(video("v.mov"))).toEqual(["mp4", "webm", "gif", "m4a", "wav"]);
   });
   it("returns nothing for unknown media", () => {
@@ -76,7 +76,7 @@ describe("getSelectableTargets — capability gating", () => {
   it("an mp4 video shows nothing extra until native engines ship", () => {
     expect(getSelectableTargets(video("v.mp4"), none)).toEqual([]);
   });
-  it("an mp4 video shows every webm/gif/audio target once engines are present (mp3 not offered)", () => {
+  it("an mp4 video shows every webm/gif/audio target once engines are present", () => {
     expect(getSelectableTargets(video("v.mp4"), all)).toEqual(["webm", "gif", "m4a", "wav"]);
   });
   it("a mov video always shows mp4 even with no native engines", () => {
@@ -96,8 +96,6 @@ describe("isTargetAvailable", () => {
     expect(isTargetAvailable("mp4", none)).toBe(true);
   });
   it("native targets gate on their capability flag", () => {
-    expect(isTargetAvailable("mp3", none)).toBe(false);
-    expect(isTargetAvailable("mp3", all)).toBe(true);
     expect(isTargetAvailable("webm", none)).toBe(false);
     expect(isTargetAvailable("webm", all)).toBe(true);
     expect(isTargetAvailable("gif", all)).toBe(true);
@@ -112,17 +110,14 @@ describe("target metadata", () => {
     expect(targetOutputKind("gif")).toBe("image");
     expect(targetOutputKind("mp4")).toBe("video");
     expect(targetOutputKind("webm")).toBe("video");
-    expect(targetOutputKind("mp3")).toBe("audio");
     expect(targetOutputKind("m4a")).toBe("audio");
     expect(targetOutputKind("wav")).toBe("audio");
   });
   it("extension equals the target", () => {
     expect(targetExtension("jpg")).toBe("jpg");
     expect(targetExtension("webm")).toBe("webm");
-    expect(targetExtension("mp3")).toBe("mp3");
   });
   it("maps share mime types", () => {
-    expect(targetMimeForShare("mp3")).toBe("audio/mpeg");
     expect(targetMimeForShare("m4a")).toBe("audio/mp4");
     expect(targetMimeForShare("wav")).toBe("audio/wav");
     expect(targetMimeForShare("webm")).toBe("video/webm");
@@ -133,7 +128,6 @@ describe("target metadata", () => {
     expect(targetLabel("jpg")).toBe("JPG");
     expect(targetLabel("webp")).toBe("WEBP");
     expect(targetLabel("webm")).toBe("WebM");
-    expect(targetLabel("mp3")).toBe("MP3");
   });
 });
 

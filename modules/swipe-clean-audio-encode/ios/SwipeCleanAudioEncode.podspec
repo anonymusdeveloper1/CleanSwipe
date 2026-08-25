@@ -1,8 +1,8 @@
 Pod::Spec.new do |s|
   s.name           = 'SwipeCleanAudioEncode'
   s.version        = '1.0.0'
-  s.summary        = 'Encode/extract audio (M4A, WAV, MP3) from a video'
-  s.description    = 'Extracts a video audio track to M4A (AVAssetExportSession), WAV (AVAssetReader PCM + RIFF), or MP3 (bundled LAME 3.100, LGPL).'
+  s.summary        = 'Encode/extract audio (M4A, WAV) from a video'
+  s.description    = 'Extracts a video audio track to M4A (AVAssetExportSession) or WAV (AVAssetReader PCM + RIFF).'
   s.author         = ''
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = {
@@ -16,26 +16,12 @@ Pod::Spec.new do |s|
 
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
-    'SWIFT_COMPILATION_MODE' => 'wholemodule',
-    # HAVE_CONFIG_H pulls in our hand-written config.h; header paths reach the
-    # vendored LAME, which lives INSIDE ios/ so the pod is self-contained (no `../`
-    # entries that would shift CocoaPods' base dir and break header visibility).
-    'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) HAVE_CONFIG_H=1',
-    'HEADER_SEARCH_PATHS' => '"$(PODS_TARGET_SRCROOT)/lame" "$(PODS_TARGET_SRCROOT)/lame/libmp3lame" "$(PODS_TARGET_SRCROOT)/lame/mpglib" "$(PODS_TARGET_SRCROOT)/lame/include"',
-    'GCC_WARN_INHIBIT_ALL_WARNINGS' => 'YES'
+    'SWIFT_COMPILATION_MODE' => 'wholemodule'
   }
 
-  # Expose only the ObjC wrapper header to the module umbrella (so Swift sees
-  # SCLameEncoder); LAME's own headers stay private.
-  s.public_header_files = "SCLameEncoder.h"
-  s.preserve_paths = "lame/**/*"
-
-  s.source_files = [
-    "*.{h,m,swift}",
-    "lame/libmp3lame/*.{c,h}",
-    "lame/libmp3lame/vector/*.{c,h}",
-    "lame/mpglib/*.{c,h}",
-    "lame/include/lame.h",
-    "lame/config.h"
-  ]
+  # Swift only. The vendored LAME 3.100 C sources and the SCLameEncoder ObjC
+  # bridge were removed (PROJECT_CONTEXT 2026-08-22 c), which also retires the
+  # HAVE_CONFIG_H define, the LAME header search paths, the public-header
+  # declaration and the warning suppression that existed solely for LAME.
+  s.source_files = "*.swift"
 end

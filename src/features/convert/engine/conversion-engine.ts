@@ -9,7 +9,7 @@
  *  - gif source → mp4             → GifEngine (frame-decode → H.264)
  *  - video → webm                 → WebmEngine (native VP8/VP9, capability-gated)
  *  - video → gif                  → GifEngine (native, capability-gated)
- *  - video → audio (mp3/m4a/wav)  → AudioEngine (native, capability-gated)
+ *  - video → audio (m4a/wav)      → AudioEngine (native, capability-gated)
  */
 import { targetOutputKind } from "@/features/convert/convert-targets";
 import { ConvertCapabilities, ConvertEngineInput, ConvertEngineOutput, ConvertOptions, ConvertTarget } from "@/features/convert/convert.types";
@@ -24,7 +24,6 @@ export function getConvertCapabilities(): ConvertCapabilities {
   const audio = audioCapabilities();
   return {
     audioM4a: audio.m4a,
-    audioMp3: audio.mp3,
     audioWav: audio.wav,
     webm: isWebmAvailable(),
     gif: isGifAvailable()

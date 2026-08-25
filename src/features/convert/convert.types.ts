@@ -18,7 +18,7 @@ export type ConvertImageTarget = "jpg" | "png" | "webp";
 // "gif" is an animated/image artifact saved to the gallery — it can come from a
 // video (video→gif) or be the static-frame target of a gif source.
 export type ConvertVideoTarget = "mp4" | "webm" | "gif";
-export type ConvertAudioTarget = "mp3" | "m4a" | "wav";
+export type ConvertAudioTarget = "m4a" | "wav";
 export type ConvertTarget = ConvertImageTarget | ConvertVideoTarget | ConvertAudioTarget;
 
 export type ConvertJobStatus = "queued" | "preparing" | "converting" | "completed" | "failed" | "cancelled";
@@ -104,7 +104,6 @@ export type ConvertEngineOutput = {
 export type ConvertCapabilities = {
   // Video → audio extraction/encode engines.
   audioM4a: boolean;
-  audioMp3: boolean;
   audioWav: boolean;
   // Video → webm (VP8/VP9) container.
   webm: boolean;

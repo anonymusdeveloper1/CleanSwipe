@@ -430,7 +430,7 @@ function getJobForMedia(state: Pick<ConvertStore, "jobs" | "jobIdByMediaId">, me
  */
 function classifyConvertError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
-  if (/webm-unavailable|gif-unavailable|audio-mp3-unavailable|audio-wav-unavailable|audio-extract-unavailable|image-manipulator-unavailable/i.test(message)) return "unavailable";
+  if (/webm-unavailable|gif-unavailable|audio-wav-unavailable|audio-extract-unavailable|image-manipulator-unavailable/i.test(message)) return "unavailable";
   if (/convert-save-failed/i.test(message)) return "saveFailed";
   if (/convert-output-invalid/i.test(message)) return "output";
   if (/cancel/i.test(message)) return "cancelled";

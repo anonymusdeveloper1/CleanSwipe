@@ -18,10 +18,6 @@ import java.nio.ByteOrder
  * Audio encode/extract from a video, three free on-device targets:
  *   - m4a: lossless remux of the existing AAC track (MediaExtractor → MediaMuxer).
  *   - wav: decode the track to PCM (MediaCodec) and wrap it in a RIFF/WAVE header.
- *   - mp3: decode to PCM, then encode with the bundled LAME 3.100 (LGPL, vendored
- *     at ../../lame and compiled by CMake into libswipecleanlame.so). If the
- *     library fails to load on some device/ABI, `supportsMp3()` reports false and
- *     the JS layer keeps the MP3 chip hidden.
  * Pure Android SDK (no FFmpeg) for m4a + wav.
  */
 class AudioEncodeModule : Module() {
@@ -31,8 +27,6 @@ class AudioEncodeModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("SwipeCleanAudioEncode")
 
-    Function("supportsMp3") { LameBridge.AVAILABLE }
-
     AsyncFunction("encodeAudio") { inputUri: String, outputPath: String, format: String ->
       val outFile = File(outputPath)
       outFile.parentFile?.mkdirs()
@@ -40,10 +34,6 @@ class AudioEncodeModule : Module() {
       when (format) {
         "m4a" -> remuxToM4a(inputUri, outputPath)
         "wav" -> decodeToWav(inputUri, outputPath)
-        "mp3" -> {
-          if (!LameBridge.AVAILABLE) throw Exception("mp3-not-linked")
-          LameBridge.encodeMp3(decodeToPcm(inputUri), outputPath)
-        }
         else -> throw Exception("unsupported-format")
       }
       "file://$outputPath"
@@ -188,29 +178,3 @@ class AudioEncodeModule : Module() {
 }
 
 data class PcmAudio(val pcm: ByteArray, val sampleRate: Int, val channels: Int)
-
-/**
- * Bridge to the bundled LAME 3.100 encoder (LGPL), compiled by CMake into
- * `libswipecleanlame.so`. If the library loads, `AVAILABLE` is true and the JS
- * capability probe shows the MP3 chip; if it fails to load on some device/ABI,
- * it degrades to false instead of crashing.
- */
-object LameBridge {
-  val AVAILABLE: Boolean = try {
-    System.loadLibrary("swipecleanlame")
-    true
-  } catch (_: Throwable) {
-    false
-  }
-
-  private const val MP3_BITRATE_KBPS = 192
-
-  private external fun nativeEncode(pcm: ByteArray, sampleRate: Int, channels: Int, bitrate: Int, outputPath: String): Int
-
-  fun encodeMp3(audio: PcmAudio, outputPath: String) {
-    if (!AVAILABLE) throw Exception("mp3-not-linked")
-    val path = outputPath.removePrefix("file://")
-    val rc = nativeEncode(audio.pcm, audio.sampleRate, audio.channels, MP3_BITRATE_KBPS, path)
-    if (rc != 0) throw Exception("mp3-encode-failed:$rc")
-  }
-}

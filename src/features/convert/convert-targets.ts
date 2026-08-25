@@ -14,10 +14,10 @@ import { PhotoAsset } from "@/models/photo";
 
 export const IMAGE_TARGETS: ConvertTarget[] = ["jpg", "png", "webp"];
 export const VIDEO_TARGETS: ConvertTarget[] = ["mp4", "webm", "gif"];
-// MP3 is intentionally NOT offered for now (product decision, 2026-07-05). The
-// "mp3" token, its output-kind/mime/label maps, the LAME engine path, and the
-// `audioMp3` capability all stay in place — re-add "mp3" here to bring the chip
-// back with no other change.
+// MP3 was REMOVED entirely (2026-08-22), not merely hidden: the vendored LAME
+// encoder that produced it is gone, so there is no engine path to re-enable.
+// Re-adding MP3 would mean re-vendoring an LGPL encoder and taking on its
+// attribution + source-offer obligations again.
 export const AUDIO_TARGETS: ConvertTarget[] = ["m4a", "wav"];
 
 const OUTPUT_KIND: Record<ConvertTarget, ConvertOutputKind> = {
@@ -27,7 +27,6 @@ const OUTPUT_KIND: Record<ConvertTarget, ConvertOutputKind> = {
   gif: "image",
   mp4: "video",
   webm: "video",
-  mp3: "audio",
   m4a: "audio",
   wav: "audio"
 };
@@ -39,7 +38,6 @@ const SHARE_MIME: Record<ConvertTarget, string> = {
   gif: "image/gif",
   mp4: "video/mp4",
   webm: "video/webm",
-  mp3: "audio/mpeg",
   m4a: "audio/mp4",
   wav: "audio/wav"
 };
@@ -53,7 +51,6 @@ const DISPLAY_LABEL: Record<ConvertTarget, string> = {
   gif: "GIF",
   mp4: "MP4",
   webm: "WebM",
-  mp3: "MP3",
   m4a: "M4A",
   wav: "WAV"
 };
@@ -119,8 +116,6 @@ export function isTargetAvailable(target: ConvertTarget, caps: ConvertCapabiliti
       return true; // pure-JS image engine + always-linked compressor
     case "m4a":
       return caps.audioM4a;
-    case "mp3":
-      return caps.audioMp3;
     case "wav":
       return caps.audioWav;
     case "webm":

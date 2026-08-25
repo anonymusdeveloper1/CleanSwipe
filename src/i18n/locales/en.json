@@ -581,7 +581,6 @@
       "gif": "Animated",
       "mp4": "Universal",
       "webm": "Open format",
-      "mp3": "Music",
       "m4a": "AAC audio",
       "wav": "Uncompressed"
     }

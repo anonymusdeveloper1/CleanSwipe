@@ -9,23 +9,16 @@ version = '0.1.0'
 android {
   namespace "expo.modules.swipecleanaudioencode"
   defaultConfig {
+    // versionCode/versionName are load-bearing for a LOCAL Expo module: omitting
+    // them surfaces as a misleading async-storage compileSdk error.
     minSdkVersion 24
     versionCode 1
     versionName "0.1.0"
-    externalNativeBuild {
-      cmake {
-        // LAME is pure C — no C++ STL needed.
-        arguments "-DANDROID_STL=none"
-      }
-    }
-    ndk {
-      abiFilters "arm64-v8a", "armeabi-v7a", "x86_64", "x86"
-    }
   }
-  externalNativeBuild {
-    cmake {
-      path "CMakeLists.txt"
-      version "3.22.1"
-    }
-  }
+  // No externalNativeBuild / CMake any more. This module used to compile a
+  // vendored LAME 3.100 into libswipecleanlame.so for MP3 encoding; LAME and its
+  // JNI bridge were removed (see PROJECT_CONTEXT 2026-08-22 c). The remaining
+  // m4a and wav paths are pure Android framework code — MediaMuxer AAC remux and
+  // MediaCodec PCM decode + a hand-written RIFF header — so there is no native
+  // source left to build.
 }
