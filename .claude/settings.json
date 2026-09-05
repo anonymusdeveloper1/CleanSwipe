@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "GRADLE_USER_HOME": "D:\\DevCache\\gradle",
+    "ANDROID_AVD_HOME": "D:\\DevCache\\android\\avd",
+    "ANDROID_EMULATOR_HOME": "D:\\DevCache\\android",
+    "ANDROID_SDK_HOME": "D:\\DevCache\\android",
+    "npm_config_cache": "D:\\DevCache\\npm-cache",
+    "YARN_CACHE_FOLDER": "D:\\DevCache\\yarn-cache",
+    "TMP": "D:\\DevCache\\tmp",
+    "TEMP": "D:\\DevCache\\tmp",
+    "TMPDIR": "D:\\DevCache\\tmp"
+  }
+}

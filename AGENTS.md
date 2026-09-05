@@ -65,6 +65,32 @@ source file references). Orphans are advisory by default; pass
 (`` t(`ns.${x}`) ``), add its prefix to `DYNAMIC_KEY_PREFIXES` in
 `scripts/check-i18n.mjs` or it will be reported as dead.
 
+## Disk: everything goes on D:, never C:
+
+**Hard rule. `C:` is nearly full (it hit 8.6 GB free on 2026-09-05); `D:` has
+~500 GB.** Any build, cache, temp file, emulator image, or scratch artifact you
+create must land on `D:`. Never write a new cache to `C:\Users\marti\`.
+
+Caches were relocated to `D:\DevCache\` on 2026-09-05:
+
+| What | Now lives at | Pinned by |
+|---|---|---|
+| Gradle home (was 11.7 GB on C:) | `D:\DevCache\gradle` | `GRADLE_USER_HOME` |
+| npm cache (was 7.8 GB) | `D:\DevCache\npm-cache` | `npm_config_cache` |
+| Android AVDs / emulator (was 9.9 GB) | `D:\DevCache\android` | `ANDROID_AVD_HOME`, `ANDROID_EMULATOR_HOME`, `ANDROID_SDK_HOME` |
+| Temp (Metro's cache uses `os.tmpdir()`) | `D:\DevCache\tmp` | `TMP`, `TEMP`, `TMPDIR` |
+
+These are set in **`.claude/settings.json`** (every Claude Code session in this
+repo inherits them) **and** as Windows *user* environment variables, so plain
+terminals and Android Studio get them too. If you add a tool with its own cache,
+point it at `D:\DevCache\` and add a row here.
+
+Verify before a big build:
+
+```bash
+powershell -NoProfile -Command "Get-PSDrive C,D | Select-Object Name,@{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}"
+```
+
 ## Device / native work
 
 - The **user runs on-device testing**. Make changes compile and rely on Fast

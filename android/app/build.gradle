@@ -156,6 +156,20 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            // A Play-installed build is signed by Play App Signing, so a locally
+            // built debug APK (debug keystore) cannot update it in place — the
+            // install fails on signature mismatch, and the only way to force it
+            // is uninstalling the production app and its data. This opt-in
+            // suffix installs the dev client SIDE BY SIDE instead, mirroring the
+            // release buildType's -PswipecleanTabletQa escape hatch below.
+            // A normal `assembleDebug` is unchanged unless -PswipecleanDevSxs=true
+            // is passed. Bonus: the suffixed app is a fresh install with no
+            // granted permissions, which is exactly what first-run permission
+            // testing needs.
+            if ((findProperty('swipecleanDevSxs') ?: 'false').toBoolean()) {
+                applicationIdSuffix '.devsxs'
+                versionNameSuffix '-devsxs'
+            }
         }
         release {
             // Refuse to build a release artifact without the real upload keystore.
