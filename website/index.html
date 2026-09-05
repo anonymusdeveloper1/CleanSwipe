@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SwipeClean Privacy Policy</title>
+    <meta
+      name="description"
+      content="Privacy Policy for SwipeClean, a local-first photo and video cleanup app by the Cognitix team."
+    />
+    <meta name="theme-color" content="#075ec8" />
+    <style>
+      :root {
+        color-scheme: light;
+        --blue: #075ec8;
+        --blue-2: #0b7bd3;
+        --green: #10a88a;
+        --ink: #122033;
+        --text: #2d3b4f;
+        --muted: #627084;
+        --line: #d9e4ef;
+        --soft: #f4f9ff;
+        --soft-2: #eefaf7;
+        --white: #ffffff;
+        --shadow: 0 16px 40px rgba(7, 94, 200, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--text);
+        background: var(--white);
+        line-height: 1.65;
+      }
+
+      a {
+        color: var(--blue);
+        text-decoration-thickness: 0.08em;
+        text-underline-offset: 0.16em;
+      }
+
+      a:hover {
+        color: #044b9f;
+      }
+
+      .skip {
+        position: absolute;
+        left: -999px;
+        top: 12px;
+        z-index: 10;
+        padding: 10px 14px;
+        background: var(--ink);
+        color: var(--white);
+        border-radius: 6px;
+      }
+
+      .skip:focus {
+        left: 12px;
+      }
+
+      .wrap {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav {
+        min-height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--ink);
+        font-weight: 900;
+        letter-spacing: 0;
+        text-decoration: none;
+      }
+
+      .mark {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        color: var(--white);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 40%),
+          var(--blue);
+        box-shadow: 0 10px 24px rgba(7, 94, 200, 0.24);
+        font-size: 18px;
+        font-weight: 950;
+      }
+
+      nav ul {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      nav a {
+        display: inline-flex;
+        min-height: 38px;
+        align-items: center;
+        padding: 0 12px;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 760;
+        text-decoration: none;
+      }
+
+      nav a:hover {
+        color: var(--blue);
+        background: var(--soft);
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 72px 0 46px;
+        background:
+          radial-gradient(circle at 90% 16%, rgba(16, 168, 138, 0.18), transparent 30%),
+          linear-gradient(180deg, #f6fbff 0%, #ffffff 82%);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 350px;
+        gap: 44px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 30px;
+        padding: 0 10px;
+        border: 1px solid rgba(7, 94, 200, 0.22);
+        border-radius: 999px;
+        color: var(--blue);
+        background: rgba(255, 255, 255, 0.82);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      h1,
+      h2,
+      h3 {
+        color: var(--ink);
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 18px 0 16px;
+        max-width: 720px;
+        font-size: clamp(42px, 7vw, 76px);
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: clamp(26px, 4vw, 38px);
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      .lede {
+        max-width: 760px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 19px;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 46px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 18px;
+        border-radius: 8px;
+        border: 1px solid var(--blue);
+        background: var(--blue);
+        color: var(--white);
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        color: var(--blue);
+        background: var(--white);
+      }
+
+      .summary-panel {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--white);
+        box-shadow: var(--shadow);
+      }
+
+      .summary-panel strong {
+        color: var(--ink);
+      }
+
+      .summary-list {
+        display: grid;
+        gap: 12px;
+        margin: 16px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .summary-list li {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .check {
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        color: var(--green);
+        background: var(--soft-2);
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      main {
+        padding: 44px 0 70px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        gap: 40px;
+      }
+
+      .toc {
+        position: sticky;
+        top: 92px;
+        align-self: start;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--soft);
+      }
+
+      .toc h2 {
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+
+      .toc ol {
+        display: grid;
+        gap: 6px;
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .toc a {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 760;
+        text-decoration: none;
+      }
+
+      .toc a:hover {
+        color: var(--blue);
+      }
+
+      .policy {
+        display: grid;
+        gap: 26px;
+      }
+
+      section {
+        scroll-margin-top: 96px;
+        padding: 26px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--white);
+      }
+
+      section.highlight {
+        background: linear-gradient(180deg, #ffffff, #f8fcff);
+      }
+
+      p {
+        margin: 0 0 14px;
+      }
+
+      p:last-child {
+        margin-bottom: 0;
+      }
+
+      ul {
+        margin: 12px 0 0;
+        padding-left: 22px;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .meta-item {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .meta-item span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .meta-item b {
+        display: block;
+        margin-top: 3px;
+        color: var(--ink);
+        font-size: 15px;
+      }
+
+      .callout {
+        padding: 16px;
+        border-left: 4px solid var(--green);
+        border-radius: 8px;
+        background: var(--soft-2);
+      }
+
+      .data-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .data-card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfdff;
+      }
+
+      .data-card p {
+        color: var(--muted);
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        background: var(--white);
+        font-size: 13px;
+        font-weight: 820;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      th,
+      td {
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--ink);
+        background: var(--soft);
+        font-size: 13px;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      footer {
+        padding: 30px 0;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        background: var(--soft);
+      }
+
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .small {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid,
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .summary-panel,
+        .toc {
+          position: static;
+        }
+
+        nav ul {
+          display: none;
+        }
+
+        .meta,
+        .data-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .wrap {
+          width: min(100% - 28px, 1120px);
+        }
+
+        .hero {
+          padding: 46px 0 34px;
+        }
+
+        h1 {
+          font-size: 40px;
+        }
+
+        .lede {
+          font-size: 17px;
+        }
+
+        section {
+          padding: 20px;
+        }
+
+        th,
+        td {
+          display: block;
+          width: 100%;
+        }
+
+        th {
+          border-bottom: 0;
+        }
+
+        td {
+          padding-top: 8px;
+        }
+
+        .footer-inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to privacy policy</a>
+
+    <header>
+      <div class="wrap nav" aria-label="Site header">
+        <a class="brand" href="#top" aria-label="SwipeClean Privacy Policy home">
+          <span class="mark" aria-hidden="true">S</span>
+          <span>SwipeClean Privacy</span>
+        </a>
+        <nav aria-label="Policy navigation">
+          <ul>
+            <li><a href="#summary">Summary</a></li>
+            <li><a href="#data">Data</a></li>
+            <li><a href="#third-parties">Third parties</a></li>
+            <li><a href="#choices">Choices</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <div id="top" class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="eyebrow">Privacy Policy for SwipeClean</span>
+          <h1>Simple, local-first privacy for your photo cleanup app.</h1>
+          <p class="lede">
+            SwipeClean helps you review, delete, compress, and convert photos and videos. The app is designed so your media
+            processing happens on your device. It does not upload your photos or videos to a custom SwipeClean server.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="#summary">Read the summary</a>
+            <a class="button secondary" href="mailto:info.cognitix@gmail.com">Contact support</a>
+          </div>
+          <div class="meta" aria-label="Policy details">
+            <div class="meta-item">
+              <span>Effective date</span>
+              <b>July 7, 2026</b>
+            </div>
+            <div class="meta-item">
+              <span>App</span>
+              <b>SwipeClean 1.0.0</b>
+            </div>
+            <div class="meta-item">
+              <span>Developer</span>
+              <b>Cognitix team</b>
+            </div>
+          </div>
+        </div>
+
+        <aside class="summary-panel" aria-label="Privacy highlights">
+          <strong>At a glance</strong>
+          <ul class="summary-list">
+            <li>
+              <span class="check" aria-hidden="true">&#10003;</span>
+              <span>No SwipeClean account, login, custom backend, or media upload is required.</span>
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">&#10003;</span>
+              <span>Photos and videos are read, cleaned, compressed, and converted on your device.</span>
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">&#10003;</span>
+              <span>Subscriptions are handled by RevenueCat and the app stores.</span>
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">&#10003;</span>
+              <span>Free users may see Google AdMob ads; Pro users do not see ads.</span>
+            </li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+
+    <main id="main">
+      <div class="wrap layout">
+        <aside class="toc" aria-label="Table of contents">
+          <h2>Contents</h2>
+          <ol>
+            <li><a href="#summary">Short summary</a></li>
+            <li><a href="#who">Who we are</a></li>
+            <li><a href="#data">Information handled</a></li>
+            <li><a href="#use">How it is used</a></li>
+            <li><a href="#local-storage">Local storage</a></li>
+            <li><a href="#third-parties">Third parties</a></li>
+            <li><a href="#permissions">Permissions</a></li>
+            <li><a href="#choices">Your choices</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#children">Children</a></li>
+            <li><a href="#changes">Changes</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ol>
+        </aside>
+
+        <div class="policy">
+          <section id="summary" class="highlight">
+            <h2>Short Summary</h2>
+            <p>
+              SwipeClean is a photo and video cleanup utility. Its core privacy posture is local-first: media review,
+              deletion queues, compression, conversion, Smart Clean detection, thumbnails, and cleanup stats are handled on
+              the device.
+            </p>
+            <div class="callout">
+              <strong>Important:</strong> SwipeClean does not run a custom cloud backend and does not upload your photo or
+              video library to us. Network access is used for subscriptions, app-store billing flows, Google ads and consent
+              tools, store links, and support email actions you choose to start.
+            </div>
+          </section>
+
+          <section id="who">
+            <h2>Who We Are</h2>
+            <p>
+              SwipeClean is provided by the Cognitix team. In this policy, "SwipeClean", "we", "us", and "our" refer to
+              the app and the Cognitix team.
+            </p>
+            <p>
+              Questions or privacy requests can be sent to
+              <a href="mailto:info.cognitix@gmail.com">info.cognitix@gmail.com</a>.
+            </p>
+          </section>
+
+          <section id="data">
+            <h2>Information Handled By The App</h2>
+            <p>
+              SwipeClean handles several categories of information so it can clean and manage media safely. Most of this
+              information stays on your device.
+            </p>
+
+            <div class="data-grid">
+              <div class="data-card">
+                <h3>Photos and videos</h3>
+                <p>
+                  With your permission, SwipeClean reads the media you allow it to access. Depending on your OS permission,
+                  this may be your full library or only selected items.
+                </p>
+                <div class="pill-row" aria-label="Media metadata examples">
+                  <span class="pill">asset ID</span>
+                  <span class="pill">local URI</span>
+                  <span class="pill">filename</span>
+                  <span class="pill">type</span>
+                  <span class="pill">size</span>
+                  <span class="pill">dates</span>
+                  <span class="pill">dimensions</span>
+                  <span class="pill">duration</span>
+                </div>
+              </div>
+
+              <div class="data-card">
+                <h3>Local cleanup state</h3>
+                <p>
+                  The app stores local state such as reviewed items, marked-for-deletion items, deletion history, compression
+                  and conversion jobs, settings, language, theme, and local stats.
+                </p>
+              </div>
+
+              <div class="data-card">
+                <h3>Smart Clean signals</h3>
+                <p>
+                  Smart Clean may compute small local signals such as MD5 hashes, perceptual hashes, blur variance, and
+                  video thumbnail hashes. These are used to detect duplicates, similar media, blurry items, screenshots,
+                  memes, and large files.
+                </p>
+              </div>
+
+              <div class="data-card">
+                <h3>App Lock and reminders</h3>
+                <p>
+                  If you enable App Lock, SwipeClean stores a 4-digit passcode in secure device storage and can use the
+                  system biometric prompt. If you enable reminders, the app schedules local notifications on your device.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="use">
+            <h2>How SwipeClean Uses Information</h2>
+            <ul>
+              <li>To show your media library, organize it by month, and help you review items quickly.</li>
+              <li>To queue media for deletion and only delete after you confirm through the app and OS flow.</li>
+              <li>To compress photos and videos, verify the output, save the new copy, and optionally delete the original.</li>
+              <li>To convert media formats and save or share the converted result.</li>
+              <li>To calculate local cleanup stats, storage estimates, and Smart Clean suggestions.</li>
+              <li>To remember preferences such as language, color, theme, reminders, App Lock, and compression quality.</li>
+              <li>To validate Pro access, restore purchases, show subscription offers, and open store subscription management.</li>
+              <li>To show ads to Free users when ads are allowed and hide ads for Pro users.</li>
+            </ul>
+          </section>
+
+          <section id="local-storage">
+            <h2>Local Storage And Retention</h2>
+            <p>
+              SwipeClean stores local app data on your device using app storage such as AsyncStorage. The App Lock passcode,
+              if enabled, is stored using secure device storage. Media outputs may be saved to your Photos, Gallery, Music,
+              Files, or app sandbox depending on the feature and platform.
+            </p>
+            <ul>
+              <li>Local app data usually remains until you delete it, clear app data, or uninstall the app.</li>
+              <li>Temporary cache files may be removed by the app or operating system.</li>
+              <li>Deletion history and stats are local convenience features, not a remote account history.</li>
+              <li>On Android, app backup is disabled in the app manifest to reduce exposure of local app data through device backup.</li>
+            </ul>
+          </section>
+
+          <section id="third-parties">
+            <h2>Third-Party Services</h2>
+            <p>
+              SwipeClean does not use a custom backend, analytics service, or crash-reporting service in the current app.
+              It does use the following third-party services for specific features:
+            </p>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Purpose</th>
+                  <th>Data involved</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>RevenueCat</td>
+                  <td>Subscriptions, purchase validation, restoring purchases, and Pro entitlement status.</td>
+                  <td>
+                    Purchase history, product identifiers, entitlement status, expiration/source details, receipts, and an
+                    app user identifier. SwipeClean does not create a custom user account for this.
+                    <a href="https://www.revenuecat.com/privacy">RevenueCat Privacy Policy</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Apple App Store and Google Play</td>
+                  <td>Native in-app purchases, subscription management, refunds, and payment processing.</td>
+                  <td>
+                    Your app-store account and payment details are handled by Apple or Google. SwipeClean does not receive
+                    your full payment card details.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Google AdMob and Google Mobile Ads SDK</td>
+                  <td>Ads for Free users, ad delivery, frequency handling, rewarded ads, consent messaging, and fraud prevention.</td>
+                  <td>
+                    SwipeClean requests non-personalized ads. Google's ads SDK may still collect or share data such as IP
+                    address, ad interactions, app interactions, diagnostics, and device or account identifiers for advertising,
+                    analytics, and fraud prevention.
+                    <a href="https://policies.google.com/privacy">Google Privacy Policy</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="permissions">
+            <h2>Permissions</h2>
+            <p>SwipeClean asks for permissions only when needed for app features.</p>
+            <ul>
+              <li>
+                <strong>Photos and videos:</strong> used to display, review, compress, convert, save, and delete media.
+              </li>
+              <li>
+                <strong>Add or save to library:</strong> used when saving compressed or converted media back to your device.
+              </li>
+              <li>
+                <strong>Notifications:</strong> used for optional reminders and Android foreground progress notifications.
+              </li>
+              <li>
+                <strong>Biometric authentication:</strong> used only if you enable App Lock and choose biometric unlock.
+              </li>
+              <li>
+                <strong>Billing:</strong> used for Play Store or App Store subscription purchases.
+              </li>
+              <li>
+                <strong>Internet:</strong> used for RevenueCat, AdMob/consent tools, app-store links, and support email links.
+              </li>
+            </ul>
+            <p>
+              SwipeClean does not request precise location, contacts, camera, or microphone permissions. Media-location access
+              is disabled in the app configuration, and custom picker flows do not request EXIF data.
+            </p>
+          </section>
+
+          <section id="choices">
+            <h2>Your Choices</h2>
+            <ul>
+              <li>Use your operating system settings to grant full media access, selected media access, or no media access.</li>
+              <li>Use the app settings or OS settings to disable notifications.</li>
+              <li>Upgrade to Pro to remove ads, or use your OS ad controls to reset or limit advertising identifiers.</li>
+              <li>Manage or cancel subscriptions through the App Store or Google Play subscription settings.</li>
+              <li>Clear local app data or uninstall SwipeClean to remove local app storage from your device.</li>
+              <li>Contact us at <a href="mailto:info.cognitix@gmail.com">info.cognitix@gmail.com</a> for privacy questions.</li>
+            </ul>
+          </section>
+
+          <section id="security">
+            <h2>Security</h2>
+            <p>
+              SwipeClean is built around local processing and confirmed destructive actions. App Lock uses secure device
+              storage for the passcode when available, and deletion flows update app state only after the operating system
+              reports success.
+            </p>
+            <p>
+              No app or transmission method is perfectly secure. Third-party services process their data according to their
+              own security practices and policies.
+            </p>
+          </section>
+
+          <section id="site">
+            <h2>This Privacy Page</h2>
+            <p>
+              This web page is a static page. It does not include cookies, forms, advertising tags, or analytics scripts.
+              If hosted on a platform such as Netlify, the hosting provider may process routine technical logs such as IP
+              address, browser, timestamp, and requested URL to deliver and secure the page.
+            </p>
+          </section>
+
+          <section id="children">
+            <h2>Children</h2>
+            <p>
+              SwipeClean is not directed to children under 13 or to children below the minimum digital-consent age in their
+              region. We do not knowingly create accounts for children or operate a child-directed backend.
+            </p>
+          </section>
+
+          <section id="transfers">
+            <h2>International Processing</h2>
+            <p>
+              Third-party providers such as RevenueCat, Google, Apple, Google Play, and your hosting provider may process
+              information in countries other than yours. Their processing is governed by their own privacy policies and legal
+              terms.
+            </p>
+          </section>
+
+          <section id="changes">
+            <h2>Changes To This Policy</h2>
+            <p>
+              We may update this policy when SwipeClean changes, when third-party services change, or when legal requirements
+              change. The effective date at the top of the page shows the latest published version.
+            </p>
+          </section>
+
+          <section id="contact">
+            <h2>Contact</h2>
+            <p>
+              For privacy questions, support, or data requests, contact the Cognitix team at
+              <a href="mailto:info.cognitix@gmail.com">info.cognitix@gmail.com</a>.
+            </p>
+            <p class="small">
+              This policy is written to match the SwipeClean app codebase reviewed on July 7, 2026. It is not a substitute
+              for legal advice.
+            </p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap footer-inner">
+        <span>&copy; 2026 Cognitix team. SwipeClean.</span>
+        <a href="#top">Back to top</a>
+      </div>
+    </footer>
+  </body>
+</html>

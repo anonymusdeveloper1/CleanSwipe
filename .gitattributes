@@ -1,0 +1,3 @@
+# app-ads.txt is machine-parsed by ad-network crawlers and index.html is deployed
+# verbatim; keep both LF on every platform regardless of core.autocrlf.
+website/** text eol=lf
