@@ -7,10 +7,10 @@ import Svg, { Circle } from "react-native-svg";
 import { AppHeader } from "@/components/app-header";
 import { EmptyState } from "@/components/empty-state";
 import { IndexingIndicator } from "@/components/indexing-indicator";
+import { MediaPermissionGate } from "@/components/media-permission-gate";
 import { MonthSelector } from "@/components/month-selector";
 import { SwipePhotoCard } from "@/components/swipe-photo-card";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { PermissionService } from "@/services/permission-service";
 import { useAppStore } from "@/store/app-store";
 import { useIndexedMediaAssets } from "@/store/media-index-store";
 import { formatDate } from "@/utils/date";
@@ -22,12 +22,9 @@ export function SwipeScreen() {
   const { t } = useTranslation();
   const [restartBlockedCount, setRestartBlockedCount] = useState<number | undefined>();
   const loadInitialData = useAppStore((state) => state.loadInitialData);
-  const requestPhotoPermission = useAppStore((state) => state.requestPhotoPermission);
   const permission = useAppStore((state) => state.permission);
   const loadingPhotos = useAppStore((state) => state.loadingPhotos);
-  const requestingPermission = useAppStore((state) => state.requestingPermission);
   const hasHydrated = useAppStore((state) => state.hasHydrated);
-  const error = useAppStore((state) => state.error);
   const photos = useIndexedMediaAssets();
   const selectedMonthKey = useAppStore((state) => state.selectedMonthKey);
   const selectedMediaType = useAppStore((state) => state.selectedMediaType);
@@ -122,31 +119,7 @@ export function SwipeScreen() {
   }
 
   if (needsMediaPermission) {
-    // Show the in-app OS dialog while the OS still allows prompting; only route
-    // to system Settings once it won't prompt anymore (Android flips
-    // canAskAgain:false after repeated denials, iOS after the first denial).
-    const permanentlyDenied = permission.status === "denied" && permission.canAskAgain === false;
-    return (
-      <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <AppHeader />
-        <EmptyState
-          icon={BrushCleaning}
-          title={t("permissions.mediaTitle")}
-          message={error ?? t("permissions.photosMessage")}
-          actionLabel={
-            permanentlyDenied ? t("common.openSettings") : requestingPermission ? t("common.requesting") : t("common.allowAccess")
-          }
-          onAction={permanentlyDenied ? PermissionService.openSettings : requestPhotoPermission}
-        />
-        {permanentlyDenied ? null : (
-          <View style={{ paddingHorizontal: 28 }}>
-            <Pressable onPress={PermissionService.openSettings} style={{ alignItems: "center", padding: 16 }}>
-              <Text style={{ color: theme.accent, fontWeight: "800", fontSize: 16 }}>{t("common.openSettings")}</Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-    );
+    return <MediaPermissionGate message={t("permissions.photosMessage")} />;
   }
 
   return (

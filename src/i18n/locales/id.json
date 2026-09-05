@@ -44,6 +44,7 @@
   "permissions": {
     "mediaTitle": "Izinkan akses media",
     "photosMessage": "SwipeClean memerlukan akses Foto dan Video agar Anda dapat meninjau dan membersihkan galeri Anda.",
+    "deniedMessage": "Akses media dimatikan. Aktifkan Foto dan Video di Pengaturan, lalu kembali — SwipeClean akan mendeteksi perubahannya secara otomatis.",
     "cleanupMessage": "SwipeClean memerlukan akses ke foto dan video Anda agar dapat menemukan media berat di perangkat ini.",
     "statusFull": "Akses penuh — semua foto dan video",
     "statusLimited": "Terbatas — hanya foto terpilih",

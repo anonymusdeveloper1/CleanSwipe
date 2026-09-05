@@ -44,6 +44,7 @@
   "permissions": {
     "mediaTitle": "メディアへのアクセスを許可",
     "photosMessage": "ギャラリーを確認して整理できるように、SwipeCleanは写真と動画へのアクセスを必要とします。",
+    "deniedMessage": "メディアへのアクセスがオフになっています。設定で「写真」と「ビデオ」をオンにしてから戻ってください。SwipeClean が自動的に変更を反映します。",
     "cleanupMessage": "このデバイス上の大きなメディアを見つけられるように、SwipeCleanは写真と動画へのアクセスを必要とします。",
     "statusFull": "フルアクセス — すべての写真と動画",
     "statusLimited": "制限あり — 選択した写真のみ",

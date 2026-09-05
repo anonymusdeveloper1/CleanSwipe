@@ -44,6 +44,7 @@
   "permissions": {
     "mediaTitle": "Permitir acceso multimedia",
     "photosMessage": "SwipeClean necesita acceso a tus fotos y videos para que puedas revisar y limpiar tu galería.",
+    "deniedMessage": "El acceso a los archivos multimedia está desactivado. Activa Fotos y Vídeos en Ajustes y vuelve: SwipeClean detectará el cambio automáticamente.",
     "cleanupMessage": "SwipeClean necesita acceso a tus fotos y videos para encontrar elementos pesados en este dispositivo.",
     "statusFull": "Acceso completo — todas las fotos y videos",
     "statusLimited": "Limitado — solo fotos seleccionadas",

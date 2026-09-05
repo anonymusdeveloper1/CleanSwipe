@@ -44,6 +44,7 @@
   "permissions": {
     "mediaTitle": "Allow media access",
     "photosMessage": "SwipeClean needs Photos and Videos access so you can review and clean your gallery.",
+    "deniedMessage": "Media access is off. Turn on Photos and Videos in Settings, then come back — SwipeClean picks up the change automatically.",
     "cleanupMessage": "SwipeClean needs access to your photos and videos so it can find heavy media on this device.",
     "statusFull": "Full access — all photos and videos",
     "statusLimited": "Limited — only selected photos",

@@ -13,6 +13,7 @@ import { ConvertStatsSection } from "@/features/convert/components/convert-stats
 import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useAppStore } from "@/store/app-store";
+import { MediaPermissionGate } from "@/components/media-permission-gate";
 import { useIndexedMediaAssets } from "@/store/media-index-store";
 import { usePaywallStore } from "@/store/paywall-store";
 import { formatBytes, sumBytes } from "@/utils/format";
@@ -41,6 +42,7 @@ export function StatsScreen() {
   const theme = useAppTheme();
   const { t } = useTranslation();
   const stats = useAppStore((state) => state.stats);
+  const permission = useAppStore((state) => state.permission);
   const loadingPhotos = useAppStore((state) => state.loadingPhotos);
   const { canUseFeature } = useFeatureAccess();
   const openPaywall = usePaywallStore((state) => state.open);
@@ -53,6 +55,12 @@ export function StatsScreen() {
 
   const reviewed = stats.totalKept + stats.totalMarkedForDeletion + stats.totalRestored;
   const libraryBytes = sumBytes(photos);
+
+  // Every library figure on this screen is derived from the media index, which
+  // is empty without access — so gate rather than render a screen of zeroes.
+  if (permission.status !== "granted" && permission.status !== "limited") {
+    return <MediaPermissionGate message={t("permissions.photosMessage")} />;
+  }
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: theme.background }} contentInsetAdjustmentBehavior="never" contentContainerStyle={{ paddingBottom: 28 }}>

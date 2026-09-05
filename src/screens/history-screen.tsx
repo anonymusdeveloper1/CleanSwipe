@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { ArrowUp, BrushCleaning, ChevronRight, FileUp, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
+import { ArrowUp, ChevronRight, FileUp, Images, Play, RefreshCw, SlidersHorizontal } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, NativeScrollEvent, NativeSyntheticEvent, Platform, Pressable, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
@@ -10,6 +10,7 @@ import { AppHeader } from "@/components/app-header";
 import { MediaThumbnail } from "@/components/media-thumbnail";
 import { CustomCompressAdDialog } from "@/components/custom-compress-ad-dialog";
 import { EmptyState } from "@/components/empty-state";
+import { MediaPermissionGate } from "@/components/media-permission-gate";
 import { RewardedAdService } from "@/features/ads/rewarded.service";
 import { MediaCompressionOverlay } from "@/features/compression/components/media-compression-overlay";
 import { useCompressFilterStore } from "@/features/compression/compress-filter.store";
@@ -21,7 +22,6 @@ import { useFeatureAccess } from "@/features/subscription/use-feature-access";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { PhotoAsset } from "@/models/photo";
 import { isCustomPickerAvailable, pickMediaForCompression, prepareCustomMediaPicker } from "@/services/custom-media-picker";
-import { PermissionService } from "@/services/permission-service";
 import { useAppStore } from "@/store/app-store";
 import { IndexedMediaAsset, MediaIndexStatus, useMediaIndexStore } from "@/store/media-index-store";
 import { monthLabel } from "@/utils/date";
@@ -43,10 +43,8 @@ export function HistoryScreen() {
   const lastShownAppError = useRef<string | undefined>(undefined);
   const lastShownCompressionError = useRef<string | undefined>(undefined);
   const loadInitialData = useAppStore((state) => state.loadInitialData);
-  const requestPhotoPermission = useAppStore((state) => state.requestPhotoPermission);
   const permission = useAppStore((state) => state.permission);
   const loadingPhotos = useAppStore((state) => state.loadingPhotos);
-  const requestingPermission = useAppStore((state) => state.requestingPermission);
   const hasHydrated = useAppStore((state) => state.hasHydrated);
   const error = useAppStore((state) => state.error);
   const mediaIndexSummary = useMediaIndexStore((state) => state.summary);
@@ -222,30 +220,7 @@ export function HistoryScreen() {
   }
 
   if (needsMediaPermission) {
-    // In-app dialog while the OS still allows prompting; route to Settings only
-    // once it won't prompt anymore (canAskAgain:false after repeated denials).
-    const permanentlyDenied = permission.status === "denied" && permission.canAskAgain === false;
-    return (
-      <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <AppHeader />
-        <EmptyState
-          icon={BrushCleaning}
-          title={t("permissions.mediaTitle")}
-          message={t("permissions.cleanupMessage")}
-          actionLabel={
-            permanentlyDenied ? t("common.openSettings") : requestingPermission ? t("common.requesting") : t("common.allowAccess")
-          }
-          onAction={permanentlyDenied ? PermissionService.openSettings : requestPhotoPermission}
-        />
-        {permanentlyDenied ? null : (
-          <View style={{ paddingHorizontal: 28 }}>
-            <Pressable onPress={PermissionService.openSettings} style={{ alignItems: "center", padding: 16 }}>
-              <Text style={{ color: theme.accent, fontWeight: "800", fontSize: 16 }}>{t("common.openSettings")}</Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-    );
+    return <MediaPermissionGate message={t("permissions.cleanupMessage")} />;
   }
 
   return (
