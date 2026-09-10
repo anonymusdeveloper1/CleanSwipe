@@ -1,0 +1,70 @@
+SwipeClean 32s promo - two prompts
+==================================
+
+PROMPT 1 - STYLE  (999 characters, under the 1000 limit)
+------------------------------------------------------
+
+Catchy male-sung commercial pop-hop. EXACTLY 32.000s, 120 BPM, 4/4. Warm baritone-tenor, dry, close-miked, conversational, never belted. No autotune, no choir, no rap, no count-in.
+
+Deep sine sub-bass, punchy kick, claps on 2+4, 16th hats, a crash, muted electric piano. No guitars or strings.
+
+0-3.2s near-silence: soft sub pulse per beat, a rising sweep, no drums, voice almost spoken.
+3.27/3.50/3.73/3.97s: FOUR BASS STABS an eighth apart, each LOUDER and LOWER, the fourth twice the weight of the first. One syllable per stab.
+4.0-4.5s: TOTAL SILENCE. Do not fill it.
+4.5s: the drop - full kit and sub-bass, never lets up.
+11/17.5/23s: bass root moves, crash each time, groove unbroken.
+27.5s: drums STOP dead. Sub-bass and voice only, eased back.
+32.0s: stop on the downbeat. No fade, no tail.
+
+Every couplet rises then falls, simple and singable. Exception: the "lighter" hook leaps UP as the bass moves DOWN - the signature.
+
+Bass-forward, dry vocal, midrange clear - every word intelligible.
+
+
+PROMPT 2 - LYRICS  (695 characters)
+----------------------------------
+
+[0:00 - near silence, almost spoken]
+Your camera roll
+is out of control
+
+[0:03.27 - four bass stabs, ONE SYLLABLE PER STAB, each louder and lower]
+light-er, LIGHT-ER
+
+[0:04.5 - the drop, full band]
+Swipe it left, let it go,
+right for the ones you wanna know.
+One thumb, watch it clear,
+gigabytes disappear.
+
+[0:11]
+Or let it hunt them down,
+the doubles and the blurs around.
+Screens you never meant to save,
+gone in a single wave.
+
+[0:17.5]
+Half the size, twice the room,
+same shot, same bloom.
+Nothing you'd ever miss.
+
+[0:23]
+Gigabytes back in your hand,
+cleaning done right where you stand.
+
+[0:27.5 - drums out, sub-bass and voice only]
+SwipeClean.
+Keep the memories, lose the rest.
+Lighter.
+
+
+NOTES
+-----
+Sing the lyrics verbatim - do not let the generator paraphrase or add a
+verse. They are checked against a live Google Play listing: never sing that
+nothing leaves the phone (the free tier links AdMob and RevenueCat), never
+claim no quality loss, and never say free, best or fastest.
+
+The four stabs at 3.27/3.50/3.73/3.97s are the signature - they land on the
+word 'lighter' growing on screen in four steps (scale 1.00, 1.42, 1.90,
+2.50), so the bass must grow with it.

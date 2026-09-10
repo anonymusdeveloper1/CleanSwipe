@@ -1,0 +1,30 @@
+{
+  "voiceSettings": {
+    "stability": 0.4,
+    "similarity_boost": 0.78,
+    "style": 0.48,
+    "use_speaker_boost": true
+  },
+  "items": [
+    {
+      "output": "public/voiceover/daily-2026-07-05/stop-buying-storage-for-trash.mp3",
+      "text": "Before you pay for more cloud storage, check what is actually filling your camera roll. SwipeClean finds screenshots, duplicates, blurry shots, and huge videos, so you can review before deleting and make space without panic upgrades."
+    },
+    {
+      "output": "public/voiceover/daily-2026-07-05/screenshot-avalanche.mp3",
+      "text": "You do not have a photo problem. You have a screenshot avalanche. SwipeClean groups the easy cleanup first, then lets you swipe through one small batch and review before deleting. Save this for your Sunday reset."
+    },
+    {
+      "output": "public/voiceover/daily-2026-07-05/hidden-heavy-video.mp3",
+      "text": "One random video can weigh more than four hundred photos. SwipeClean surfaces heavy files, compresses a smaller copy, and lets you compare before deciding what to keep. Make room before the next trip."
+    },
+    {
+      "output": "public/voiceover/daily-2026-07-05/afraid-to-delete-memories.mp3",
+      "text": "If deleting photos makes you nervous, do not start with memories. Start with duplicates, blurry shots, and screenshots. SwipeClean finds candidates, but you review every group before anything goes."
+    },
+    {
+      "output": "public/voiceover/daily-2026-07-05/no-ads-cleanup-flow.mp3",
+      "text": "Your cleanup app should not become clutter too. SwipeClean Pro removes ads and unlocks Smart Clean, batch compression, and Studio tools for a calmer camera roll workflow. Upgrade when you are ready."
+    }
+  ]
+}

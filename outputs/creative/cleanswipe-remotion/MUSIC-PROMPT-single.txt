@@ -1,0 +1,37 @@
+32.000s exactly. 120 BPM, 4/4. Catchy male-sung commercial pop-hop. One male lead: warm baritone-tenor, dry, close-miked, conversational, never belted; no autotune, no choir, no harmonies. Band: deep sine sub-bass, punchy kick, claps on 2+4, tight 16th hats, one crash, muted electric piano. No guitars, no strings, no rap, no second vocalist, no count-in, no spoken intro.
+
+TIMELINE - follow these times exactly.
+
+0.0-3.2 NEAR-SILENCE: one soft sub pulse per beat plus a slow rising noise sweep, no drums. Voice almost spoken, intimate:
+"Your camera roll / is out of control"
+
+3.267 / 3.500 / 3.733 / 3.967 FOUR BASS STABS, an eighth-note apart, each LOUDER and LOWER than the last (55, 55, 46, 41 Hz), the fourth twice the weight of the first with a sub-octave tail. One syllable per stab - pump, pump, PUMP, PUMP:
+"light-er, LIGHT-ER"
+
+4.0-4.5 TOTAL SILENCE. Do not fill this half-beat; the gap is what makes the drop land.
+
+4.5 THE DROP: crash, four-on-the-floor kick, claps on 2+4, 16th hats, sub-bass on A. Full energy, and it never lets up:
+"Swipe it left, let it go, / right for the ones you wanna know. / One thumb, watch it clear, / gigabytes disappear."
+Quick accents at 6.0, 7.25 and 8.5 - a snap over the groove, not instead of it.
+
+11.0 root moves to F, crash + bass stab, groove unbroken:
+"Or let it hunt them down, / the doubles and the blurs around. / Screens you never meant to save, / gone in a single wave."
+
+17.5 root to C, crash + stab:
+"Half the size, twice the room, / same shot, same bloom. / Nothing you'd ever miss."
+
+23.0 root to G, crash + stab:
+"Gigabytes back in your hand, / cleaning done right where you stand."
+
+27.5 DRUMS STOP DEAD - not a fade, a stop. Sub-bass and voice only, level eased back 45%:
+"SwipeClean. / Keep the memories, lose the rest. / Lighter."
+
+32.0 stop on the downbeat. No fade, no reverb tail, no outro.
+
+MELODY - make it stick: every couplet rises on the first line and falls on the second (the Twinkle Twinkle shape), simple and stepwise, singable after one listen. The exception is the hook: "light-er, LIGHT-ER" repeats the same two syllables with a clear upward LEAP the second time while the bass underneath moves DOWN. That contrary motion is the signature and must be the most distinctive interval in the track. "Lighter" is both the first hook at 3.3s and the last word at 32s, closing the loop.
+
+WORDS: sing the lyrics above VERBATIM. Do not rewrite, paraphrase, add lines or invent a second verse - they are legally checked for a live app-store listing. In particular never sing that nothing leaves the phone, never claim no quality loss, and never say free, best or fastest.
+
+FEEL: a modern app commercial - not a club track, not a jingle. Warm, assured, forward-moving.
+
+MIX: bass-forward, punchy but not loud, dry vocal with a short slap delay, midrange kept clear - this plays under motion graphics with no narration and every word must stay intelligible. The four stabs are the loudest low-end moments in the track.

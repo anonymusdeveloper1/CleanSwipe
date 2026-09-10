@@ -41,6 +41,16 @@ bundle-warm.out
 # Agent/scratch output tree (local research + creative artifacts, can be large)
 outputs/
 
+# ...except the promo film's SOURCE, which is real work and belongs in the repo.
+# Git cannot re-include a path inside an ignored directory, so each level has to
+# be walked back out. The heavy and licensed parts (renders, frame sequences,
+# music) are excluded again by outputs/creative/cleanswipe-remotion/.gitignore.
+!outputs/
+outputs/*
+!outputs/creative/
+outputs/creative/*
+!outputs/creative/cleanswipe-remotion/
+
 # Dev-server QR codes — they encode this machine's Metro LAN/tunnel URL
 qr-*.svg
 

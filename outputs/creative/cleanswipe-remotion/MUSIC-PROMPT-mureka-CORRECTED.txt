@@ -1,0 +1,97 @@
+SwipeClean 32s promo - corrected Mureka prompts
+===============================================
+
+WHY THIS FILE EXISTS
+--------------------
+The 2026-09-07 generation put the timing directions inside the LYRICS field,
+in square brackets. Mureka only treats a bracket as a structure tag when it is
+one it recognises ([Intro], [Verse], [Chorus], [Bridge], [Outro]). Everything
+else in brackets it treats as words, and the singer sang them.
+
+Measured, not guessed - centre-channel (vocal) energy against the sides,
+300-3000 Hz, on the returned track:
+
+  known sung lyric lines .................. mid/side 3.7 - 5.3
+  known instrumental intro ................ mid/side 1.8 - 2.3
+  "[0:03.27 - four bass stabs...]" ........ mid/side 6.8   <- sung
+  "[0:23]" ................................ mid/side 6.2   <- sung
+  "[0:27.5 - drums out...]" ............... mid/side 5.0   <- sung
+  "[0:11]" ................................ mid/side 4.6   <- sung
+  "[0:17.5]" .............................. mid/side 3.5   <- sung
+
+So: the LYRICS field gets words only. The arrangement lives in the STYLE field,
+which is a description and is never sung.
+
+The generator also ignored the 32-second length (it returned 96s and 131s).
+Expect to re-cut; ask for "one short verse and a short outro, no repeats".
+
+
+PROMPT 1 - LYRICS FIELD  (words only, nothing in brackets but structure tags)
+----------------------------------------------------------------------------
+
+[Verse]
+Your camera roll
+is out of control
+light-er, LIGHT-ER
+
+Swipe it left, let it go,
+right for the ones you wanna know.
+One thumb, watch it clear,
+gigabytes disappear.
+
+Or let it hunt them down,
+the doubles and the blurs around.
+Screens you never meant to save,
+gone in a single wave.
+
+Half the size, twice the room,
+same shot, same bloom.
+Nothing you'd ever miss.
+
+Gigabytes back in your hand,
+cleaning done right where you stand.
+
+[Outro]
+SwipeClean.
+Keep the memories, lose the rest.
+Lighter.
+
+
+PROMPT 2 - STYLE FIELD  (999 characters, under the 1000 limit)
+--------------------------------------------------------------
+
+Catchy male-sung commercial pop-hop. EXACTLY 32.000s, 120 BPM, 4/4. Warm baritone-tenor, dry, close-miked, conversational, never belted. No autotune, no choir, no rap, no count-in.
+
+Deep sine sub-bass, punchy kick, claps on 2+4, 16th hats, a crash, muted electric piano. No guitars or strings.
+
+0-3.2s near-silence: soft sub pulse per beat, a rising sweep, no drums, voice almost spoken.
+3.27/3.50/3.73/3.97s: FOUR BASS STABS an eighth apart, each LOUDER and LOWER, the fourth twice the weight of the first. One syllable per stab.
+4.0-4.5s: TOTAL SILENCE. Do not fill it.
+4.5s: the drop - full kit and sub-bass, never lets up.
+11/17.5/23s: bass root moves, crash each time, groove unbroken.
+27.5s: drums STOP dead. Sub-bass and voice only, eased back.
+32.0s: stop on the downbeat. No fade, no tail.
+
+Every couplet rises then falls, simple and singable. Exception: the "lighter" hook leaps UP as the bass moves DOWN - the signature.
+
+Bass-forward, dry vocal, midrange clear - every word intelligible.
+
+
+SETTINGS
+--------
+Vocal Gender: Male.  Model: V7.5-all.  Title: SwipeClean - Lighter.
+Cost on 2026-09-07 was 20 credits for a pair of takes.
+
+
+LYRIC CONSTRAINTS - check any regenerated lyrics against this
+------------------------------------------------------------
+SwipeClean is live on Google Play, so a sung claim is held to the same bar as
+the store listing. Never sing:
+  - "nothing ever leaves your phone" - false; the free tier links AdMob and
+    RevenueCat. "Cleaning done right where you stand" is the true form.
+  - "no quality loss" / "lossless" - the approved wording is "without visibly
+    losing quality". "Nothing you'd ever miss" is the sung form.
+  - "free" attached to Smart Clean, Convert, video compression or Compress All.
+  - "AI" or "machine learning" - the detectors are MD5, dHash and
+    variance-of-Laplacian.
+  - Superlatives ("#1", "best", "fastest"), competitor names, iOS references.

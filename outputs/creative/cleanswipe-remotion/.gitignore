@@ -1,0 +1,25 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# Ignore the output video from Git but not videos you import into src/.
+out
+
+# ---------------------------------------------------------------------------
+# Everything below is deliberately NOT in the repo.
+#
+# renders/      838 MB of encoded video. Regenerable from src/ + scripts/.
+# public/seq/    54 MB of pass-one JPEG frame sequences, likewise regenerable.
+# public/music/  40 MB, and it holds reference-source.mp3 - a commercial
+#                recording. This repo is PUBLIC, so that must not be pushed.
+#                beat-v2.wav is rebuildable with scripts/make-beat-v2.py.
+# the remaining media are large inputs kept on the working machine.
+# ---------------------------------------------------------------------------
+renders/
+public/seq/
+public/music/
+public/images/
+public/screens/
+public/voiceover/
+public/audio/voiceover/
